@@ -1,0 +1,72 @@
+{
+  "name": "sortly",
+  "version": "1.0.0",
+  "description": "Aplicativo desktop para organizar arquivos por extensão de forma rápida e segura.",
+  "main": "electron/main.js",
+  "author": "Caio Fernandes dos Reis",
+  "license": "MIT",
+  "homepage": "https://github.com/caiofdev/sortly",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/caiofdev/sortly.git"
+  },
+  "bugs": {
+    "url": "https://github.com/caiofdev/sortly/issues"
+  },
+  "keywords": [
+    "electron",
+    "react",
+    "vite",
+    "tailwindcss",
+    "organizador",
+    "arquivos"
+  ],
+  "scripts": {
+    "dev": "concurrently -k \"npm:dev:renderer\" \"npm:dev:electron\"",
+    "dev:renderer": "vite",
+    "dev:electron": "wait-on tcp:5173 && cross-env VITE_DEV_SERVER_URL=http://localhost:5173 electron .",
+    "start": "electron .",
+    "build:renderer": "vite build",
+    "build": "npm run build:renderer && electron-builder"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.1",
+    "autoprefixer": "^10.4.20",
+    "concurrently": "^9.0.1",
+    "cross-env": "^7.0.3",
+    "electron": "^31.7.7",
+    "electron-builder": "^24.13.3",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.13",
+    "vite": "^5.4.8",
+    "wait-on": "^8.0.1"
+  },
+  "build": {
+    "appId": "com.sortly.app",
+    "productName": "Sortly",
+    "copyright": "Copyright © 2026 Jorge",
+    "executableName": "Sortly",
+    "artifactName": "Sortly-${version}.${ext}",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.ico",
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "shortcutName": "Sortly",
+      "uninstallDisplayName": "Sortly"
+    }
+  }
+}
