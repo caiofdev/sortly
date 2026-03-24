@@ -1,32 +1,54 @@
 import { useState } from 'react';
 
 function App() {
-  const [folderPath, setFolderPath] = useState('');
+  const [sourceFolderPath, setSourceFolderPath] = useState('');
+  const [destinationFolderPath, setDestinationFolderPath] = useState('');
+  const [hasUndo, setHasUndo] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [feedback, setFeedback] = useState(null);
 
-  const handleSelectFolder = async () => {
+  const handleSelectSourceFolder = async () => {
     try {
-      const selectedPath = await window.electronAPI.selectFolder();
+      const selectedPath = await window.electronAPI.selectSourceFolder();
       if (!selectedPath) {
         return;
       }
 
-      setFolderPath(selectedPath);
+      setSourceFolderPath(selectedPath);
+      if (!destinationFolderPath) {
+        setDestinationFolderPath(selectedPath);
+      }
       setFeedback(null);
     } catch (error) {
       setFeedback({
         type: 'error',
-        message: 'Não foi possível selecionar a pasta.'
+        message: 'Não foi possível selecionar a pasta de origem.'
+      });
+    }
+  };
+
+  const handleSelectDestinationFolder = async () => {
+    try {
+      const selectedPath = await window.electronAPI.selectDestinationFolder();
+      if (!selectedPath) {
+        return;
+      }
+
+      setDestinationFolderPath(selectedPath);
+      setFeedback(null);
+    } catch (error) {
+      setFeedback({
+        type: 'error',
+        message: 'Não foi possível selecionar a pasta de destino.'
       });
     }
   };
 
   const handleOrganizeFiles = async () => {
-    if (!folderPath) {
+    if (!sourceFolderPath) {
       setFeedback({
         type: 'error',
-        message: 'Selecione uma pasta antes de organizar.'
+        message: 'Selecione a pasta de origem antes de organizar.'
       });
       return;
     }
@@ -35,15 +57,43 @@ function App() {
     setFeedback(null);
 
     try {
-      const result = await window.electronAPI.organizeFiles(folderPath);
+      const result = await window.electronAPI.organizeFiles({
+        sourceFolderPath,
+        destinationFolderPath: destinationFolderPath || sourceFolderPath
+      });
+
+      setHasUndo(result.canUndo);
+
       setFeedback({
         type: 'success',
-        message: `${result.message} Processados: ${result.processedFiles}. Ignorados sem extensão: ${result.ignoredWithoutExtension}. Pastas ignoradas: ${result.ignoredFolders}.`
+        message: `${result.message} Origem: ${result.sourceFolderPath}. Destino: ${result.destinationFolderPath}. Processados: ${result.processedFiles}. Ignorados sem extensão: ${result.ignoredWithoutExtension}. Pastas ignoradas: ${result.ignoredFolders}.`
       });
     } catch (error) {
       setFeedback({
         type: 'error',
         message: error?.message || 'Erro inesperado ao organizar os arquivos.'
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleUndoLastOrganization = async () => {
+    setIsLoading(true);
+    setFeedback(null);
+
+    try {
+      const result = await window.electronAPI.undoLastOrganization();
+      setHasUndo(result.canUndo);
+
+      setFeedback({
+        type: 'success',
+        message: `${result.message} Renomeados na restauração: ${result.renamedOnRestore}. Não encontrados: ${result.skippedMissing}.`
+      });
+    } catch (error) {
+      setFeedback({
+        type: 'error',
+        message: error?.message || 'Erro inesperado ao desfazer a organização.'
       });
     } finally {
       setIsLoading(false);
@@ -58,23 +108,46 @@ function App() {
         <div className="mt-8 space-y-4">
           <button
             type="button"
-            onClick={handleSelectFolder}
+            onClick={handleSelectSourceFolder}
             className="w-full rounded-xl bg-slate-700 hover:bg-slate-600 transition-colors px-5 py-4 text-lg font-semibold"
           >
-            Selecionar pasta
+            Selecionar pasta de origem
           </button>
 
-          <div className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-sm text-slate-300 break-all min-h-14 flex items-center">
-            {folderPath || 'Nenhuma pasta selecionada'}
+          <div className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-sm text-slate-300 break-all min-h-14">
+            <p className="text-xs uppercase tracking-wide text-slate-500 mb-1">Origem</p>
+            <p>{sourceFolderPath || 'Nenhuma pasta de origem selecionada'}</p>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleSelectDestinationFolder}
+            className="w-full rounded-xl bg-slate-700 hover:bg-slate-600 transition-colors px-5 py-4 text-lg font-semibold"
+          >
+            Selecionar pasta de destino
+          </button>
+
+          <div className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-sm text-slate-300 break-all min-h-14">
+            <p className="text-xs uppercase tracking-wide text-slate-500 mb-1">Destino</p>
+            <p>{destinationFolderPath || sourceFolderPath || 'Nenhuma pasta de destino selecionada'}</p>
           </div>
 
           <button
             type="button"
             onClick={handleOrganizeFiles}
-            disabled={isLoading || !folderPath}
+            disabled={isLoading || !sourceFolderPath}
             className="w-full rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-800/70 disabled:cursor-not-allowed transition-colors px-5 py-4 text-lg font-semibold"
           >
             {isLoading ? 'Organizando arquivos...' : 'Organizar arquivos'}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleUndoLastOrganization}
+            disabled={isLoading || !hasUndo}
+            className="w-full rounded-xl bg-amber-600 hover:bg-amber-500 disabled:bg-amber-900/50 disabled:cursor-not-allowed transition-colors px-5 py-4 text-lg font-semibold"
+          >
+            Desfazer última separação
           </button>
 
           <div

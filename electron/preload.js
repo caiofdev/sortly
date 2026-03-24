@@ -1,6 +1,8 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
-  selectFolder: () => ipcRenderer.invoke('dialog:select-folder'),
-  organizeFiles: (folderPath) => ipcRenderer.invoke('files:organize', folderPath)
+  selectSourceFolder: () => ipcRenderer.invoke('dialog:select-source-folder'),
+  selectDestinationFolder: () => ipcRenderer.invoke('dialog:select-destination-folder'),
+  organizeFiles: (payload) => ipcRenderer.invoke('files:organize', payload),
+  undoLastOrganization: () => ipcRenderer.invoke('files:undo-last-organization')
 });
