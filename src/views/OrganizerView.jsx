@@ -1,6 +1,7 @@
+import { useEffect, useState } from 'react';
 import DragDropPanel from '../components/DragDropPanel';
-import FeedbackPanel from '../components/FeedbackPanel';
 import FolderPathsPanel from '../components/FolderPathsPanel';
+import NotificationsCenter from '../components/NotificationsCenter';
 import OrganizerActions from '../components/OrganizerActions';
 import OrganizerHeader from '../components/OrganizerHeader';
 import organizerCopy from '../i18n/organizerCopy';
@@ -11,8 +12,8 @@ function OrganizerView({
   destinationFolderPath,
   hasUndo,
   isLoading,
+  loadingAction,
   feedback,
-  onClearFeedback,
   onLanguageChange,
   onResolveDroppedPath,
   onSelectSourceFolder,
@@ -20,6 +21,30 @@ function OrganizerView({
   onOrganizeFiles,
   onUndoLastOrganization
 }) {
+  const [notifications, setNotifications] = useState([]);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+
+  useEffect(() => {
+    if (!feedback) {
+      return;
+    }
+
+    const now = new Date();
+    const formattedTime = now.toLocaleTimeString(language === 'pt-BR' ? 'pt-BR' : 'en-US', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
+    const notificationItem = {
+      id: `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
+      type: feedback.type,
+      message: feedback.message,
+      time: formattedTime
+    };
+
+    setNotifications((previous) => [notificationItem, ...previous].slice(0, 80));
+  }, [feedback, language]);
+
   const text = organizerCopy[language] || organizerCopy['pt-BR'];
   const hasDestination = Boolean(destinationFolderPath);
   const destinationLabel = destinationFolderPath || text.destinationEmpty;
@@ -54,21 +79,24 @@ function OrganizerView({
             <OrganizerActions
               labels={text}
               isLoading={isLoading}
+              loadingAction={loadingAction}
               hasUndo={hasUndo}
               hasSource={Boolean(sourceFolderPath)}
               onOrganizeFiles={onOrganizeFiles}
               onUndoLastOrganization={onUndoLastOrganization}
             />
-
-            
-
-            <FeedbackPanel
-              feedback={feedback}
-              onClearFeedback={onClearFeedback}
-            />
           </div>
         </div>
       </section>
+
+      <NotificationsCenter
+        labels={text}
+        notifications={notifications}
+        isOpen={isNotificationsOpen}
+        onToggle={() => setIsNotificationsOpen((open) => !open)}
+        onClose={() => setIsNotificationsOpen(false)}
+        onClear={() => setNotifications([])}
+      />
     </main>
   );
 }

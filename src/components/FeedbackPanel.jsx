@@ -30,14 +30,18 @@ function FeedbackPanel({ feedback, onClearFeedback }) {
   }
 
   const toneClass =
-    feedback.type === 'success'
+    feedback.type === 'organize'
       ? 'border-[#22C55E]/45 bg-[#22C55E]/12 text-[#b8ffcf]'
-      : 'border-rose-500/45 bg-rose-500/12 text-rose-200';
+      : feedback.type === 'restore'
+        ? 'border-rose-500/45 bg-rose-500/12 text-rose-200'
+        : feedback.type === 'error'
+          ? 'border-rose-500/45 bg-rose-500/12 text-rose-200'
+          : 'border-[#3B82F6]/45 bg-[#3B82F6]/12 text-[#bfdbfe]';
 
   return (
     <div
-      className={`rounded-2xl border px-4 py-4 text-sm shadow-sm transition-all duration-300 ${toneClass} ${
-        isVisible ? 'translate-y-0 opacity-100' : '-translate-y-1 opacity-0'
+      className={`fixed bottom-5 right-5 z-50 w-[min(92vw,420px)] rounded-2xl border px-4 py-4 text-sm shadow-xl backdrop-blur-sm transition-all duration-300 ${toneClass} ${
+        isVisible ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0'
       }`}
     >
       <p>{feedback.message}</p>

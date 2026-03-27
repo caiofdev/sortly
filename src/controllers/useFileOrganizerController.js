@@ -34,8 +34,10 @@ function useFileOrganizerController(language) {
   const [sourceFolderPath, setSourceFolderPath] = useState('');
   const [destinationFolderPath, setDestinationFolderPath] = useState('');
   const [hasUndo, setHasUndo] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [loadingAction, setLoadingAction] = useState(null);
   const [feedback, setFeedback] = useState(null);
+
+  const isLoading = Boolean(loadingAction);
 
   const handleSelectSourceFolder = async () => {
     try {
@@ -81,7 +83,7 @@ function useFileOrganizerController(language) {
       setSourceFolderPath(result.sourceFolderPath);
 
       setFeedback({
-        type: 'success',
+        type: 'info',
         message: `${copy.droppedPathSuccess} ${result.sourceFolderPath}`
       });
     } catch (error) {
@@ -101,7 +103,7 @@ function useFileOrganizerController(language) {
       return;
     }
 
-    setIsLoading(true);
+    setLoadingAction('organize');
     setFeedback(null);
 
     try {
@@ -113,7 +115,7 @@ function useFileOrganizerController(language) {
       setHasUndo(result.canUndo);
 
       setFeedback({
-        type: 'success',
+        type: 'organize',
         message: copy.organizeSuccess(result)
       });
     } catch (error) {
@@ -122,12 +124,12 @@ function useFileOrganizerController(language) {
         message: error?.message || copy.organizeUnexpectedError
       });
     } finally {
-      setIsLoading(false);
+      setLoadingAction(null);
     }
   };
 
   const handleUndoLastOrganization = async () => {
-    setIsLoading(true);
+    setLoadingAction('restore');
     setFeedback(null);
 
     try {
@@ -135,7 +137,7 @@ function useFileOrganizerController(language) {
       setHasUndo(result.canUndo);
 
       setFeedback({
-        type: 'success',
+        type: 'restore',
         message: copy.undoSuccess(result)
       });
     } catch (error) {
@@ -144,12 +146,8 @@ function useFileOrganizerController(language) {
         message: error?.message || copy.undoUnexpectedError
       });
     } finally {
-      setIsLoading(false);
+      setLoadingAction(null);
     }
-  };
-
-  const handleClearFeedback = () => {
-    setFeedback(null);
   };
 
   return {
@@ -157,8 +155,8 @@ function useFileOrganizerController(language) {
     destinationFolderPath,
     hasUndo,
     isLoading,
+    loadingAction,
     feedback,
-    handleClearFeedback,
     handleResolveDroppedPath,
     handleSelectSourceFolder,
     handleSelectDestinationFolder,
