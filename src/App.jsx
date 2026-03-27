@@ -11,6 +11,7 @@ function App() {
     hasUndo,
     isLoading,
     feedback,
+    handleClearFeedback,
     handleResolveDroppedPath,
     handleSelectSourceFolder,
     handleSelectDestinationFolder,
@@ -26,6 +27,7 @@ function App() {
       hasUndo={hasUndo}
       isLoading={isLoading}
       feedback={feedback}
+      onClearFeedback={handleClearFeedback}
       onLanguageChange={setLanguage}
       onResolveDroppedPath={handleResolveDroppedPath}
       onSelectSourceFolder={handleSelectSourceFolder}

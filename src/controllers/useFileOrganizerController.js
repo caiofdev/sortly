@@ -148,12 +148,17 @@ function useFileOrganizerController(language) {
     }
   };
 
+  const handleClearFeedback = () => {
+    setFeedback(null);
+  };
+
   return {
     sourceFolderPath,
     destinationFolderPath,
     hasUndo,
     isLoading,
     feedback,
+    handleClearFeedback,
     handleResolveDroppedPath,
     handleSelectSourceFolder,
     handleSelectDestinationFolder,

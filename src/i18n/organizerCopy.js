@@ -14,8 +14,10 @@ const organizerCopy = {
     dropDescription: 'Se for arquivo, usamos a pasta dele como origem.',
     dropSelectHintPrefix: 'Ou',
     dropSelectHintAction: 'selecione uma pasta',
-    destinationSelectHintPrefix: 'Ou',
-    destinationSelectHintAction: 'selecione uma pasta de destino'
+    destinationSelectHintPrefix: '',
+    destinationSelectHintAction: 'selecione uma pasta de destino',
+    feedbackProgressRunning: 'Aplicando alteracoes...',
+    feedbackProgressDone: 'Alteracoes realizadas com sucesso.'
   },
   en: {
     subtitle: 'Select source and destination, click organize, and done.',
@@ -32,8 +34,10 @@ const organizerCopy = {
     dropDescription: 'If a file is dropped, we use its parent folder as source.',
     dropSelectHintPrefix: 'Or',
     dropSelectHintAction: 'select a folder',
-    destinationSelectHintPrefix: 'Or',
-    destinationSelectHintAction: 'select a destination folder'
+    destinationSelectHintPrefix: '',
+    destinationSelectHintAction: 'select a destination folder',
+    feedbackProgressRunning: 'Applying changes...',
+    feedbackProgressDone: 'Changes applied successfully.'
   }
 };
 

@@ -12,6 +12,7 @@ function OrganizerView({
   hasUndo,
   isLoading,
   feedback,
+  onClearFeedback,
   onLanguageChange,
   onResolveDroppedPath,
   onSelectSourceFolder,
@@ -61,7 +62,10 @@ function OrganizerView({
 
             
 
-            <FeedbackPanel feedback={feedback} emptyMessage={text.feedbackEmpty} />
+            <FeedbackPanel
+              feedback={feedback}
+              onClearFeedback={onClearFeedback}
+            />
           </div>
         </div>
       </section>

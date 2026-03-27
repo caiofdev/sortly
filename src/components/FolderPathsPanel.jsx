@@ -8,6 +8,11 @@ function FolderPathsPanel({
   destinationSelectHintAction,
   onSelectDestinationFolder
 }) {
+  const abbreviatedDestinationPath =
+    destinationPath.length > 72
+      ? `${destinationPath.slice(0, 32)}...${destinationPath.slice(-32)}`
+      : destinationPath;
+
   return (
     <div className="grid gap-4 md:grid-cols-2">
       <div className="rounded-2xl border border-white/10 bg-[#0F172A]/65 px-4 py-4 shadow-sm">
@@ -17,10 +22,15 @@ function FolderPathsPanel({
 
       <div className="rounded-2xl border border-white/10 bg-[#0F172A]/65 px-4 py-4 shadow-sm">
         <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#94A3B8]">{destinationLabel}</p>
-        <p className={`${hasDestination ? 'min-h-12' : ''} break-all text-sm text-[#F8FAFC]`}>{destinationPath}</p>
+        <p
+          title={destinationPath}
+          className="min-h-12 overflow-hidden text-ellipsis whitespace-nowrap text-sm text-[#F8FAFC]"
+        >
+          {abbreviatedDestinationPath}
+        </p>
 
         <p className={`${hasDestination ? 'mt-2' : 'mt-1'} text-sm text-[#94A3B8]`}>
-          {destinationSelectHintPrefix}{' '}
+          {destinationSelectHintPrefix ? `${destinationSelectHintPrefix} ` : ''}
           <button
             type="button"
             onClick={onSelectDestinationFolder}
