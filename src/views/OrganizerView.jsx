@@ -20,7 +20,8 @@ function OrganizerView({
   onUndoLastOrganization
 }) {
   const text = organizerCopy[language] || organizerCopy['pt-BR'];
-  const destinationLabel = destinationFolderPath || sourceFolderPath || text.destinationEmpty;
+  const hasDestination = Boolean(destinationFolderPath);
+  const destinationLabel = destinationFolderPath || text.destinationEmpty;
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#0F172A] text-[#F8FAFC]">
@@ -43,6 +44,7 @@ function OrganizerView({
               destinationLabel={text.destinationLabel}
               sourcePath={sourceFolderPath || text.sourceEmpty}
               destinationPath={destinationLabel}
+              hasDestination={hasDestination}
               destinationSelectHintPrefix={text.destinationSelectHintPrefix}
               destinationSelectHintAction={text.destinationSelectHintAction}
               onSelectDestinationFolder={onSelectDestinationFolder}

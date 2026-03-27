@@ -3,6 +3,7 @@ function FolderPathsPanel({
   destinationLabel,
   sourcePath,
   destinationPath,
+  hasDestination,
   destinationSelectHintPrefix,
   destinationSelectHintAction,
   onSelectDestinationFolder
@@ -16,9 +17,9 @@ function FolderPathsPanel({
 
       <div className="rounded-2xl border border-white/10 bg-[#0F172A]/65 px-4 py-4 shadow-sm">
         <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#94A3B8]">{destinationLabel}</p>
-        <p className="min-h-12 break-all text-sm text-[#F8FAFC]">{destinationPath}</p>
+        <p className={`${hasDestination ? 'min-h-12' : ''} break-all text-sm text-[#F8FAFC]`}>{destinationPath}</p>
 
-        <p className="mt-2 text-sm text-[#94A3B8]">
+        <p className={`${hasDestination ? 'mt-2' : 'mt-1'} text-sm text-[#94A3B8]`}>
           {destinationSelectHintPrefix}{' '}
           <button
             type="button"

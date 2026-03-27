@@ -45,9 +45,6 @@ function useFileOrganizerController(language) {
       }
 
       setSourceFolderPath(selectedPath);
-      if (!destinationFolderPath) {
-        setDestinationFolderPath(selectedPath);
-      }
       setFeedback(null);
     } catch {
       setFeedback({
@@ -82,9 +79,6 @@ function useFileOrganizerController(language) {
       }
 
       setSourceFolderPath(result.sourceFolderPath);
-      if (!destinationFolderPath) {
-        setDestinationFolderPath(result.sourceFolderPath);
-      }
 
       setFeedback({
         type: 'success',
