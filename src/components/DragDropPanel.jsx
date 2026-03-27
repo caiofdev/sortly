@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-function DragDropPanel({ isLoading, labels, onResolveDroppedPath }) {
+function DragDropPanel({ isLoading, labels, onResolveDroppedPath, onSelectSourceFolder }) {
   const [isDragging, setIsDragging] = useState(false);
 
   const handleDragOver = (event) => {
@@ -40,6 +40,17 @@ function DragDropPanel({ isLoading, labels, onResolveDroppedPath }) {
     >
       <p className="text-lg font-semibold text-[#F8FAFC]">{labels.dropTitle}</p>
       <p className="mt-2 text-sm text-[#94A3B8]">{labels.dropDescription}</p>
+
+      <p className="mt-2 text-sm text-[#94A3B8]">
+        {labels.dropSelectHintPrefix}{' '}
+        <button
+          type="button"
+          onClick={onSelectSourceFolder}
+          className="font-semibold text-[#3B82F6] underline underline-offset-2 transition-colors hover:text-[#60a5fa]"
+        >
+          {labels.dropSelectHintAction}
+        </button>
+      </p>
     </div>
   );
 }

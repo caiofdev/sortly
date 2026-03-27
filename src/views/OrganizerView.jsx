@@ -1,7 +1,6 @@
 import appLogo from '../assets/app-logo.svg';
 import DragDropPanel from '../components/DragDropPanel';
 import LanguageToggle from '../components/LanguageToggle';
-import ViewModeToggle from '../components/ViewModeToggle';
 
 const copy = {
   'pt-BR': {
@@ -18,8 +17,8 @@ const copy = {
     feedbackEmpty: 'Nenhuma acao executada ainda. Selecione as pastas e clique em organizar.',
     dropTitle: 'Arraste e solte uma pasta ou arquivo aqui',
     dropDescription: 'Se for arquivo, usamos a pasta dele como origem.',
-    defaultMode: 'Modo padrao',
-    dragDropMode: 'Drag and Drop'
+    dropSelectHintPrefix: 'Ou',
+    dropSelectHintAction: 'selecione uma pasta'
   },
   en: {
     subtitle: 'Select source and destination, click organize, and done.',
@@ -35,21 +34,19 @@ const copy = {
     feedbackEmpty: 'No action yet. Select folders and click organize.',
     dropTitle: 'Drag and drop a folder or file here',
     dropDescription: 'If a file is dropped, we use its parent folder as source.',
-    defaultMode: 'Default mode',
-    dragDropMode: 'Drag and Drop'
+    dropSelectHintPrefix: 'Or',
+    dropSelectHintAction: 'select a folder'
   }
 };
 
 function OrganizerView({
   language,
-  viewMode,
   sourceFolderPath,
   destinationFolderPath,
   hasUndo,
   isLoading,
   feedback,
   onLanguageChange,
-  onViewModeChange,
   onResolveDroppedPath,
   onSelectSourceFolder,
   onSelectDestinationFolder,
@@ -68,7 +65,6 @@ function OrganizerView({
           <header className="space-y-3 text-center">
             <div className="flex items-center justify-between gap-3 pb-2">
               <LanguageToggle language={language} onChange={onLanguageChange} />
-              <ViewModeToggle viewMode={viewMode} onChange={onViewModeChange} labels={text} />
             </div>
 
             <div className="flex items-center justify-center gap-3">
@@ -79,37 +75,20 @@ function OrganizerView({
           </header>
 
           <div className="mt-8 grid gap-5">
-            {viewMode === 'drag-drop' ? (
-              <DragDropPanel isLoading={isLoading} labels={text} onResolveDroppedPath={onResolveDroppedPath} />
-            ) : (
-              <div className="grid gap-4 md:grid-cols-2">
-                <button
-                  type="button"
-                  onClick={onSelectSourceFolder}
-                  className="rounded-2xl bg-[#334155] px-6 py-4 text-base font-semibold text-[#F8FAFC] shadow-sm transition-all hover:-translate-y-0.5 hover:bg-[#3b4a5d] hover:shadow-md"
-                >
-                  {text.sourceButton}
-                </button>
+            <DragDropPanel
+              isLoading={isLoading}
+              labels={text}
+              onResolveDroppedPath={onResolveDroppedPath}
+              onSelectSourceFolder={onSelectSourceFolder}
+            />
 
-                <button
-                  type="button"
-                  onClick={onSelectDestinationFolder}
-                  className="rounded-2xl bg-[#334155] px-6 py-4 text-base font-semibold text-[#F8FAFC] shadow-sm transition-all hover:-translate-y-0.5 hover:bg-[#3b4a5d] hover:shadow-md"
-                >
-                  {text.destinationButton}
-                </button>
-              </div>
-            )}
-
-            {viewMode === 'drag-drop' && (
-              <button
-                type="button"
-                onClick={onSelectDestinationFolder}
-                className="rounded-2xl bg-[#334155] px-6 py-4 text-base font-semibold text-[#F8FAFC] shadow-sm transition-all hover:-translate-y-0.5 hover:bg-[#3b4a5d] hover:shadow-md"
-              >
-                {text.destinationButton}
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={onSelectDestinationFolder}
+              className="rounded-2xl bg-[#334155] px-6 py-4 text-base font-semibold text-[#F8FAFC] shadow-sm transition-all hover:-translate-y-0.5 hover:bg-[#3b4a5d] hover:shadow-md"
+            >
+              {text.destinationButton}
+            </button>
 
             <div className="grid gap-4 md:grid-cols-2">
               <div className="rounded-2xl border border-white/10 bg-[#0F172A]/65 px-4 py-4 shadow-sm">
