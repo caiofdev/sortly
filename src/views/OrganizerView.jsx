@@ -9,66 +9,79 @@ function OrganizerView({
   onOrganizeFiles,
   onUndoLastOrganization
 }) {
+  const destinationLabel = destinationFolderPath || sourceFolderPath || 'Nenhuma pasta de destino selecionada';
+
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-6">
-      <section className="w-full max-w-2xl rounded-2xl border border-slate-800 bg-slate-900/90 p-8 shadow-2xl">
-        <h1 className="text-3xl font-bold tracking-tight text-center">Organizador de Arquivos</h1>
+    <main className="relative min-h-screen overflow-hidden bg-[#0F172A] text-[#F8FAFC]">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_10%_15%,rgba(59,130,246,0.16),transparent_35%),radial-gradient(circle_at_90%_85%,rgba(34,197,94,0.12),transparent_30%)]" />
 
-        <div className="mt-8 space-y-4">
-          <button
-            type="button"
-            onClick={onSelectSourceFolder}
-            className="w-full rounded-xl bg-slate-700 hover:bg-slate-600 transition-colors px-5 py-4 text-lg font-semibold"
-          >
-            Selecionar pasta de origem
-          </button>
+      <section className="relative mx-auto flex min-h-screen w-full max-w-4xl items-center justify-center px-6 py-12">
+        <div className="w-full rounded-2xl border border-white/10 bg-[#1E293B]/90 p-8 shadow-[0_22px_60px_rgba(2,6,23,0.45)] backdrop-blur-sm md:p-10">
+          <header className="space-y-2 text-center">
+            <h1 className="text-3xl font-bold tracking-tight md:text-4xl">Organizador de Arquivos</h1>
+            <p className="text-sm text-[#94A3B8] md:text-base">Selecione origem e destino, clique em organizar e pronto.</p>
+          </header>
 
-          <div className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-sm text-slate-300 break-all min-h-14">
-            <p className="text-xs uppercase tracking-wide text-slate-500 mb-1">Origem</p>
-            <p>{sourceFolderPath || 'Nenhuma pasta de origem selecionada'}</p>
-          </div>
+          <div className="mt-8 grid gap-5">
+            <div className="grid gap-4 md:grid-cols-2">
+              <button
+                type="button"
+                onClick={onSelectSourceFolder}
+                className="rounded-2xl bg-[#334155] px-6 py-4 text-base font-semibold text-[#F8FAFC] shadow-sm transition-all hover:-translate-y-0.5 hover:bg-[#3b4a5d] hover:shadow-md"
+              >
+                Selecionar pasta de origem
+              </button>
 
-          <button
-            type="button"
-            onClick={onSelectDestinationFolder}
-            className="w-full rounded-xl bg-slate-700 hover:bg-slate-600 transition-colors px-5 py-4 text-lg font-semibold"
-          >
-            Selecionar pasta de destino
-          </button>
+              <button
+                type="button"
+                onClick={onSelectDestinationFolder}
+                className="rounded-2xl bg-[#334155] px-6 py-4 text-base font-semibold text-[#F8FAFC] shadow-sm transition-all hover:-translate-y-0.5 hover:bg-[#3b4a5d] hover:shadow-md"
+              >
+                Selecionar pasta de destino
+              </button>
+            </div>
 
-          <div className="rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-sm text-slate-300 break-all min-h-14">
-            <p className="text-xs uppercase tracking-wide text-slate-500 mb-1">Destino</p>
-            <p>{destinationFolderPath || sourceFolderPath || 'Nenhuma pasta de destino selecionada'}</p>
-          </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="rounded-2xl border border-white/10 bg-[#0F172A]/65 px-4 py-4 shadow-sm">
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#94A3B8]">Origem</p>
+                <p className="min-h-12 break-all text-sm text-[#F8FAFC]">{sourceFolderPath || 'Nenhuma pasta de origem selecionada'}</p>
+              </div>
 
-          <button
-            type="button"
-            onClick={onOrganizeFiles}
-            disabled={isLoading || !sourceFolderPath}
-            className="w-full rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-800/70 disabled:cursor-not-allowed transition-colors px-5 py-4 text-lg font-semibold"
-          >
-            {isLoading ? 'Organizando arquivos...' : 'Organizar arquivos'}
-          </button>
+              <div className="rounded-2xl border border-white/10 bg-[#0F172A]/65 px-4 py-4 shadow-sm">
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#94A3B8]">Destino</p>
+                <p className="min-h-12 break-all text-sm text-[#F8FAFC]">{destinationLabel}</p>
+              </div>
+            </div>
 
-          <button
-            type="button"
-            onClick={onUndoLastOrganization}
-            disabled={isLoading || !hasUndo}
-            className="w-full rounded-xl bg-amber-600 hover:bg-amber-500 disabled:bg-amber-900/50 disabled:cursor-not-allowed transition-colors px-5 py-4 text-lg font-semibold"
-          >
-            Desfazer última separação
-          </button>
+            <button
+              type="button"
+              onClick={onOrganizeFiles}
+              disabled={isLoading || !sourceFolderPath}
+              className="rounded-2xl bg-[#3B82F6] px-6 py-4 text-lg font-semibold text-white shadow-[0_10px_30px_rgba(59,130,246,0.35)] transition-all hover:-translate-y-0.5 hover:bg-[#4f8ff7] disabled:cursor-not-allowed disabled:bg-[#2b3b57] disabled:text-slate-300 disabled:shadow-none"
+            >
+              {isLoading ? 'Organizando arquivos...' : 'Organizar arquivos'}
+            </button>
 
-          <div
-            className={`rounded-xl border px-4 py-3 text-sm min-h-14 flex items-center ${
-              feedback
-                ? feedback.type === 'success'
-                  ? 'border-emerald-500/40 bg-emerald-900/30 text-emerald-300'
-                  : 'border-rose-500/40 bg-rose-900/30 text-rose-300'
-                : 'border-slate-700 bg-slate-950/50 text-slate-500'
-            }`}
-          >
-            {feedback ? feedback.message : 'O resultado da organização aparecerá aqui.'}
+            <button
+              type="button"
+              onClick={onUndoLastOrganization}
+              disabled={isLoading || !hasUndo}
+              className="rounded-2xl border border-[#3B82F6]/45 bg-transparent px-6 py-4 text-base font-semibold text-[#F8FAFC] transition-all hover:-translate-y-0.5 hover:border-[#3B82F6] hover:bg-[#3B82F6]/12 disabled:cursor-not-allowed disabled:border-slate-600/60 disabled:text-slate-400"
+            >
+              Desfazer última separação
+            </button>
+
+            <div
+              className={`rounded-2xl border px-4 py-4 text-sm shadow-sm ${
+                feedback
+                  ? feedback.type === 'success'
+                    ? 'border-[#22C55E]/45 bg-[#22C55E]/12 text-[#b8ffcf]'
+                    : 'border-rose-500/45 bg-rose-500/12 text-rose-200'
+                  : 'border-white/10 bg-[#0F172A]/65 text-[#94A3B8]'
+              }`}
+            >
+              {feedback ? feedback.message : 'Nenhuma ação executada ainda. Selecione as pastas e clique em organizar.'}
+            </div>
           </div>
         </div>
       </section>
