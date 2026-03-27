@@ -1,17 +1,63 @@
 import appLogo from '../assets/app-logo.svg';
+import DragDropPanel from '../components/DragDropPanel';
+import LanguageToggle from '../components/LanguageToggle';
+import ViewModeToggle from '../components/ViewModeToggle';
+
+const copy = {
+  'pt-BR': {
+    subtitle: 'Selecione origem e destino, clique em organizar e pronto.',
+    sourceButton: 'Selecionar pasta de origem',
+    destinationButton: 'Selecionar pasta de destino',
+    sourceLabel: 'Origem',
+    destinationLabel: 'Destino',
+    sourceEmpty: 'Nenhuma pasta de origem selecionada',
+    destinationEmpty: 'Nenhuma pasta de destino selecionada',
+    organize: 'Organizar arquivos',
+    organizing: 'Organizando arquivos...',
+    undo: 'Desfazer ultima separacao',
+    feedbackEmpty: 'Nenhuma acao executada ainda. Selecione as pastas e clique em organizar.',
+    dropTitle: 'Arraste e solte uma pasta ou arquivo aqui',
+    dropDescription: 'Se for arquivo, usamos a pasta dele como origem.',
+    defaultMode: 'Modo padrao',
+    dragDropMode: 'Drag and Drop'
+  },
+  en: {
+    subtitle: 'Select source and destination, click organize, and done.',
+    sourceButton: 'Select source folder',
+    destinationButton: 'Select destination folder',
+    sourceLabel: 'Source',
+    destinationLabel: 'Destination',
+    sourceEmpty: 'No source folder selected',
+    destinationEmpty: 'No destination folder selected',
+    organize: 'Organize files',
+    organizing: 'Organizing files...',
+    undo: 'Undo last organization',
+    feedbackEmpty: 'No action yet. Select folders and click organize.',
+    dropTitle: 'Drag and drop a folder or file here',
+    dropDescription: 'If a file is dropped, we use its parent folder as source.',
+    defaultMode: 'Default mode',
+    dragDropMode: 'Drag and Drop'
+  }
+};
 
 function OrganizerView({
+  language,
+  viewMode,
   sourceFolderPath,
   destinationFolderPath,
   hasUndo,
   isLoading,
   feedback,
+  onLanguageChange,
+  onViewModeChange,
+  onResolveDroppedPath,
   onSelectSourceFolder,
   onSelectDestinationFolder,
   onOrganizeFiles,
   onUndoLastOrganization
 }) {
-  const destinationLabel = destinationFolderPath || sourceFolderPath || 'Nenhuma pasta de destino selecionada';
+  const text = copy[language] || copy['pt-BR'];
+  const destinationLabel = destinationFolderPath || sourceFolderPath || text.destinationEmpty;
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#0F172A] text-[#F8FAFC]">
@@ -20,40 +66,59 @@ function OrganizerView({
       <section className="relative mx-auto flex min-h-screen w-full max-w-4xl items-center justify-center px-6 py-12">
         <div className="w-full rounded-2xl border border-white/10 bg-[#1E293B]/90 p-8 shadow-[0_22px_60px_rgba(2,6,23,0.45)] backdrop-blur-sm md:p-10">
           <header className="space-y-3 text-center">
+            <div className="flex items-center justify-between gap-3 pb-2">
+              <LanguageToggle language={language} onChange={onLanguageChange} />
+              <ViewModeToggle viewMode={viewMode} onChange={onViewModeChange} labels={text} />
+            </div>
+
             <div className="flex items-center justify-center gap-3">
               <img src={appLogo} alt="Logo do app" className="h-14 w-14" />
               <h1 className="text-3xl font-bold tracking-tight md:text-4xl">Sortly</h1>
             </div>
-            <p className="text-sm text-[#94A3B8] md:text-base">Selecione origem e destino, clique em organizar e pronto.</p>
+            <p className="text-sm text-[#94A3B8] md:text-base">{text.subtitle}</p>
           </header>
 
           <div className="mt-8 grid gap-5">
-            <div className="grid gap-4 md:grid-cols-2">
-              <button
-                type="button"
-                onClick={onSelectSourceFolder}
-                className="rounded-2xl bg-[#334155] px-6 py-4 text-base font-semibold text-[#F8FAFC] shadow-sm transition-all hover:-translate-y-0.5 hover:bg-[#3b4a5d] hover:shadow-md"
-              >
-                Selecionar pasta de origem
-              </button>
+            {viewMode === 'drag-drop' ? (
+              <DragDropPanel isLoading={isLoading} labels={text} onResolveDroppedPath={onResolveDroppedPath} />
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={onSelectSourceFolder}
+                  className="rounded-2xl bg-[#334155] px-6 py-4 text-base font-semibold text-[#F8FAFC] shadow-sm transition-all hover:-translate-y-0.5 hover:bg-[#3b4a5d] hover:shadow-md"
+                >
+                  {text.sourceButton}
+                </button>
 
+                <button
+                  type="button"
+                  onClick={onSelectDestinationFolder}
+                  className="rounded-2xl bg-[#334155] px-6 py-4 text-base font-semibold text-[#F8FAFC] shadow-sm transition-all hover:-translate-y-0.5 hover:bg-[#3b4a5d] hover:shadow-md"
+                >
+                  {text.destinationButton}
+                </button>
+              </div>
+            )}
+
+            {viewMode === 'drag-drop' && (
               <button
                 type="button"
                 onClick={onSelectDestinationFolder}
                 className="rounded-2xl bg-[#334155] px-6 py-4 text-base font-semibold text-[#F8FAFC] shadow-sm transition-all hover:-translate-y-0.5 hover:bg-[#3b4a5d] hover:shadow-md"
               >
-                Selecionar pasta de destino
+                {text.destinationButton}
               </button>
-            </div>
+            )}
 
             <div className="grid gap-4 md:grid-cols-2">
               <div className="rounded-2xl border border-white/10 bg-[#0F172A]/65 px-4 py-4 shadow-sm">
-                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#94A3B8]">Origem</p>
-                <p className="min-h-12 break-all text-sm text-[#F8FAFC]">{sourceFolderPath || 'Nenhuma pasta de origem selecionada'}</p>
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#94A3B8]">{text.sourceLabel}</p>
+                <p className="min-h-12 break-all text-sm text-[#F8FAFC]">{sourceFolderPath || text.sourceEmpty}</p>
               </div>
 
               <div className="rounded-2xl border border-white/10 bg-[#0F172A]/65 px-4 py-4 shadow-sm">
-                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#94A3B8]">Destino</p>
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#94A3B8]">{text.destinationLabel}</p>
                 <p className="min-h-12 break-all text-sm text-[#F8FAFC]">{destinationLabel}</p>
               </div>
             </div>
@@ -64,7 +129,7 @@ function OrganizerView({
               disabled={isLoading || !sourceFolderPath}
               className="rounded-2xl bg-[#3B82F6] px-6 py-4 text-lg font-semibold text-white shadow-[0_10px_30px_rgba(59,130,246,0.35)] transition-all hover:-translate-y-0.5 hover:bg-[#4f8ff7] disabled:cursor-not-allowed disabled:bg-[#2b3b57] disabled:text-slate-300 disabled:shadow-none"
             >
-              {isLoading ? 'Organizando arquivos...' : 'Organizar arquivos'}
+              {isLoading ? text.organizing : text.organize}
             </button>
 
             <button
@@ -73,7 +138,7 @@ function OrganizerView({
               disabled={isLoading || !hasUndo}
               className="rounded-2xl border border-[#3B82F6]/45 bg-transparent px-6 py-4 text-base font-semibold text-[#F8FAFC] transition-all hover:-translate-y-0.5 hover:border-[#3B82F6] hover:bg-[#3B82F6]/12 disabled:cursor-not-allowed disabled:border-slate-600/60 disabled:text-slate-400"
             >
-              Desfazer última separação
+              {text.undo}
             </button>
 
             <div
@@ -85,7 +150,7 @@ function OrganizerView({
                   : 'border-white/10 bg-[#0F172A]/65 text-[#94A3B8]'
               }`}
             >
-              {feedback ? feedback.message : 'Nenhuma ação executada ainda. Selecione as pastas e clique em organizar.'}
+              {feedback ? feedback.message : text.feedbackEmpty}
             </div>
           </div>
         </div>

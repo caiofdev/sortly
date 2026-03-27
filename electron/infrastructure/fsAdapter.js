@@ -29,10 +29,19 @@ async function pathExists(filePath) {
   }
 }
 
+async function getPathStats(filePath) {
+  try {
+    return await fs.stat(filePath);
+  } catch {
+    return null;
+  }
+}
+
 module.exports = {
   readDirectoryWithTypes,
   createDirectory,
   moveFile,
   removeDirectoryIfEmpty,
-  pathExists
+  pathExists,
+  getPathStats
 };

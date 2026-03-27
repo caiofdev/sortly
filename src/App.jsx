@@ -1,26 +1,36 @@
+import { useState } from 'react';
 import useFileOrganizerController from './controllers/useFileOrganizerController';
 import OrganizerView from './views/OrganizerView';
 
 function App() {
+  const [language, setLanguage] = useState('pt-BR');
+  const [viewMode, setViewMode] = useState('default');
+
   const {
     sourceFolderPath,
     destinationFolderPath,
     hasUndo,
     isLoading,
     feedback,
+    handleResolveDroppedPath,
     handleSelectSourceFolder,
     handleSelectDestinationFolder,
     handleOrganizeFiles,
     handleUndoLastOrganization
-  } = useFileOrganizerController();
+  } = useFileOrganizerController(language);
 
   return (
     <OrganizerView
+      language={language}
+      viewMode={viewMode}
       sourceFolderPath={sourceFolderPath}
       destinationFolderPath={destinationFolderPath}
       hasUndo={hasUndo}
       isLoading={isLoading}
       feedback={feedback}
+      onLanguageChange={setLanguage}
+      onViewModeChange={setViewMode}
+      onResolveDroppedPath={handleResolveDroppedPath}
       onSelectSourceFolder={handleSelectSourceFolder}
       onSelectDestinationFolder={handleSelectDestinationFolder}
       onOrganizeFiles={handleOrganizeFiles}
