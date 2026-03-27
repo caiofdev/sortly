@@ -13,7 +13,9 @@ const organizerCopy = {
     dropTitle: 'Arraste e solte uma pasta ou arquivo aqui',
     dropDescription: 'Se for arquivo, usamos a pasta dele como origem.',
     dropSelectHintPrefix: 'Ou',
-    dropSelectHintAction: 'selecione uma pasta'
+    dropSelectHintAction: 'selecione uma pasta',
+    destinationSelectHintPrefix: 'Ou',
+    destinationSelectHintAction: 'selecione uma pasta de destino'
   },
   en: {
     subtitle: 'Select source and destination, click organize, and done.',
@@ -29,7 +31,9 @@ const organizerCopy = {
     dropTitle: 'Drag and drop a folder or file here',
     dropDescription: 'If a file is dropped, we use its parent folder as source.',
     dropSelectHintPrefix: 'Or',
-    dropSelectHintAction: 'select a folder'
+    dropSelectHintAction: 'select a folder',
+    destinationSelectHintPrefix: 'Or',
+    destinationSelectHintAction: 'select a destination folder'
   }
 };
 

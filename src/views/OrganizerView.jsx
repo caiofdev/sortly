@@ -43,6 +43,9 @@ function OrganizerView({
               destinationLabel={text.destinationLabel}
               sourcePath={sourceFolderPath || text.sourceEmpty}
               destinationPath={destinationLabel}
+              destinationSelectHintPrefix={text.destinationSelectHintPrefix}
+              destinationSelectHintAction={text.destinationSelectHintAction}
+              onSelectDestinationFolder={onSelectDestinationFolder}
             />
 
             <OrganizerActions
@@ -50,7 +53,6 @@ function OrganizerView({
               isLoading={isLoading}
               hasUndo={hasUndo}
               hasSource={Boolean(sourceFolderPath)}
-              onSelectDestinationFolder={onSelectDestinationFolder}
               onOrganizeFiles={onOrganizeFiles}
               onUndoLastOrganization={onUndoLastOrganization}
             />

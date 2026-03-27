@@ -1,4 +1,12 @@
-function FolderPathsPanel({ sourceLabel, destinationLabel, sourcePath, destinationPath }) {
+function FolderPathsPanel({
+  sourceLabel,
+  destinationLabel,
+  sourcePath,
+  destinationPath,
+  destinationSelectHintPrefix,
+  destinationSelectHintAction,
+  onSelectDestinationFolder
+}) {
   return (
     <div className="grid gap-4 md:grid-cols-2">
       <div className="rounded-2xl border border-white/10 bg-[#0F172A]/65 px-4 py-4 shadow-sm">
@@ -9,6 +17,17 @@ function FolderPathsPanel({ sourceLabel, destinationLabel, sourcePath, destinati
       <div className="rounded-2xl border border-white/10 bg-[#0F172A]/65 px-4 py-4 shadow-sm">
         <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#94A3B8]">{destinationLabel}</p>
         <p className="min-h-12 break-all text-sm text-[#F8FAFC]">{destinationPath}</p>
+
+        <p className="mt-2 text-sm text-[#94A3B8]">
+          {destinationSelectHintPrefix}{' '}
+          <button
+            type="button"
+            onClick={onSelectDestinationFolder}
+            className="font-semibold text-[#3B82F6] underline underline-offset-2 transition-colors hover:text-[#60a5fa]"
+          >
+            {destinationSelectHintAction}
+          </button>
+        </p>
       </div>
     </div>
   );
