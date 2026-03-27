@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import useFileOrganizerController from './controllers/useFileOrganizerController';
+import useLanguagePreference from './hooks/useLanguagePreference';
 import OrganizerView from './views/OrganizerView';
 
 function App() {
-  const [language, setLanguage] = useState('pt-BR');
+  const { language, setLanguage } = useLanguagePreference();
   const [viewMode, setViewMode] = useState('default');
 
   const {
