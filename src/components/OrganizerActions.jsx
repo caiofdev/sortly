@@ -17,7 +17,7 @@ function OrganizerActions({
         disabled={isLoading || !hasSource}
         title={isLoading ? labels.organizing : labels.organize}
         aria-label={isLoading ? labels.organizing : labels.organize}
-            className={`${baseIconButtonClass} bg-[#22C55E] text-white shadow-[0_10px_30px_rgba(34,197,94,0.35)] hover:-translate-y-0.5 hover:bg-[#32d26b] disabled:cursor-not-allowed disabled:bg-[#1c4a33] disabled:text-slate-300 disabled:shadow-none`}
+            className={`${baseIconButtonClass} bg-[#22C55E] text-white hover:-translate-y-0.5 hover:bg-[#32d26b] disabled:cursor-not-allowed disabled:bg-[#1c4a33] disabled:text-slate-300`}
       >
         {isLoading ? (
           <svg viewBox="0 0 24 24" className="h-5 w-5 animate-spin" aria-hidden="true">
@@ -41,7 +41,7 @@ function OrganizerActions({
         disabled={isLoading || !hasUndo}
         title={labels.undo}
         aria-label={labels.undo}
-        className={`${baseIconButtonClass} bg-[#DC2626] text-white shadow-[0_10px_30px_rgba(220,38,38,0.35)] hover:-translate-y-0.5 hover:bg-[#ef4444] disabled:cursor-not-allowed disabled:bg-[#4f2020] disabled:text-slate-300 disabled:shadow-none`}
+        className={`${baseIconButtonClass} bg-[#DC2626] text-white hover:-translate-y-0.5 hover:bg-[#ef4444] disabled:cursor-not-allowed disabled:bg-[#4f2020] disabled:text-slate-300`}
       >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5" aria-hidden="true">
           <path d="M9 7H4v5" />
