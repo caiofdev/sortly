@@ -1,6 +1,9 @@
 const { app, BrowserWindow } = require('electron');
 const path = require('path');
 
+const appIconPath = path.join(__dirname, '../assets/app-logo.ico');
+const windowsAppId = 'com.sortly.app';
+
 function createWindow() {
   const window = new BrowserWindow({
     width: 980,
@@ -8,7 +11,8 @@ function createWindow() {
     minWidth: 820,
     minHeight: 600,
     show: false,
-    title: 'Organizador de Arquivos',
+    title: 'Sortly',
+    icon: appIconPath,
     backgroundColor: '#0f172a',
     webPreferences: {
       preload: path.join(__dirname, '../preload.js'),
@@ -27,11 +31,16 @@ function createWindow() {
   }
 
   window.once('ready-to-show', () => {
+    window.setTitle('Sortly');
     window.show();
   });
 }
 
 function bootstrapApp() {
+  if (process.platform === 'win32') {
+    app.setAppUserModelId(windowsAppId);
+  }
+
   app.whenReady().then(() => {
     createWindow();
 
