@@ -1,4 +1,4 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, Menu } = require('electron');
 const path = require('path');
 
 const appIconPath = path.join(__dirname, '../assets/app-logo.ico');
@@ -11,6 +11,7 @@ function createWindow() {
     minWidth: 820,
     minHeight: 600,
     show: false,
+    autoHideMenuBar: true,
     title: 'Sortly',
     icon: appIconPath,
     backgroundColor: '#0f172a',
@@ -42,6 +43,7 @@ function bootstrapApp() {
   }
 
   app.whenReady().then(() => {
+    Menu.setApplicationMenu(null);
     createWindow();
 
     app.on('activate', () => {

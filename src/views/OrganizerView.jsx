@@ -19,9 +19,11 @@ function OrganizerView({
 
       <section className="relative mx-auto flex min-h-screen w-full max-w-4xl items-center justify-center px-6 py-12">
         <div className="w-full rounded-2xl border border-white/10 bg-[#1E293B]/90 p-8 shadow-[0_22px_60px_rgba(2,6,23,0.45)] backdrop-blur-sm md:p-10">
-          <header className="space-y-2 text-center">
-            <img src={appLogo} alt="Logo do app" className="mx-auto h-16 w-16" />
-            <h1 className="text-3xl font-bold tracking-tight md:text-4xl">Organizador de Arquivos</h1>
+          <header className="space-y-3 text-center">
+            <div className="flex items-center justify-center gap-3">
+              <img src={appLogo} alt="Logo do app" className="h-14 w-14" />
+              <h1 className="text-3xl font-bold tracking-tight md:text-4xl">Sortly</h1>
+            </div>
             <p className="text-sm text-[#94A3B8] md:text-base">Selecione origem e destino, clique em organizar e pronto.</p>
           </header>
 
