@@ -1,6 +1,9 @@
+import enIcon from '../assets/en.ico';
+import ptBrIcon from '../assets/pt-br.ico';
+
 const options = [
-  { value: 'pt-BR', label: 'PT-BR', flag: '🇧🇷' },
-  { value: 'en', label: 'EN', flag: '🇺🇸' }
+  { value: 'pt-BR', label: 'PT-BR', icon: ptBrIcon },
+  { value: 'en', label: 'EN', icon: enIcon }
 ];
 
 function LanguageToggle({ language, onChange }) {
@@ -17,9 +20,7 @@ function LanguageToggle({ language, onChange }) {
               isActive ? 'bg-[#3B82F6] text-white' : 'text-[#94A3B8] hover:bg-white/5 hover:text-[#F8FAFC]'
             }`}
           >
-            <span aria-hidden="true" className="mr-2">
-              {option.flag}
-            </span>
+            <img src={option.icon} alt={option.label} className="mr-2 inline-block h-5 w-5 rounded-full object-cover" />
             {option.label}
           </button>
         );
