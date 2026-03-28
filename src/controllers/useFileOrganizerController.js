@@ -9,6 +9,7 @@ const feedbackByLanguage = {
     undoUnexpectedError: 'Erro inesperado ao desfazer a organização.',
     droppedPathUnexpectedError: 'Não foi possível usar o item arrastado.',
     droppedPathSuccess: 'Origem definida por arrastar e soltar.',
+    recoveredLastOrganization: 'Última organização recuperada. Você pode desfazer essa alteração.',
     organizeSuccess: (result) =>
       `Organizacao concluida: ${result.movedFiles} arquivo(s) movido(s). Origem: ${result.sourceFolderPath}. Destino: ${result.destinationFolderPath}. Processados: ${result.processedFiles}. Ignorados sem extensao: ${result.ignoredWithoutExtension}. Pastas ignoradas: ${result.ignoredFolders}.`,
     undoSuccess: (result) =>
@@ -22,6 +23,7 @@ const feedbackByLanguage = {
     undoUnexpectedError: 'Unexpected error while undoing organization.',
     droppedPathUnexpectedError: 'Could not use the dropped item.',
     droppedPathSuccess: 'Source folder set from drag and drop.',
+    recoveredLastOrganization: 'Last organization recovered. You can undo this change.',
     organizeSuccess: (result) =>
       `Organization complete: ${result.movedFiles} file(s) moved. Source: ${result.sourceFolderPath}. Destination: ${result.destinationFolderPath}. Processed: ${result.processedFiles}. Ignored without extension: ${result.ignoredWithoutExtension}. Ignored folders: ${result.ignoredFolders}.`,
     undoSuccess: (result) =>
@@ -53,9 +55,10 @@ function useFileOrganizerController(language, organizationOptions) {
     const loadLastOrganizationState = async () => {
       try {
         const result = await window.electronAPI.getLastOrganizationState();
+        const hasUndo = Boolean(result?.hasUndo);
 
         if (isMounted) {
-          setHasUndo(Boolean(result?.hasUndo));
+          setHasUndo(hasUndo);
 
           if (result?.sourceFolderPath) {
             setSourceFolderPath(result.sourceFolderPath);
@@ -63,6 +66,10 @@ function useFileOrganizerController(language, organizationOptions) {
 
           if (result?.destinationFolderPath) {
             setDestinationFolderPath(result.destinationFolderPath);
+          }
+
+          if (hasUndo) {
+            emitFeedback('info', copy.recoveredLastOrganization);
           }
         }
       } catch {
