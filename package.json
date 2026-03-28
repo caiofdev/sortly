@@ -62,7 +62,7 @@
     ],
     "win": {
       "target": "nsis",
-      "icon": "build/icon.ico",
+      "icon": "electron/assets/app-logo.ico",
       "signAndEditExecutable": false
     },
     "nsis": {
