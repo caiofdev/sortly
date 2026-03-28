@@ -1,114 +1,81 @@
-# Sortly - Documentação Técnica
+# Sortly
 
-Aplicação desktop para organização de arquivos por extensão, construída com Electron no processo principal e React no renderer.
+## English
 
-## 1) Stack utilizada
+Sortly is a desktop app that helps you organize files in a simple, fast, and visual way.
 
-### Runtime e plataforma
-- Node.js 18+
-- Electron 31
+You pick a folder, choose how files should be grouped, and Sortly takes care of the rest.
 
-### Frontend (Renderer)
-- React 18
-- Vite 5
-- TailwindCSS 3
+### What Sortly does
 
-### Build e empacotamento
-- electron-builder (geração do instalador Windows)
-- concurrently, wait-on e cross-env (orquestração de ambiente de desenvolvimento)
+- Organizes files by criteria such as extension, date, size, resolution, duration, and page count.
+- Lets you choose both source and destination folders.
+- Supports drag and drop to start quickly.
+- Prevents overwriting files with the same name.
+- Lets you undo the last organization.
+- Keeps the last organization saved, so undo is still available after reopening the app.
+- Shows clear notifications for each action.
+- Supports two languages: Portuguese and English.
 
-## 2) Arquitetura MVC aplicada
+### Release 1.0
 
-O projeto adota uma separação de responsabilidades inspirada em MVC, respeitando o contexto Electron (main process + renderer).
+Version 1.0 is the first public release of Sortly, focused on productivity and safe file organization.
 
-### Main Process (Electron)
-- Model: regras de domínio de arquivos e políticas de nomeação (ex.: evitar sobrescrita).
-- Controller: handlers IPC finos que recebem requisições do renderer e delegam para serviços.
-- View: não há view tradicional no processo principal; ele atua como backend local da aplicação.
+Release 1.0 highlights:
 
-### Renderer (React)
-- View: componentes de apresentação da interface.
-- Controller: hook de controle de fluxo da UI, estado e orquestração das chamadas IPC.
-- Model: neste MVP, regras de negócio ficam concentradas no main process.
+- Full organize and undo flow.
+- Simplified source and destination selection.
+- Notifications and action history.
+- Cleaner interface focused on essential actions.
+- Real image resolution grouping.
+- Duration and page-based grouping when file metadata is available.
 
-### Fluxo macro
-1. Usuário interage com a View (renderer).
-2. Controller do renderer chama APIs expostas no preload.
-3. Controller IPC no main process delega para services.
-4. Services aplicam regras de domínio e usam infraestrutura (`fs`, `dialog`).
-5. Resultado retorna ao renderer para atualização de estado/feedback.
+### Important notes
 
-## 3) Estrutura de pastas e responsabilidades
+- Some files may not include duration or page information. In those cases, the app uses an "unknown" category.
+- Sortly organizes files from the selected folder only and does not alter existing subfolders.
 
-```text
-.
-├─ electron/
-│  ├─ main.js                    # Composition root do processo principal
-│  ├─ preload.js                 # Bridge segura entre renderer e IPC
-│  ├─ bootstrap/                 # Inicialização da aplicação e ciclo de vida da janela
-│  ├─ controllers/               # Handlers IPC (camada Controller no main)
-│  ├─ services/                  # Casos de uso (organizar e desfazer)
-│  ├─ models/                    # Regras de domínio reutilizáveis
-│  ├─ repositories/              # Estado em memória da última operação
-│  └─ infrastructure/            # Acesso a dependências externas (fs, dialog)
-├─ src/
-│  ├─ main.jsx                   # Entry point do React
-│  ├─ App.jsx                    # Composição View + Controller do renderer
-│  ├─ controllers/               # Hooks/controllers da interface
-│  ├─ views/                     # Componentes de apresentação
-│  └─ index.css                  # Estilos globais (Tailwind)
-├─ build/                        # Recursos de build (ex.: ícone)
-├─ dist/                         # Build do renderer
-└─ release/                      # Artefatos empacotados do Electron
-```
+### Download
 
-## 4) Como executar o projeto
+Downloadable versions are available in the Releases section of this repository.
 
-### Pré-requisitos
-- Node.js 18 ou superior
-- npm 9 ou superior
+---
 
-### Instalação
+## Português
 
-```bash
-npm install
-```
+Sortly é um aplicativo para organizar arquivos de forma simples, rápida e visual.
 
-### Desenvolvimento (Electron + React com hot reload)
+Você escolhe uma pasta, define como quer separar os arquivos e o Sortly organiza tudo em poucos segundos.
 
-```bash
-npm run dev
-```
+### O que o Sortly faz
 
-Esse comando:
-- inicia o Vite em `http://localhost:5173`
-- aguarda o renderer ficar disponível
-- inicia o Electron apontando para o servidor de desenvolvimento
+- Organiza arquivos por critérios como extensão, data, tamanho, resolução, duração e páginas.
+- Permite escolher pasta de origem e pasta de destino.
+- Aceita arrastar e soltar arquivos ou pastas para começar mais rápido.
+- Evita sobrescrever arquivos com o mesmo nome.
+- Permite desfazer a última organização.
+- Mantém a última organização salva para desfazer mesmo após reabrir o app.
+- Mostra notificações claras sobre cada ação.
+- Suporta dois idiomas: Português e Inglês.
 
-### Executar Electron diretamente (sem servidor dev)
+### Release 1.0
 
-```bash
-npm run start
-```
+A versão 1.0 marca a primeira versão pública do Sortly, com foco em produtividade e segurança na organização de arquivos.
 
-Observação: para esse modo funcionar corretamente, o build do renderer deve existir em `dist/`.
+Principais destaques da versão 1.0:
 
-### Build de produção
+- Fluxo completo de organizar e desfazer.
+- Seleção de origem e destino com experiência simplificada.
+- Notificações e histórico de ações.
+- Interface mais limpa, com foco no essencial.
+- Agrupamento por resolução com leitura real da imagem.
+- Agrupamento por duração e páginas com leitura de metadados quando disponíveis.
 
-```bash
-npm run build
-```
+### Observações importantes
 
-Resultado esperado:
-- `dist/`: build do frontend
-- `release/`: instalador e artefatos do app desktop
+- Em alguns arquivos, informações como duração ou número de páginas podem não estar disponíveis. Nesses casos, o app usa uma categoria "unknown".
+- O Sortly organiza apenas arquivos da pasta selecionada, sem alterar subpastas existentes.
 
-## 5) Comportamento funcional atual
+### Download
 
-- Seleção de pasta de origem
-- Seleção opcional de pasta de destino
-- Organização por extensão (somente arquivos da raiz da origem)
-- Criação automática de subpastas por extensão
-- Tratamento de colisão de nome (`arquivo (1).ext`, `arquivo (2).ext`, ...)
-- Ação de desfazer última organização
-- Feedback com contadores de processados, movidos e ignorados
+As versões para download ficam na aba Releases deste repositório.
