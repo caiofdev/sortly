@@ -62,10 +62,11 @@
     ],
     "win": {
       "target": "nsis",
-      "icon": "electron/assets/app-logo.ico",
-      "signAndEditExecutable": false
+      "icon": "electron/assets/app-logo.ico"
     },
     "nsis": {
+      "installerIcon": "electron/assets/app-logo.ico",
+      "uninstallerIcon": "electron/assets/app-logo.ico",
       "shortcutName": "Sortly",
       "uninstallDisplayName": "Sortly"
     }
