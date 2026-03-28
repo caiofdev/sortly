@@ -1,9 +1,22 @@
 const path = require('path');
+const fs = require('fs/promises');
 const { imageSizeFromFile } = require('image-size/fromFile');
+const { PDFDocument } = require('pdf-lib');
+const JSZip = require('jszip');
 const { getUniqueDestination } = require('../models/pathModel');
 
 const IMAGE_EXTENSIONS = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp']);
 const PAGED_EXTENSIONS = new Set(['pdf', 'doc', 'docx', 'odt']);
+
+let musicMetadataModulePromise;
+
+async function getMusicMetadataModule() {
+  if (!musicMetadataModulePromise) {
+    musicMetadataModulePromise = import('music-metadata');
+  }
+
+  return musicMetadataModulePromise;
+}
 
 function normalizeOptions(rawOptions) {
   return {
@@ -43,6 +56,98 @@ async function getResolutionFolderName(filePath) {
   }
 }
 
+function formatDurationFolder(seconds) {
+  const safeSeconds = Math.max(0, Math.round(seconds));
+  const hours = Math.floor(safeSeconds / 3600);
+  const minutes = Math.floor((safeSeconds % 3600) / 60);
+  const remainingSeconds = safeSeconds % 60;
+
+  return `duration-${String(hours).padStart(2, '0')}h${String(minutes).padStart(2, '0')}m${String(remainingSeconds).padStart(2, '0')}s`;
+}
+
+function parsePositiveInteger(value) {
+  const parsed = Number.parseInt(String(value || ''), 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+async function getDurationFolderName(filePath, extension) {
+  if (extension !== 'mp4') {
+    return 'duration-unknown';
+  }
+
+  try {
+    const { parseFile } = await getMusicMetadataModule();
+    const metadata = await parseFile(filePath, {
+      duration: true,
+      skipCovers: true
+    });
+
+    if (!Number.isFinite(metadata?.format?.duration) || metadata.format.duration <= 0) {
+      return 'duration-unknown';
+    }
+
+    return formatDurationFolder(metadata.format.duration);
+  } catch {
+    return 'duration-unknown';
+  }
+}
+
+async function getPdfPagesCount(filePath) {
+  const buffer = await fs.readFile(filePath);
+  const pdfDocument = await PDFDocument.load(buffer, { updateMetadata: false });
+  return pdfDocument.getPageCount();
+}
+
+async function getDocxPagesCount(filePath) {
+  const buffer = await fs.readFile(filePath);
+  const zip = await JSZip.loadAsync(buffer);
+  const appFile = zip.file('docProps/app.xml');
+
+  if (!appFile) {
+    return null;
+  }
+
+  const appXml = await appFile.async('string');
+  const pagesMatch = appXml.match(/<Pages>(\d+)<\/Pages>/i);
+  return parsePositiveInteger(pagesMatch?.[1]);
+}
+
+async function getOdtPagesCount(filePath) {
+  const buffer = await fs.readFile(filePath);
+  const zip = await JSZip.loadAsync(buffer);
+  const metaFile = zip.file('meta.xml');
+
+  if (!metaFile) {
+    return null;
+  }
+
+  const metaXml = await metaFile.async('string');
+  const pageCountMatch = metaXml.match(/meta:page-count="(\d+)"/i);
+  return parsePositiveInteger(pageCountMatch?.[1]);
+}
+
+async function getPagesFolderName(filePath, extension) {
+  try {
+    let pageCount = null;
+
+    if (extension === 'pdf') {
+      pageCount = await getPdfPagesCount(filePath);
+    } else if (extension === 'docx') {
+      pageCount = await getDocxPagesCount(filePath);
+    } else if (extension === 'odt') {
+      pageCount = await getOdtPagesCount(filePath);
+    }
+
+    if (!Number.isFinite(pageCount) || pageCount <= 0) {
+      return 'pages-unknown';
+    }
+
+    return `pages-${pageCount}`;
+  } catch {
+    return 'pages-unknown';
+  }
+}
+
 async function buildSegments(options, extension, stats, sourcePath) {
   const segments = [];
 
@@ -66,11 +171,11 @@ async function buildSegments(options, extension, stats, sourcePath) {
   }
 
   if (options.byDuration && extension === 'mp4') {
-    segments.push('duration-unknown');
+    segments.push(await getDurationFolderName(sourcePath, extension));
   }
 
   if (options.byPages && PAGED_EXTENSIONS.has(extension)) {
-    segments.push('pages-unknown');
+    segments.push(await getPagesFolderName(sourcePath, extension));
   }
 
   return segments;
