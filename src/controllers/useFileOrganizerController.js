@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const feedbackByLanguage = {
   'pt-BR': {
@@ -46,6 +46,38 @@ function useFileOrganizerController(language, organizationOptions) {
       message
     });
   };
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadLastOrganizationState = async () => {
+      try {
+        const result = await window.electronAPI.getLastOrganizationState();
+
+        if (isMounted) {
+          setHasUndo(Boolean(result?.hasUndo));
+
+          if (result?.sourceFolderPath) {
+            setSourceFolderPath(result.sourceFolderPath);
+          }
+
+          if (result?.destinationFolderPath) {
+            setDestinationFolderPath(result.destinationFolderPath);
+          }
+        }
+      } catch {
+        if (isMounted) {
+          setHasUndo(false);
+        }
+      }
+    };
+
+    loadLastOrganizationState();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handleSelectSourceFolder = async () => {
     try {
