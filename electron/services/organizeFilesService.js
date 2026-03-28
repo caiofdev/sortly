@@ -1,4 +1,5 @@
 const path = require('path');
+const { imageSizeFromFile } = require('image-size/fromFile');
 const { getUniqueDestination } = require('../models/pathModel');
 
 const IMAGE_EXTENSIONS = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp']);
@@ -28,7 +29,21 @@ function formatSizeFolder(sizeInBytes) {
   return `${sizeMb}mb`;
 }
 
-function buildSegments(options, extension, stats) {
+async function getResolutionFolderName(filePath) {
+  try {
+    const dimensions = await imageSizeFromFile(filePath);
+
+    if (!dimensions?.width || !dimensions?.height) {
+      return 'unknown';
+    }
+
+    return `${dimensions.width}x${dimensions.height}`;
+  } catch {
+    return 'unknown';
+  }
+}
+
+async function buildSegments(options, extension, stats, sourcePath) {
   const segments = [];
 
   if (options.byExtension) {
@@ -47,7 +62,7 @@ function buildSegments(options, extension, stats) {
   }
 
   if (options.byResolution && IMAGE_EXTENSIONS.has(extension)) {
-    segments.push('resolution-unknown');
+    segments.push(await getResolutionFolderName(sourcePath));
   }
 
   if (options.byDuration && extension === 'mp4') {
@@ -109,7 +124,12 @@ async function organizeFiles(payload, dependencies) {
       continue;
     }
 
-    const segments = buildSegments(organizationOptions, extension, stats);
+    const segments = await buildSegments(
+      organizationOptions,
+      extension,
+      stats,
+      sourcePath
+    );
     if (!segments) {
       ignoredWithoutExtension += 1;
       continue;
