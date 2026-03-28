@@ -1,11 +1,19 @@
 import appLogo from '../assets/app-logo.svg';
 import LanguageToggle from './LanguageToggle';
+import OrganizerSettingsPanel from './OrganizerSettingsPanel';
 
-function OrganizerHeader({ language, onLanguageChange, subtitle }) {
+function OrganizerHeader({ language, onLanguageChange, subtitle, labels, settingsOpen, onToggleSettings, options, onOptionChange }) {
   return (
     <header className="space-y-3 text-center">
       <div className="flex items-center justify-between gap-3 pb-2">
         <LanguageToggle language={language} onChange={onLanguageChange} />
+        <OrganizerSettingsPanel
+          isOpen={settingsOpen}
+          onToggle={onToggleSettings}
+          labels={labels}
+          options={options}
+          onOptionChange={onOptionChange}
+        />
       </div>
 
       <div className="flex items-center justify-center gap-3">

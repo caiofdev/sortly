@@ -19,7 +19,15 @@ const organizerCopy = {
     feedbackProgressDone: 'Alterações realizadas com sucesso.',
     notificationsTitle: 'Notificações',
     notificationsEmpty: 'Nenhum feedback ainda.',
-    notificationsClear: 'Limpar'
+    notificationsClear: 'Limpar',
+      settingsTitle: 'Configurações de organização',
+      settingsSubtitle: 'Marque os critérios usados para separar os arquivos.',
+      settingsByDuration: 'Duração (vídeos .mp4)',
+      settingsByPages: 'Páginas (PDF, DOC e similares)',
+      settingsByResolution: 'Resolução (imagens)',
+      settingsByDate: 'Data (todos os arquivos)',
+      settingsBySize: 'Tamanho (MB)',
+      settingsByExtension: 'Extensão do arquivo'
   },
   en: {
     subtitle: 'Select source and destination, click organize, and done.',
@@ -41,7 +49,15 @@ const organizerCopy = {
     feedbackProgressDone: 'Changes applied successfully.',
     notificationsTitle: 'Notifications',
     notificationsEmpty: 'No feedback yet.',
-    notificationsClear: 'Clear'
+    notificationsClear: 'Clear',
+      settingsTitle: 'Organization settings',
+      settingsSubtitle: 'Select the criteria used to split files.',
+      settingsByDuration: 'Duration (videos .mp4)',
+      settingsByPages: 'Pages (PDF, DOC and similar)',
+      settingsByResolution: 'Resolution (images)',
+      settingsByDate: 'Date (all files)',
+      settingsBySize: 'Size (MB)',
+      settingsByExtension: 'File extension'
   }
 };
 

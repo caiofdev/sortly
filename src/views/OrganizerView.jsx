@@ -8,6 +8,7 @@ import organizerCopy from '../i18n/organizerCopy';
 
 function OrganizerView({
   language,
+  organizationOptions,
   sourceFolderPath,
   destinationFolderPath,
   hasUndo,
@@ -15,6 +16,7 @@ function OrganizerView({
   loadingAction,
   feedback,
   onLanguageChange,
+  onOptionChange,
   onResolveDroppedPath,
   onSelectSourceFolder,
   onSelectDestinationFolder,
@@ -23,6 +25,7 @@ function OrganizerView({
 }) {
   const [notifications, setNotifications] = useState([]);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   useEffect(() => {
     if (!feedback) {
@@ -55,7 +58,16 @@ function OrganizerView({
 
       <section className="relative mx-auto flex min-h-screen w-full max-w-4xl items-center justify-center px-6 py-12">
         <div className="w-full rounded-2xl border border-white/10 bg-[#1E293B]/90 p-8 shadow-[0_22px_60px_rgba(2,6,23,0.45)] backdrop-blur-sm md:p-10">
-          <OrganizerHeader language={language} onLanguageChange={onLanguageChange} subtitle={text.subtitle} />
+          <OrganizerHeader
+            language={language}
+            onLanguageChange={onLanguageChange}
+            subtitle={text.subtitle}
+            labels={text}
+            settingsOpen={isSettingsOpen}
+            onToggleSettings={() => setIsSettingsOpen((open) => !open)}
+            options={organizationOptions}
+            onOptionChange={onOptionChange}
+          />
 
           <div className="mt-8 grid gap-5">
             <DragDropPanel

@@ -29,7 +29,7 @@ const feedbackByLanguage = {
   }
 };
 
-function useFileOrganizerController(language) {
+function useFileOrganizerController(language, organizationOptions) {
   const copy = feedbackByLanguage[language] || feedbackByLanguage['pt-BR'];
   const [sourceFolderPath, setSourceFolderPath] = useState('');
   const [destinationFolderPath, setDestinationFolderPath] = useState('');
@@ -109,7 +109,8 @@ function useFileOrganizerController(language) {
     try {
       const result = await window.electronAPI.organizeFiles({
         sourceFolderPath,
-        destinationFolderPath: destinationFolderPath || sourceFolderPath
+        destinationFolderPath: destinationFolderPath || sourceFolderPath,
+        organizationOptions
       });
 
       setHasUndo(result.canUndo);
