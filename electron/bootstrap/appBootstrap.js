@@ -32,6 +32,7 @@ function createWindow() {
   }
 
   window.once('ready-to-show', () => {
+    window.maximize();
     window.setTitle('Sortly');
     window.show();
   });

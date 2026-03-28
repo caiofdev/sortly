@@ -35,10 +35,19 @@ function useOrganizationOptions() {
   }, [organizationOptions]);
 
   const updateOrganizationOption = (key, value) => {
-    setOrganizationOptions((current) => ({
-      ...current,
-      [key]: value
-    }));
+    setOrganizationOptions((current) => {
+      const selectedCount = Object.values(current).filter(Boolean).length;
+      const isUncheckingLast = current[key] && !value && selectedCount === 1;
+
+      if (isUncheckingLast) {
+        return current;
+      }
+
+      return {
+        ...current,
+        [key]: value
+      };
+    });
   };
 
   return {

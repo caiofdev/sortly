@@ -1,4 +1,6 @@
 function OrganizerSettingsPanel({ isOpen, onToggle, labels, options, onOptionChange }) {
+  const selectedCount = Object.values(options).filter(Boolean).length;
+
   const settingsOptions = [
     { key: 'byDuration', label: labels.settingsByDuration },
     { key: 'byPages', label: labels.settingsByPages },
@@ -31,17 +33,28 @@ function OrganizerSettingsPanel({ isOpen, onToggle, labels, options, onOptionCha
         <p className="mt-1 text-xs text-[#94A3B8]">{labels.settingsSubtitle}</p>
 
         <div className="mt-3 space-y-2">
-          {settingsOptions.map((item) => (
-            <label key={item.key} className="flex cursor-pointer items-center justify-between rounded-lg bg-white/5 px-3 py-2 text-sm">
+          {settingsOptions.map((item) => {
+            const isChecked = Boolean(options[item.key]);
+            const shouldDisable = isChecked && selectedCount === 1;
+
+            return (
+            <label
+              key={item.key}
+              className={`flex items-center justify-between rounded-lg bg-white/5 px-3 py-2 text-sm ${
+                shouldDisable ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'
+              }`}
+            >
               <span className="text-[#F8FAFC]">{item.label}</span>
               <input
                 type="checkbox"
-                checked={Boolean(options[item.key])}
+                checked={isChecked}
+                disabled={shouldDisable}
                 onChange={(event) => onOptionChange(item.key, event.target.checked)}
                 className="h-4 w-4 accent-[#3B82F6]"
               />
             </label>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>
