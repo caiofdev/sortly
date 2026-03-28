@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import DragDropPanel from '../components/DragDropPanel';
 import FolderPathsPanel from '../components/FolderPathsPanel';
 import NotificationsCenter from '../components/NotificationsCenter';
@@ -15,6 +15,7 @@ function OrganizerView({
   isLoading,
   loadingAction,
   feedback,
+  onClearFeedback,
   onLanguageChange,
   onOptionChange,
   onResolveDroppedPath,
@@ -26,11 +27,18 @@ function OrganizerView({
   const [notifications, setNotifications] = useState([]);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const processedFeedbackIdsRef = useRef(new Set());
 
   useEffect(() => {
     if (!feedback) {
       return;
     }
+
+    if (processedFeedbackIdsRef.current.has(feedback.id)) {
+      return;
+    }
+
+    processedFeedbackIdsRef.current.add(feedback.id);
 
     const now = new Date();
     const formattedTime = now.toLocaleTimeString(language === 'pt-BR' ? 'pt-BR' : 'en-US', {
@@ -46,7 +54,8 @@ function OrganizerView({
     };
 
     setNotifications((previous) => [notificationItem, ...previous].slice(0, 80));
-  }, [feedback, language]);
+    onClearFeedback();
+  }, [feedback, language, onClearFeedback]);
 
   const text = organizerCopy[language] || organizerCopy['pt-BR'];
   const hasDestination = Boolean(destinationFolderPath);

@@ -39,6 +39,14 @@ function useFileOrganizerController(language, organizationOptions) {
 
   const isLoading = Boolean(loadingAction);
 
+  const emitFeedback = (type, message) => {
+    setFeedback({
+      id: `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
+      type,
+      message
+    });
+  };
+
   const handleSelectSourceFolder = async () => {
     try {
       const selectedPath = await window.electronAPI.selectSourceFolder();
@@ -49,10 +57,7 @@ function useFileOrganizerController(language, organizationOptions) {
       setSourceFolderPath(selectedPath);
       setFeedback(null);
     } catch {
-      setFeedback({
-        type: 'error',
-        message: copy.sourceSelectError
-      });
+      emitFeedback('error', copy.sourceSelectError);
     }
   };
 
@@ -66,10 +71,7 @@ function useFileOrganizerController(language, organizationOptions) {
       setDestinationFolderPath(selectedPath);
       setFeedback(null);
     } catch {
-      setFeedback({
-        type: 'error',
-        message: copy.destinationSelectError
-      });
+      emitFeedback('error', copy.destinationSelectError);
     }
   };
 
@@ -82,24 +84,15 @@ function useFileOrganizerController(language, organizationOptions) {
 
       setSourceFolderPath(result.sourceFolderPath);
 
-      setFeedback({
-        type: 'info',
-        message: `${copy.droppedPathSuccess} ${result.sourceFolderPath}`
-      });
+      emitFeedback('info', `${copy.droppedPathSuccess} ${result.sourceFolderPath}`);
     } catch (error) {
-      setFeedback({
-        type: 'error',
-        message: error?.message || copy.droppedPathUnexpectedError
-      });
+      emitFeedback('error', error?.message || copy.droppedPathUnexpectedError);
     }
   };
 
   const handleOrganizeFiles = async () => {
     if (!sourceFolderPath) {
-      setFeedback({
-        type: 'error',
-        message: copy.sourceRequired
-      });
+      emitFeedback('error', copy.sourceRequired);
       return;
     }
 
@@ -115,15 +108,9 @@ function useFileOrganizerController(language, organizationOptions) {
 
       setHasUndo(result.canUndo);
 
-      setFeedback({
-        type: 'organize',
-        message: copy.organizeSuccess(result)
-      });
+      emitFeedback('organize', copy.organizeSuccess(result));
     } catch (error) {
-      setFeedback({
-        type: 'error',
-        message: error?.message || copy.organizeUnexpectedError
-      });
+      emitFeedback('error', error?.message || copy.organizeUnexpectedError);
     } finally {
       setLoadingAction(null);
     }
@@ -137,18 +124,16 @@ function useFileOrganizerController(language, organizationOptions) {
       const result = await window.electronAPI.undoLastOrganization();
       setHasUndo(result.canUndo);
 
-      setFeedback({
-        type: 'restore',
-        message: copy.undoSuccess(result)
-      });
+      emitFeedback('restore', copy.undoSuccess(result));
     } catch (error) {
-      setFeedback({
-        type: 'error',
-        message: error?.message || copy.undoUnexpectedError
-      });
+      emitFeedback('error', error?.message || copy.undoUnexpectedError);
     } finally {
       setLoadingAction(null);
     }
+  };
+
+  const handleClearFeedback = () => {
+    setFeedback(null);
   };
 
   return {
@@ -158,6 +143,7 @@ function useFileOrganizerController(language, organizationOptions) {
     isLoading,
     loadingAction,
     feedback,
+    handleClearFeedback,
     handleResolveDroppedPath,
     handleSelectSourceFolder,
     handleSelectDestinationFolder,
