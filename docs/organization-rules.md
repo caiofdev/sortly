@@ -115,13 +115,13 @@ O Sortly **nunca sobrescreve** arquivos. Se o destino já existe, tenta `nome (1
 | `foto.jpg` e `foto (1).jpg` existem | `foto (2).jpg` |
 | `LEIAME` existe | `LEIAME (1)` |
 
-🔧 A reescrita limita o número de tentativas e torna a criação atômica (B4).
+🔧 Na versão Go (`internal/fsutil`, `Reserve`/`MoveUnique`) a busca vai até `nome (9999)` e o nome é reservado com criação exclusiva, evitando que dois movimentos usem o mesmo nome (B4 ✅). A extensão segue a mesma regra do §3, então `.gitignore` vira `.gitignore (1)` e `backup.tar.gz` vira `backup.tar (1).gz`.
 
 ## 6. Movimento
 
 Os arquivos são movidos (não copiados), um de cada vez. As pastas de destino são criadas conforme necessário.
 
-🔧 Hoje mover entre discos/volumes diferentes falha; a reescrita faz cópia + remoção como alternativa (B3).
+🔧 Na versão Go (`internal/fsutil.Move`), se o rename falha por serem volumes diferentes, o arquivo é copiado, a data de modificação é preservada e a origem é removida. Se qualquer etapa falhar, a cópia é apagada e a origem fica intacta: o arquivo nunca fica duplicado nem perdido (B3 ✅).
 
 ## 7. Registro da operação
 
