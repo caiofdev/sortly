@@ -1,8 +1,8 @@
-package main
+package app
 
 // função          | CC | casos
-// newAppOptions   |  1 | TestNewAppOptionsMatchesElectronWindow, TestNewAppOptionsWiresApp, TestNewAppOptionsDoesNotShareBackground
-// NewApp          |  1 | TestStartupStoresContext
+// Options         |  1 | TestOptionsMatchesElectronWindow, TestOptionsWiresApp, TestOptionsDoesNotShareBackground
+// New             |  1 | TestStartupStoresContext
 // App.startup     |  1 | TestStartupStoresContext
 
 import (
@@ -13,8 +13,8 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options"
 )
 
-func TestNewAppOptionsMatchesElectronWindow(t *testing.T) {
-	opts := newAppOptions(NewApp(), fstest.MapFS{})
+func TestOptionsMatchesElectronWindow(t *testing.T) {
+	opts := Options(New(), fstest.MapFS{})
 
 	cases := []struct {
 		name      string
@@ -40,11 +40,11 @@ func TestNewAppOptionsMatchesElectronWindow(t *testing.T) {
 	}
 }
 
-func TestNewAppOptionsWiresApp(t *testing.T) {
-	app := NewApp()
+func TestOptionsWiresApp(t *testing.T) {
+	app := New()
 	assets := fstest.MapFS{"index.html": &fstest.MapFile{Data: []byte("<html></html>")}}
 
-	opts := newAppOptions(app, assets)
+	opts := Options(app, assets)
 
 	if opts.AssetServer == nil || opts.AssetServer.Assets == nil {
 		t.Fatal("asset server sem assets")
@@ -57,21 +57,21 @@ func TestNewAppOptionsWiresApp(t *testing.T) {
 	}
 }
 
-func TestNewAppOptionsDoesNotShareBackground(t *testing.T) {
-	first := newAppOptions(NewApp(), fstest.MapFS{})
+func TestOptionsDoesNotShareBackground(t *testing.T) {
+	first := Options(New(), fstest.MapFS{})
 	first.BackgroundColour.R = 255
 
-	second := newAppOptions(NewApp(), fstest.MapFS{})
+	second := Options(New(), fstest.MapFS{})
 	if second.BackgroundColour.R != 15 {
 		t.Fatalf("cor de fundo compartilhada entre instâncias: R = %d", second.BackgroundColour.R)
 	}
 }
 
 func TestStartupStoresContext(t *testing.T) {
-	app := NewApp()
+	app := New()
 	ctx := context.WithValue(context.Background(), runtimeKey{}, "runtime")
 
-	newAppOptions(app, fstest.MapFS{}).OnStartup(ctx)
+	Options(app, fstest.MapFS{}).OnStartup(ctx)
 
 	if app.ctx != ctx {
 		t.Fatal("startup não guardou o contexto do runtime")
