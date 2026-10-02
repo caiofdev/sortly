@@ -3,7 +3,6 @@ function FolderPathsPanel({
   destinationLabel,
   sourcePath,
   destinationPath,
-  hasDestination,
   destinationSelectHintPrefix,
   destinationSelectHintAction,
   onSelectDestinationFolder
@@ -16,14 +15,21 @@ function FolderPathsPanel({
   return (
     <div className="grid gap-4 md:grid-cols-2">
       <div className="flex h-36 flex-col rounded-2xl border border-white/10 bg-[#0F172A]/65 px-4 py-4 shadow-sm">
-        <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#94A3B8]">{sourceLabel}</p>
-        <p className="min-h-12 overflow-hidden text-ellipsis whitespace-nowrap text-sm text-[#F8FAFC]" title={sourcePath}>
+        <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#94A3B8]">
+          {sourceLabel}
+        </p>
+        <p
+          className="min-h-12 overflow-hidden text-ellipsis whitespace-nowrap text-sm text-[#F8FAFC]"
+          title={sourcePath}
+        >
           {sourcePath}
         </p>
       </div>
 
       <div className="flex h-36 flex-col rounded-2xl border border-white/10 bg-[#0F172A]/65 px-4 py-4 shadow-sm">
-        <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#94A3B8]">{destinationLabel}</p>
+        <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#94A3B8]">
+          {destinationLabel}
+        </p>
         <p
           title={destinationPath}
           className="min-h-12 overflow-hidden text-ellipsis whitespace-nowrap text-sm text-[#F8FAFC]"
