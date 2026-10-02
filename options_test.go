@@ -69,7 +69,7 @@ func TestNewAppOptionsDoesNotShareBackground(t *testing.T) {
 
 func TestStartupStoresContext(t *testing.T) {
 	app := NewApp()
-	ctx := context.WithValue(context.Background(), struct{}{}, "runtime")
+	ctx := context.WithValue(context.Background(), runtimeKey{}, "runtime")
 
 	newAppOptions(app, fstest.MapFS{}).OnStartup(ctx)
 
@@ -77,3 +77,5 @@ func TestStartupStoresContext(t *testing.T) {
 		t.Fatal("startup não guardou o contexto do runtime")
 	}
 }
+
+type runtimeKey struct{}

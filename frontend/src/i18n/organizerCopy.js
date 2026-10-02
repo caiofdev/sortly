@@ -20,14 +20,14 @@ const organizerCopy = {
     notificationsTitle: 'Notificações',
     notificationsEmpty: 'Nenhum feedback ainda.',
     notificationsClear: 'Limpar',
-      settingsTitle: 'Configurações de organização',
-      settingsSubtitle: 'Marque os critérios usados para separar os arquivos.',
-      settingsByDuration: 'Duração (.mp4)',
-      settingsByPages: 'Páginas',
-      settingsByResolution: 'Resolução',
-      settingsByDate: 'Data',
-      settingsBySize: 'Tamanho (MB)',
-      settingsByExtension: 'Extensão do arquivo'
+    settingsTitle: 'Configurações de organização',
+    settingsSubtitle: 'Marque os critérios usados para separar os arquivos.',
+    settingsByDuration: 'Duração (.mp4)',
+    settingsByPages: 'Páginas',
+    settingsByResolution: 'Resolução',
+    settingsByDate: 'Data',
+    settingsBySize: 'Tamanho (MB)',
+    settingsByExtension: 'Extensão do arquivo'
   },
   en: {
     subtitle: 'Select source and destination, click organize, and done.',
@@ -50,14 +50,14 @@ const organizerCopy = {
     notificationsTitle: 'Notifications',
     notificationsEmpty: 'No feedback yet.',
     notificationsClear: 'Clear',
-      settingsTitle: 'Organization settings',
-      settingsSubtitle: 'Select the criteria used to split files.',
-      settingsByDuration: 'Duration (.mp4)',
-      settingsByPages: 'Pages',
-      settingsByResolution: 'Resolution',
-      settingsByDate: 'Date',
-      settingsBySize: 'Size (MB)',
-      settingsByExtension: 'File extension'
+    settingsTitle: 'Organization settings',
+    settingsSubtitle: 'Select the criteria used to split files.',
+    settingsByDuration: 'Duration (.mp4)',
+    settingsByPages: 'Pages',
+    settingsByResolution: 'Resolution',
+    settingsByDate: 'Date',
+    settingsBySize: 'Size (MB)',
+    settingsByExtension: 'File extension'
   }
 };
 

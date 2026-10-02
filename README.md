@@ -94,8 +94,10 @@ Os testes seguem dois conceitos:
 
 ```bash
 go test ./...    # backend
-npm test         # frontend
+cd frontend && npm test   # frontend
 ```
+
+Detalhes, critérios e o que a CI executa: [docs/testing.md](docs/testing.md).
 
 ### Documentação
 
@@ -196,7 +198,7 @@ Tests follow cyclomatic complexity (at least N test cases for a function with co
 
 ```bash
 go test ./...
-npm test
+cd frontend && npm test
 ```
 
 ### Documentation

@@ -20,15 +20,34 @@ function OrganizerActions({
         disabled={isLoading || !hasSource}
         title={isOrganizing ? labels.organizing : labels.organize}
         aria-label={isOrganizing ? labels.organizing : labels.organize}
-            className={`${baseIconButtonClass} bg-[#22C55E] text-white hover:-translate-y-0.5 hover:bg-[#32d26b] disabled:cursor-not-allowed disabled:bg-[#1c4a33] disabled:text-slate-300`}
+        className={`${baseIconButtonClass} bg-[#22C55E] text-white hover:-translate-y-0.5 hover:bg-[#32d26b] disabled:cursor-not-allowed disabled:bg-[#1c4a33] disabled:text-slate-300`}
       >
         {isOrganizing ? (
           <svg viewBox="0 0 24 24" className="h-5 w-5 animate-spin" aria-hidden="true">
-            <circle cx="12" cy="12" r="9" className="opacity-25" stroke="currentColor" strokeWidth="3" fill="none" />
-            <path className="opacity-90" fill="currentColor" d="M12 3a9 9 0 0 1 9 9h-3a6 6 0 0 0-6-6V3Z" />
+            <circle
+              cx="12"
+              cy="12"
+              r="9"
+              className="opacity-25"
+              stroke="currentColor"
+              strokeWidth="3"
+              fill="none"
+            />
+            <path
+              className="opacity-90"
+              fill="currentColor"
+              d="M12 3a9 9 0 0 1 9 9h-3a6 6 0 0 0-6-6V3Z"
+            />
           </svg>
         ) : (
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5" aria-hidden="true">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            className="h-5 w-5"
+            aria-hidden="true"
+          >
             <path d="M8 5v14l11-7-11-7Z" fill="currentColor" stroke="none" />
             <path d="M4 5v14" />
           </svg>
@@ -48,11 +67,30 @@ function OrganizerActions({
       >
         {isRestoring ? (
           <svg viewBox="0 0 24 24" className="h-5 w-5 animate-spin" aria-hidden="true">
-            <circle cx="12" cy="12" r="9" className="opacity-25" stroke="currentColor" strokeWidth="3" fill="none" />
-            <path className="opacity-90" fill="currentColor" d="M12 3a9 9 0 0 1 9 9h-3a6 6 0 0 0-6-6V3Z" />
+            <circle
+              cx="12"
+              cy="12"
+              r="9"
+              className="opacity-25"
+              stroke="currentColor"
+              strokeWidth="3"
+              fill="none"
+            />
+            <path
+              className="opacity-90"
+              fill="currentColor"
+              d="M12 3a9 9 0 0 1 9 9h-3a6 6 0 0 0-6-6V3Z"
+            />
           </svg>
         ) : (
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5" aria-hidden="true">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            className="h-5 w-5"
+            aria-hidden="true"
+          >
             <path d="M9 7H4v5" />
             <path d="M4 12a8 8 0 1 0 2.34-5.66L4 9" />
           </svg>
