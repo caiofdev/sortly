@@ -17,10 +17,16 @@ function LanguageToggle({ language, onChange }) {
             type="button"
             onClick={() => onChange(option.value)}
             className={`rounded-xl px-3 py-2 text-sm font-semibold transition-colors ${
-              isActive ? 'bg-[#3B82F6] text-white' : 'text-[#94A3B8] hover:bg-white/5 hover:text-[#F8FAFC]'
+              isActive
+                ? 'bg-[#3B82F6] text-white'
+                : 'text-[#94A3B8] hover:bg-white/5 hover:text-[#F8FAFC]'
             }`}
           >
-            <img src={option.icon} alt={option.label} className="mr-2 inline-block h-5 w-5 rounded-full object-cover" />
+            <img
+              src={option.icon}
+              alt={option.label}
+              className="mr-2 inline-block h-5 w-5 rounded-full object-cover"
+            />
             {option.label}
           </button>
         );

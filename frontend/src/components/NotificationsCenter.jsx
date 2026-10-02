@@ -23,7 +23,14 @@ function NotificationsCenter({ labels, notifications, isOpen, onToggle, onClose,
         aria-label={labels.notificationsTitle}
         className="fixed right-5 top-5 z-50 inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-[#1E293B]/95 text-[#F8FAFC] shadow-md transition-colors hover:bg-[#2b3a4f]"
       >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5" aria-hidden="true">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          className="h-5 w-5"
+          aria-hidden="true"
+        >
           <path d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V10a6 6 0 1 0-12 0v4.2a2 2 0 0 1-.6 1.4L4 17h5" />
           <path d="M10 17a2 2 0 0 0 4 0" />
         </svg>
@@ -62,7 +69,10 @@ function NotificationsCenter({ labels, notifications, isOpen, onToggle, onClose,
             <p className="text-sm text-[#94A3B8]">{labels.notificationsEmpty}</p>
           ) : (
             notifications.map((item) => (
-              <div key={item.id} className={`rounded-xl border px-3 py-3 text-sm ${getItemTone(item.type)}`}>
+              <div
+                key={item.id}
+                className={`rounded-xl border px-3 py-3 text-sm ${getItemTone(item.type)}`}
+              >
                 <p className="leading-relaxed">{item.message}</p>
                 <p className="mt-1 text-[11px] opacity-80">{item.time}</p>
               </div>

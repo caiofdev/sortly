@@ -33,9 +33,7 @@ function DragDropPanel({ isLoading, labels, onResolveDroppedPath, onSelectSource
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       className={`rounded-2xl border-2 border-dashed px-6 py-10 text-center transition-colors ${
-        isDragging
-          ? 'border-[#3B82F6] bg-[#3B82F6]/12'
-          : 'border-white/20 bg-[#0F172A]/60'
+        isDragging ? 'border-[#3B82F6] bg-[#3B82F6]/12' : 'border-white/20 bg-[#0F172A]/60'
       } ${isLoading ? 'opacity-60' : ''}`}
     >
       <p className="text-lg font-semibold text-[#F8FAFC]">{labels.dropTitle}</p>
