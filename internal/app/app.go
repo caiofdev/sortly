@@ -1,4 +1,6 @@
-package main
+// Package app contém a fachada exposta ao frontend pelo Wails e a
+// configuração da janela. A lógica de negócio fica nos demais pacotes de internal/.
+package app
 
 import "context"
 
@@ -8,8 +10,8 @@ type App struct {
 	ctx context.Context
 }
 
-// NewApp cria a fachada da aplicação.
-func NewApp() *App {
+// New cria a fachada da aplicação.
+func New() *App {
 	return &App{}
 }
 

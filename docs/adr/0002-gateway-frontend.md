@@ -6,7 +6,7 @@
 
 ## Contexto
 
-Hoje o `useFileOrganizerController` chama diretamente a global `window.electronAPI`, criada pelo preload do Electron. No Wails, o backend é exposto por bindings JavaScript gerados (`wailsjs/go/main/App`), com outros nomes e outra forma de reportar erros.
+Hoje o `useFileOrganizerController` chama diretamente a global `window.electronAPI`, criada pelo preload do Electron. No Wails, o backend é exposto por bindings JavaScript gerados (`wailsjs/go/app/App`), com outros nomes e outra forma de reportar erros.
 
 Precisamos trocar o backend sem alterar a interface e queremos poder testar a lógica do frontend sem o runtime do Wails.
 

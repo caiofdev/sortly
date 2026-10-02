@@ -1,4 +1,4 @@
-package main
+package app
 
 import (
 	"io/fs"
@@ -19,9 +19,9 @@ const (
 // backgroundColour é o #0f172a usado enquanto a interface carrega.
 var backgroundColour = options.RGBA{R: 15, G: 23, B: 42, A: 255}
 
-// newAppOptions monta a configuração da janela e do servidor de assets.
+// Options monta a configuração da janela e do servidor de assets.
 // A janela abre maximizada e sem menu, como na versão Electron.
-func newAppOptions(app *App, assets fs.FS) *options.App {
+func Options(a *App, assets fs.FS) *options.App {
 	bg := backgroundColour
 
 	return &options.App{
@@ -35,9 +35,9 @@ func newAppOptions(app *App, assets fs.FS) *options.App {
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},
-		OnStartup: app.startup,
+		OnStartup: a.startup,
 		Bind: []interface{}{
-			app,
+			a,
 		},
 	}
 }
