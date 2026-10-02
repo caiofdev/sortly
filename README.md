@@ -107,6 +107,8 @@ Commits seguem o padrão semântico com o número da issue:
 feat(sortly-12): adiciona drag and drop nativo
 ```
 
+Cada issue tem sua própria branch (`sortly-N-descricao`), que sai de `wails-rewrite` e volta para ela por pull request. Os PRs abrem já preenchidos com o [template](.github/pull_request_template.md): issue, resumo, testes (complexidade ciclomática e valor-limite), checklist e autores. O fluxo completo está em [docs/README.md](docs/README.md#fluxo-de-contribuição).
+
 O que muda para o usuário é registrado no [CHANGELOG](CHANGELOG.md).
 
 ### Autores
@@ -198,6 +200,10 @@ npm test
 ### Documentation
 
 Technical documentation (in Portuguese) lives in [docs/](docs/README.md).
+
+### Contributing
+
+Commits follow the semantic format with the issue number, e.g. `feat(sortly-12): add native drag and drop`. Each issue gets its own branch (`sortly-N-description`) and a pull request, which opens pre-filled with the [PR template](.github/pull_request_template.md).
 
 ### Authors
 
