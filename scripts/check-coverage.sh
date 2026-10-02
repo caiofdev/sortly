@@ -6,7 +6,9 @@ set -euo pipefail
 threshold="${1:-85}"
 profile="coverage-internal.out"
 
-packages="$(go list ./internal/... 2>/dev/null || true)"
+# Erros do go list (ex.: go fora do PATH) interrompem o script via set -e;
+# "matched no packages" é só um aviso e retorna vazio.
+packages="$(go list ./internal/...)"
 if [ -z "$packages" ]; then
   echo "Nenhum pacote em internal/ ainda; verificação de cobertura ignorada."
   exit 0
