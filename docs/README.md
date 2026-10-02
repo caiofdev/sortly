@@ -11,6 +11,7 @@
 | [architecture.md](architecture.md) | Arquitetura atual (Electron) e arquitetura alvo (Wails v2 + Go + React), com diagramas |
 | [organization-rules.md](organization-rules.md) | Regras de negócio: critérios de organização, nomes de pastas, conflitos e desfazer |
 | [code-review.md](code-review.md) | Revisão do código atual: defeitos (B1–B7) e refatorações planejadas |
+| [testing.md](testing.md) | Estratégia de testes (complexidade ciclomática e valor-limite), CI e como rodar localmente |
 
 ## Decisões de arquitetura (ADRs)
 
@@ -42,7 +43,6 @@ Seções que não se aplicam podem ser marcadas como "Não se aplica" ou removid
 
 Os documentos abaixo serão criados conforme as issues da milestone [Wails rewrite](https://github.com/caiofdev/sortly/milestone/1) avançam:
 
-- `testing.md` — estratégia de testes (complexidade ciclomática e valor-limite), como rodar e metas de cobertura
 - `development.md` — pré-requisitos, comandos de desenvolvimento e convenções de commit
 - `release.md` — empacotamento por plataforma, versionamento e changelog
 
