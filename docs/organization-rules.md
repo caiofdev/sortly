@@ -142,6 +142,8 @@ Esse formato **deve ser mantido** para que um desfazer pendente da versão Elect
 
 🔧 Hoje o registro é sobrescrito mesmo quando nenhum arquivo é movido (B2) e não é salvo se um movimento falhar no meio (B1).
 
+🔧 Na versão Go (`internal/store`), a gravação é atômica: o JSON vai para um arquivo temporário na mesma pasta, que depois substitui o atual. Um crash no meio da gravação deixa o registro anterior intacto, e falhas são registradas no log (B5 ✅). O arquivo gravado é idêntico, byte a byte, ao da versão Electron, e um arquivo vazio ou corrompido é tratado como "nada para desfazer".
+
 ## 8. Desfazer
 
 - Apenas a **última** organização pode ser desfeita. Sem registro: erro **"Nenhuma separação recente para desfazer."**
