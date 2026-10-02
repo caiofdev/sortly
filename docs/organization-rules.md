@@ -77,6 +77,10 @@ Com a Extensão desligada, arquivos sem extensão **são** movidos pelos demais 
 
 ### 4.2 Duração
 
+**De onde vem a duração.** A versão Electron (`music-metadata`) usa a duração da **primeira faixa de áudio** do mp4 (box `mdhd`), não a do filme. Por isso, um vídeo sem áudio (gravação de tela, mp4 convertido de GIF) cai em `duration-unknown`.
+
+🔧 Na versão Go (`internal/metadata`), a faixa de áudio continua sendo a primeira opção, então quem já organizou com áudio recebe a mesma pasta. Se não houver faixa de áudio com duração, usa a duração do filme (box `mvhd`), a mesma que o player mostra. A versão Go também lê o `mdhd`/`mvhd` versão 1 (campos de 64 bits), que a `music-metadata` ignora e trata como `unknown`.
+
 Os segundos são arredondados para o inteiro mais próximo (`Math.round`, 0,5 arredonda para cima) e formatados com dois dígitos em cada parte. Duração ausente, zero ou negativa resulta em `duration-unknown`.
 
 | Duração | Pasta |
@@ -102,7 +106,7 @@ Valores ausentes, zero ou inválidos resultam em `pages-unknown`.
 
 ### 4.4 Resolução
 
-Lida do cabeçalho da imagem (sem considerar orientação EXIF). Falha de leitura ou dimensão zero resulta em `unknown`.
+Lida do cabeçalho da imagem (sem considerar orientação EXIF). O formato é detectado pelo **conteúdo**, não pela extensão: um `.png` que na verdade é um JPEG tem a resolução lida normalmente. No BMP, altura negativa (imagem gravada de cima para baixo) conta pelo valor absoluto. Falha de leitura ou dimensão zero resulta em `unknown`.
 
 ## 5. Conflito de nomes
 
