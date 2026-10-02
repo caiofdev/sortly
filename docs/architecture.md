@@ -48,7 +48,7 @@ flowchart LR
     Ctrl --> Notif[useNotifications]
     Ctrl --> GW[services/sortlyGateway]
   end
-  GW -- "bindings gerados<br/>wailsjs/go/main/App" --> App
+  GW -- "bindings gerados<br/>wailsjs/go/app/App" --> App
   subgraph Backend["Backend — Go"]
     App[App<br/>fachada fina] --> Org[organizer<br/>Planner · Executor · Rules]
     App --> Undo[undo]
@@ -66,7 +66,8 @@ flowchart LR
 
 | Pacote | Responsabilidade |
 |---|---|
-| `main` (`main.go`, `app.go`) | Inicializa o Wails, monta as dependências e expõe os métodos para o frontend. `App` só delega (fachada) |
+| `main` (`main.go`) | Embute `frontend/dist`, monta as dependências e chama `wails.Run`. Fica na raiz porque o `go:embed` não aceita `..` e a CLI do Wails v2 compila o pacote da pasta do `wails.json` |
+| `internal/app` | Fachada `App` exposta ao frontend (só delega aos serviços) e opções da janela (`Options`) |
 | `internal/organizer` | Validação das opções, `SegmentRule` + registry ([ADR 0003](adr/0003-strategy-regras.md)), `Planner` (calcula o plano, sem efeitos colaterais), `Executor` (aplica os movimentos e mantém o journal), erros com código ([ADR 0004](adr/0004-erros-com-codigo.md)) |
 | `internal/metadata` | Leitura de resolução de imagens, duração de mp4 e contagem de páginas (`PageCounter` por extensão) |
 | `internal/undo` | Reverte o journal da última operação e remove as pastas que ficaram vazias |
@@ -98,8 +99,10 @@ A interface **não muda visualmente**. A lógica é reorganizada ([ADR 0002](adr
 
 ```
 sortly/
-  main.go, app.go, wails.json, go.mod
-  internal/{organizer,metadata,undo,store,fsutil,logging}/
+  main.go, wails.json, go.mod   # raiz só com o ponto de entrada
+  internal/                     # backend Go (não importável de fora do módulo)
+    app/                        # fachada do Wails + opções da janela
+    {organizer,metadata,undo,store,fsutil,logging}/
   frontend/            # Vite + React + Tailwind
     src/{components,views,controllers,hooks,services,domain,utils,i18n}/
   build/               # ícones e configuração do instalador
