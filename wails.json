@@ -1,0 +1,19 @@
+{
+  "$schema": "https://wails.io/schemas/config.v2.json",
+  "name": "Sortly",
+  "outputfilename": "Sortly",
+  "frontend:install": "npm install",
+  "frontend:build": "npm run build",
+  "frontend:dev:watcher": "npm run dev",
+  "frontend:dev:serverUrl": "auto",
+  "author": {
+    "name": "Caio Fernandes dos Reis"
+  },
+  "info": {
+    "companyName": "Caio Fernandes dos Reis",
+    "productName": "Sortly",
+    "productVersion": "2.0.0",
+    "copyright": "Copyright © 2026 Caio Fernandes dos Reis",
+    "comments": "Organizador de arquivos"
+  }
+}

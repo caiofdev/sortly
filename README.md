@@ -67,20 +67,22 @@ Baixe o instalador na aba [Releases](https://github.com/caiofdev/sortly/releases
 
 > 🚧 A migração para Wails está em andamento na branch `wails-rewrite` ([milestone](https://github.com/caiofdev/sortly/milestone/1)). Até ela terminar, o app roda com Electron.
 
+A interface fica em `frontend/` e é compartilhada pelas duas versões.
+
 **Versão atual (Electron)** — requer Node.js 20+:
 
 ```bash
-npm install
+npm install      # instala também as dependências de frontend/
 npm run dev      # modo desenvolvimento
 npm run build    # gera o instalador em release/
 ```
 
-**Versão Wails** — requer Go 1.23+, Node.js 20+ e a [Wails CLI v2](https://wails.io/docs/gettingstarted/installation):
+**Versão Wails** — requer Go 1.25+, Node.js 20+ e a [Wails CLI v2](https://wails.io/docs/gettingstarted/installation). Por enquanto a janela abre com a interface, mas as ações ainda não estão ligadas ao backend Go:
 
 ```bash
 wails doctor     # verifica o ambiente
 wails dev        # modo desenvolvimento
-wails build      # gera o executável
+wails build      # gera build/bin/Sortly.exe
 ```
 
 ### Testes
@@ -180,7 +182,7 @@ npm run dev
 npm run build
 ```
 
-**Wails version** — requires Go 1.23+, Node.js 20+ and the [Wails CLI v2](https://wails.io/docs/gettingstarted/installation):
+**Wails version** — requires Go 1.25+, Node.js 20+ and the [Wails CLI v2](https://wails.io/docs/gettingstarted/installation):
 
 ```bash
 wails doctor

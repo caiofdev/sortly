@@ -28,7 +28,7 @@ function createWindow() {
   if (devServerUrl) {
     window.loadURL(devServerUrl);
   } else {
-    window.loadFile(path.join(__dirname, '../../dist/index.html'));
+    window.loadFile(path.join(__dirname, '../../frontend/dist/index.html'));
   }
 
   window.once('ready-to-show', () => {
