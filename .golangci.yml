@@ -1,0 +1,25 @@
+version: "2"
+
+run:
+  timeout: 5m
+
+linters:
+  # standard = errcheck, govet, ineffassign, staticcheck, unused
+  default: standard
+  enable:
+    - gocyclo # complexidade ciclomática
+    - cyclop # complexidade ciclomática (também por pacote)
+    - errorlint # uso correto de errors.Is / errors.As / %w
+    - unparam
+    - unconvert
+  settings:
+    gocyclo:
+      # reporta funções com complexidade > 10
+      min-complexity: 10
+    cyclop:
+      max-complexity: 10
+
+formatters:
+  enable:
+    - gofmt
+    - goimports

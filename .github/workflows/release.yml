@@ -1,0 +1,100 @@
+name: Release
+
+# Gera os executáveis ao criar uma tag de versão (ex.: v2.0.0) e anexa a um
+# rascunho de release. Instalador, ícones e assinatura são refinados na issue de empacotamento.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+env:
+  WAILS_VERSION: v2.16.0
+
+jobs:
+  build:
+    name: Build (${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: windows
+            os: windows-latest
+            platform: windows/amd64
+            flags: -nsis
+          - name: macos
+            os: macos-latest
+            platform: darwin/universal
+            flags: ''
+          - name: linux
+            os: ubuntu-latest
+            platform: linux/amd64
+            flags: -tags webkit2_41
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Dependências do Wails (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev
+
+      - name: NSIS (Windows)
+        if: runner.os == 'Windows'
+        run: command -v makensis || choco install nsis -y --no-progress
+
+      - name: Wails CLI
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@${WAILS_VERSION}
+
+      - name: Build
+        run: wails build -clean -platform ${{ matrix.platform }} ${{ matrix.flags }}
+
+      - name: Empacotar artefatos
+        run: |
+          mkdir -p dist-release
+          version="${GITHUB_REF_NAME#v}"
+          case "$RUNNER_OS" in
+            Windows)
+              cp build/bin/*-installer.exe "dist-release/Sortly-${version}-windows-amd64-installer.exe"
+              cp build/bin/Sortly.exe "dist-release/Sortly-${version}-windows-amd64.exe"
+              ;;
+            macOS)
+              ditto -c -k --keepParent build/bin/Sortly.app "dist-release/Sortly-${version}-macos-universal.zip"
+              ;;
+            Linux)
+              tar -czf "dist-release/Sortly-${version}-linux-amd64.tar.gz" -C build/bin Sortly
+              ;;
+          esac
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sortly-${{ matrix.name }}
+          path: dist-release/*
+
+  release:
+    name: Rascunho de release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v5
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          files: artifacts/*
