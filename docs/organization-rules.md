@@ -175,6 +175,11 @@ O estado de desfazer sobrevive ao fechamento do app: ao abrir, a interface recup
 | Arquivo | a pasta que contém o arquivo vira a origem |
 | Item inexistente | erro |
 | Outro tipo | erro |
+| Vários itens | usa o primeiro |
+
+O item precisa ser solto **sobre o painel** de arrastar e soltar; fora dele, nada acontece.
+
+🔧 Na versão Go, o Wails entrega os caminhos dos arquivos soltos (DragAndDrop.EnableFileDrop) apenas quando o drop termina num elemento com o estilo --wails-drop-target: drop, que o painel define. O frontend recebe esses caminhos por gateway.subscribeFileDrop. A versão Electron lia File.path, que não existe no WebView do sistema.
 
 ## 10. Preferências
 
