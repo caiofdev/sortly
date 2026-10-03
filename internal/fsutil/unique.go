@@ -24,7 +24,7 @@ func Reserve(path string) (string, error) {
 	for n := range maxAttempts {
 		candidate := candidateName(path, n)
 
-		f, err := os.OpenFile(candidate, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o644)
+		f, err := os.OpenFile(nativePath(candidate), os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o644)
 		if err == nil {
 			return candidate, closeReservation(f, candidate)
 		}
@@ -54,13 +54,13 @@ func isOccupied(path string, err error) bool {
 	if errors.Is(err, fs.ErrExist) {
 		return true
 	}
-	_, statErr := os.Lstat(path)
+	_, statErr := os.Lstat(nativePath(path))
 	return statErr == nil
 }
 
 func closeReservation(f *os.File, path string) error {
 	if err := f.Close(); err != nil {
-		_ = os.Remove(path)
+		_ = os.Remove(nativePath(path))
 		return err
 	}
 	return nil

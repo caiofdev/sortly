@@ -6,17 +6,18 @@ Revisão feita antes da reescrita em Wails. Cada achado tem a issue que o resolv
 
 ## 1. Defeitos
 
-Status: ✅ corrigido na reescrita · ⏳ pendente.
+Status: ✅ corrigido na reescrita · ⏳ pendente. B6 tem a parte do backend pronta (#8); a tradução dos códigos no frontend vem na #11.
 
 | ID | Severidade | Onde | Problema | Correção | Issue |
 |---|---|---|---|---|---|
-| B1 ⏳ | Alta | `organizeFilesService.js:212-260` | Se um movimento falha no meio do lote, a exceção interrompe a função antes de `setLastOperation`. Os arquivos já movidos **não podem ser desfeitos**. | Journal: registrar cada movimento concluído e persistir mesmo em falha parcial. O resultado informa movidos e falhas. | [#8](https://github.com/caiofdev/sortly/issues/8) |
-| B2 ⏳ | Alta | `organizeFilesService.js:255` | Organizar uma pasta onde nada é movido sobrescreve o registro com uma lista vazia e **apaga o desfazer da operação anterior**. | Persistir somente se houve ao menos um movimento. | [#8](https://github.com/caiofdev/sortly/issues/8) |
+| B1 ✅ | Alta | `organizeFilesService.js:212-260` | Se um movimento falha no meio do lote, a exceção interrompe a função antes de `setLastOperation`. Os arquivos já movidos **não podem ser desfeitos**. | Journal: registrar cada movimento concluído e persistir mesmo em falha parcial. O resultado informa movidos e falhas. | [#8](https://github.com/caiofdev/sortly/issues/8) |
+| B2 ✅ | Alta | `organizeFilesService.js:255` | Organizar uma pasta onde nada é movido sobrescreve o registro com uma lista vazia e **apaga o desfazer da operação anterior**. | Persistir somente se houve ao menos um movimento. | [#8](https://github.com/caiofdev/sortly/issues/8) |
 | B3 ✅ | Média | `fsAdapter.js:11-13` | `fs.rename` falha ao mover entre discos ou volumes diferentes (EXDEV). | `Move` com fallback: copia, preserva a data de modificação e remove a origem. | [#5](https://github.com/caiofdev/sortly/issues/5) |
 | B4 ✅ | Média | `pathModel.js:13` | `while (true)` sem limite e corrida entre "o nome existe?" e "mover" (TOCTOU). | Limite de tentativas e criação exclusiva do destino. | [#5](https://github.com/caiofdev/sortly/issues/5) |
 | B5 ✅ | Média | `lastOperationRepository.js:30-40` | A gravação não é atômica (um crash pode deixar JSON corrompido) e os erros são descartados silenciosamente. | Gravar em arquivo temporário + rename; registrar erros em log. | [#6](https://github.com/caiofdev/sortly/issues/6) |
-| B6 ⏳ | Baixa | serviços do backend | Mensagens de erro misturam português ("Pasta inválida.") e inglês ("Invalid dropped item."). Com a interface em inglês, o usuário vê texto em português. | Erros com código; o frontend traduz ([ADR 0004](adr/0004-erros-com-codigo.md)). | [#8](https://github.com/caiofdev/sortly/issues/8) |
-| B7 ⏳ | Baixa | `organizeFilesService.js:269`, `undoOrganizationService.js:89` | O backend monta um campo `message` em português que a interface nunca usa (`feedbackCopy` gera o próprio texto). | Remover `message` do contrato: o backend devolve só dados. | [#8](https://github.com/caiofdev/sortly/issues/8) |
+| B6 ✅ | Baixa | serviços do backend | Mensagens de erro misturam português ("Pasta inválida.") e inglês ("Invalid dropped item."). Com a interface em inglês, o usuário vê texto em português. | Erros com código; o frontend traduz ([ADR 0004](adr/0004-erros-com-codigo.md)). | [#8](https://github.com/caiofdev/sortly/issues/8) |
+| B7 ✅ | Baixa | `organizeFilesService.js:269`, `undoOrganizationService.js:89` | O backend monta um campo `message` em português que a interface nunca usa (`feedbackCopy` gera o próprio texto). | Remover `message` do contrato: o backend devolve só dados. | [#8](https://github.com/caiofdev/sortly/issues/8) |
+| B8 ✅ | Média | `organizeFilesService.js:243-250` | Com destino = origem, um arquivo para o qual nenhum critério gera subpasta (ex.: só "Resolução" e um `.txt`) tem como destino o próprio caminho. O nome está "ocupado" por ele mesmo, então o arquivo é **renomeado para `nome (1).ext` sem motivo**. Achado na checagem de paridade da #8: 42 de 55 arquivos renomeados. | Se o destino é o próprio arquivo, ele fica onde está e conta em `unchangedFiles`. | [#8](https://github.com/caiofdev/sortly/issues/8) |
 
 ## 2. Backend — design
 

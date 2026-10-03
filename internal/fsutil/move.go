@@ -20,7 +20,7 @@ var (
 // rename falha; nesse caso o arquivo é copiado, a data de modificação é
 // preservada e a origem é removida.
 func Move(src, dst string) error {
-	err := rename(src, dst)
+	err := rename(nativePath(src), nativePath(dst))
 	if err == nil || !isCrossDevice(err) {
 		return err
 	}
@@ -36,10 +36,15 @@ func MoveUnique(src, dst string) (string, error) {
 		return "", err
 	}
 	if err := Move(src, final); err != nil {
-		_ = os.Remove(final)
+		_ = os.Remove(nativePath(final))
 		return "", err
 	}
 	return final, nil
+}
+
+// MkdirAll cria a pasta e as intermediárias (com nativePath no Windows).
+func MkdirAll(path string) error {
+	return os.MkdirAll(nativePath(path), 0o755)
 }
 
 func isCrossDevice(err error) bool {
@@ -50,29 +55,29 @@ func isCrossDevice(err error) bool {
 // apagada e a origem continua intacta, então o arquivo nunca fica duplicado
 // nem perdido.
 func copyThenRemove(src, dst string) error {
-	info, err := os.Stat(src)
+	info, err := os.Stat(nativePath(src))
 	if err != nil {
 		return err
 	}
 	if err := copyFile(src, dst, info); err != nil {
-		_ = os.Remove(dst)
+		_ = os.Remove(nativePath(dst))
 		return err
 	}
-	if err := removeFile(src); err != nil {
-		_ = os.Remove(dst)
+	if err := removeFile(nativePath(src)); err != nil {
+		_ = os.Remove(nativePath(dst))
 		return fmt.Errorf("fsutil: cópia feita, mas a origem não pôde ser removida: %w", err)
 	}
 	return nil
 }
 
 func copyFile(src, dst string, info fs.FileInfo) error {
-	in, err := os.Open(src)
+	in, err := os.Open(nativePath(src))
 	if err != nil {
 		return err
 	}
 	defer func() { _ = in.Close() }()
 
-	out, err := os.OpenFile(dst, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, info.Mode().Perm())
+	out, err := os.OpenFile(nativePath(dst), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, info.Mode().Perm())
 	if err != nil {
 		return err
 	}
@@ -83,5 +88,5 @@ func copyFile(src, dst string, info fs.FileInfo) error {
 	if err := out.Close(); err != nil {
 		return err
 	}
-	return os.Chtimes(dst, info.ModTime(), info.ModTime())
+	return os.Chtimes(nativePath(dst), info.ModTime(), info.ModTime())
 }

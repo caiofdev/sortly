@@ -21,9 +21,10 @@ Na versão Electron, o backend lança erros com texto fixo, em português em alg
   | `DROPPED_INVALID` | Item arrastado inválido |
   | `DROPPED_MISSING` | Item arrastado não existe mais |
   | `DROPPED_UNSUPPORTED` | Item arrastado não é arquivo nem pasta |
+  | `RECORD_NOT_SAVED` | Arquivos movidos, mas o registro para desfazer não foi gravado |
   | `UNEXPECTED` | Erro inesperado (detalhes vão para o log) |
 
-- Em Go, são erros sentinela (`var ErrInvalidSource = …`), verificados com `errors.Is`.
+- Em Go, são erros sentinela criados com `apperr.New(código, mensagem)` (`internal/apperr`), verificados com `errors.Is`. `apperr.CodeOf(err)` devolve o código para o frontend (`UNEXPECTED` quando não há).
 - O gateway do frontend ([ADR 0002](0002-gateway-frontend.md)) converte o código no texto do idioma atual, via `feedbackCopy`.
 - Os textos em português continuam **idênticos** aos atuais.
 - O campo `message` sai dos resultados de `organizeFiles` e `undoLastOrganization`.
