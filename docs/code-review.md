@@ -6,7 +6,7 @@ Revisão feita antes da reescrita em Wails. Cada achado tem a issue que o resolv
 
 ## 1. Defeitos
 
-Status: ✅ corrigido na reescrita · ⏳ pendente. B6 tem a parte do backend pronta (#8); a tradução dos códigos no frontend vem na #11.
+Status: ✅ corrigido na reescrita · ⏳ pendente.
 
 | ID | Severidade | Onde | Problema | Correção | Issue |
 |---|---|---|---|---|---|
@@ -35,6 +35,8 @@ Status: ✅ corrigido na reescrita · ⏳ pendente. B6 tem a parte do backend pr
 | Sem cancelamento ou progresso | Extensibilidade | `context.Context` nas operações longas | [#8](https://github.com/caiofdev/sortly/issues/8) |
 
 ## 3. Frontend — lógica (sem mudança visual)
+
+✅ Todos os itens desta seção foram resolvidos na [#11](https://github.com/caiofdev/sortly/issues/11), com HTML renderizado idêntico ao anterior.
 
 | Achado | Onde | Princípio | Refatoração | Issue |
 |---|---|---|---|---|
