@@ -1,11 +1,14 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import DragDropPanel from '../components/DragDropPanel';
 import FolderPathsPanel from '../components/FolderPathsPanel';
 import NotificationsCenter from '../components/NotificationsCenter';
 import OrganizerActions from '../components/OrganizerActions';
 import OrganizerHeader from '../components/OrganizerHeader';
+import { getCopy } from '../i18n/language';
 import organizerCopy from '../i18n/organizerCopy';
 
+// Apenas apresentação: recebe estado e ações prontos. O único estado local é
+// o de abrir/fechar painéis.
 function OrganizerView({
   language,
   organizationOptions,
@@ -14,8 +17,8 @@ function OrganizerView({
   hasUndo,
   isLoading,
   loadingAction,
-  feedback,
-  onClearFeedback,
+  notifications,
+  onClearNotifications,
   onLanguageChange,
   onOptionChange,
   onResolveDroppedPath,
@@ -24,41 +27,10 @@ function OrganizerView({
   onOrganizeFiles,
   onUndoLastOrganization
 }) {
-  const [notifications, setNotifications] = useState([]);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const processedFeedbackIdsRef = useRef(new Set());
 
-  useEffect(() => {
-    if (!feedback) {
-      return;
-    }
-
-    if (processedFeedbackIdsRef.current.has(feedback.id)) {
-      return;
-    }
-
-    processedFeedbackIdsRef.current.add(feedback.id);
-
-    const now = new Date();
-    const formattedTime = now.toLocaleTimeString(language === 'pt-BR' ? 'pt-BR' : 'en-US', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-
-    const notificationItem = {
-      id: `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
-      type: feedback.type,
-      message: feedback.message,
-      time: formattedTime
-    };
-
-    setNotifications((previous) => [notificationItem, ...previous].slice(0, 80));
-    onClearFeedback();
-  }, [feedback, language, onClearFeedback]);
-
-  const text = organizerCopy[language] || organizerCopy['pt-BR'];
-  const hasDestination = Boolean(destinationFolderPath);
+  const text = getCopy(organizerCopy, language);
   const destinationLabel = destinationFolderPath || text.destinationEmpty;
 
   return (
@@ -102,7 +74,6 @@ function OrganizerView({
               destinationLabel={text.destinationLabel}
               sourcePath={sourceFolderPath || text.sourceEmpty}
               destinationPath={destinationLabel}
-              hasDestination={hasDestination}
               destinationSelectHintPrefix={text.destinationSelectHintPrefix}
               destinationSelectHintAction={text.destinationSelectHintAction}
               onSelectDestinationFolder={onSelectDestinationFolder}
@@ -127,7 +98,7 @@ function OrganizerView({
         isOpen={isNotificationsOpen}
         onToggle={() => setIsNotificationsOpen((open) => !open)}
         onClose={() => setIsNotificationsOpen(false)}
-        onClear={() => setNotifications([])}
+        onClear={onClearNotifications}
       />
 
       <style>{`

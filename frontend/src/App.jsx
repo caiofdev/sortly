@@ -1,11 +1,13 @@
 import useFileOrganizerController from './controllers/useFileOrganizerController';
 import useLanguagePreference from './hooks/useLanguagePreference';
+import useNotifications from './hooks/useNotifications';
 import useOrganizationOptions from './hooks/useOrganizationOptions';
 import OrganizerView from './views/OrganizerView';
 
 function App() {
   const { language, setLanguage } = useLanguagePreference();
   const { organizationOptions, updateOrganizationOption } = useOrganizationOptions();
+  const { notifications, notify, clearNotifications } = useNotifications(language);
 
   const {
     sourceFolderPath,
@@ -13,14 +15,12 @@ function App() {
     hasUndo,
     isLoading,
     loadingAction,
-    feedback,
-    handleClearFeedback,
     handleResolveDroppedPath,
     handleSelectSourceFolder,
     handleSelectDestinationFolder,
     handleOrganizeFiles,
     handleUndoLastOrganization
-  } = useFileOrganizerController(language, organizationOptions);
+  } = useFileOrganizerController({ language, organizationOptions, notify });
 
   return (
     <OrganizerView
@@ -31,8 +31,8 @@ function App() {
       hasUndo={hasUndo}
       isLoading={isLoading}
       loadingAction={loadingAction}
-      feedback={feedback}
-      onClearFeedback={handleClearFeedback}
+      notifications={notifications}
+      onClearNotifications={clearNotifications}
       onLanguageChange={setLanguage}
       onOptionChange={updateOrganizationOption}
       onResolveDroppedPath={handleResolveDroppedPath}

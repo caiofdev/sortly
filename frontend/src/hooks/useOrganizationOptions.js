@@ -1,54 +1,30 @@
-import { useEffect, useState } from 'react';
+import { useCallback } from 'react';
+import { DEFAULT_OPTIONS, normalizeOptions, toggleOption } from '../domain/organizationOptions';
+import usePersistentState from './usePersistentState';
 
 const STORAGE_KEY = 'sortly.organizationOptions';
 
-const defaultOrganizationOptions = {
-  byDuration: false,
-  byPages: false,
-  byResolution: false,
-  byDate: false,
-  bySize: false,
-  byExtension: true
-};
+function deserializeOptions(saved) {
+  if (!saved) {
+    return DEFAULT_OPTIONS;
+  }
+  try {
+    return normalizeOptions(JSON.parse(saved));
+  } catch {
+    return DEFAULT_OPTIONS;
+  }
+}
 
 function useOrganizationOptions() {
-  const [organizationOptions, setOrganizationOptions] = useState(() => {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      return defaultOrganizationOptions;
-    }
-
-    try {
-      const parsed = JSON.parse(raw);
-      return {
-        ...defaultOrganizationOptions,
-        ...parsed,
-        byExtension: parsed.byExtension ?? true
-      };
-    } catch {
-      return defaultOrganizationOptions;
-    }
+  const [organizationOptions, setOrganizationOptions] = usePersistentState(STORAGE_KEY, {
+    deserialize: deserializeOptions,
+    serialize: JSON.stringify
   });
 
-  useEffect(() => {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(organizationOptions));
-  }, [organizationOptions]);
-
-  const updateOrganizationOption = (key, value) => {
-    setOrganizationOptions((current) => {
-      const selectedCount = Object.values(current).filter(Boolean).length;
-      const isUncheckingLast = current[key] && !value && selectedCount === 1;
-
-      if (isUncheckingLast) {
-        return current;
-      }
-
-      return {
-        ...current,
-        [key]: value
-      };
-    });
-  };
+  const updateOrganizationOption = useCallback(
+    (key, value) => setOrganizationOptions((current) => toggleOption(current, key, value)),
+    [setOrganizationOptions]
+  );
 
   return {
     organizationOptions,

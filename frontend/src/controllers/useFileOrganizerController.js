@@ -1,158 +1,118 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { describeError } from '../i18n/describeError';
 import feedbackCopy from '../i18n/feedbackCopy';
+import { getCopy } from '../i18n/language';
+import defaultGateway from '../services/sortlyGateway';
 
-function useFileOrganizerController(language, organizationOptions) {
-  const copy = feedbackCopy[language] || feedbackCopy['pt-BR'];
+// Estado da tela e ações do organizador. Fala com o backend só pelo gateway e
+// avisa o usuário pelo notify (useNotifications).
+function useFileOrganizerController({
+  language,
+  organizationOptions,
+  notify,
+  gateway = defaultGateway
+}) {
+  const copy = getCopy(feedbackCopy, language);
+  const copyRef = useRef(copy);
+  copyRef.current = copy;
+
   const [sourceFolderPath, setSourceFolderPath] = useState('');
   const [destinationFolderPath, setDestinationFolderPath] = useState('');
   const [hasUndo, setHasUndo] = useState(false);
   const [loadingAction, setLoadingAction] = useState(null);
-  const [feedback, setFeedback] = useState(null);
-
-  const isLoading = Boolean(loadingAction);
-
-  const emitFeedback = (type, message) => {
-    setFeedback({
-      id: `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
-      type,
-      message
-    });
-  };
 
   useEffect(() => {
     let isMounted = true;
 
-    const loadLastOrganizationState = async () => {
-      try {
-        const result = await window.electronAPI.getLastOrganizationState();
-        const hasUndo = Boolean(result?.hasUndo);
-
-        if (isMounted) {
-          setHasUndo(hasUndo);
-
-          if (result?.sourceFolderPath) {
-            setSourceFolderPath(result.sourceFolderPath);
-          }
-
-          if (result?.destinationFolderPath) {
-            setDestinationFolderPath(result.destinationFolderPath);
-          }
-
-          if (hasUndo) {
-            emitFeedback('info', copy.recoveredLastOrganization);
-          }
-        }
-      } catch {
-        if (isMounted) {
-          setHasUndo(false);
-        }
-      }
-    };
-
-    loadLastOrganizationState();
+    gateway
+      .getLastOrganizationState()
+      .then((state) => {
+        if (!isMounted) return;
+        setHasUndo(Boolean(state?.hasUndo));
+        if (state?.sourceFolderPath) setSourceFolderPath(state.sourceFolderPath);
+        if (state?.destinationFolderPath) setDestinationFolderPath(state.destinationFolderPath);
+        if (state?.hasUndo) notify('info', copyRef.current.recoveredLastOrganization);
+      })
+      .catch(() => {
+        if (isMounted) setHasUndo(false);
+      });
 
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [gateway, notify]);
 
-  const handleSelectSourceFolder = async () => {
+  const selectFolder = async (pick, setPath, errorMessage) => {
     try {
-      const selectedPath = await window.electronAPI.selectSourceFolder();
-      if (!selectedPath) {
-        return;
-      }
-
-      setSourceFolderPath(selectedPath);
-      setFeedback(null);
+      const selectedPath = await pick();
+      if (selectedPath) setPath(selectedPath);
     } catch {
-      emitFeedback('error', copy.sourceSelectError);
+      notify('error', errorMessage);
     }
   };
 
-  const handleSelectDestinationFolder = async () => {
+  // Fluxo comum de organizar e desfazer: carregando → backend → aviso → fim.
+  const runAction = async (kind, call, successMessage, fallbackMessage) => {
+    setLoadingAction(kind);
     try {
-      const selectedPath = await window.electronAPI.selectDestinationFolder();
-      if (!selectedPath) {
-        return;
-      }
-
-      setDestinationFolderPath(selectedPath);
-      setFeedback(null);
-    } catch {
-      emitFeedback('error', copy.destinationSelectError);
+      const result = await call();
+      setHasUndo(Boolean(result.canUndo));
+      notify(kind, successMessage(result));
+    } catch (error) {
+      notify('error', describeError(error, copy, fallbackMessage));
+    } finally {
+      setLoadingAction(null);
     }
   };
+
+  const handleSelectSourceFolder = () =>
+    selectFolder(gateway.selectSourceFolder, setSourceFolderPath, copy.sourceSelectError);
+
+  const handleSelectDestinationFolder = () =>
+    selectFolder(
+      gateway.selectDestinationFolder,
+      setDestinationFolderPath,
+      copy.destinationSelectError
+    );
 
   const handleResolveDroppedPath = async (droppedPath) => {
     try {
-      const result = await window.electronAPI.resolveDroppedPath(droppedPath);
-      if (!result?.sourceFolderPath) {
-        return;
-      }
-
+      const result = await gateway.resolveDroppedPath(droppedPath);
+      if (!result?.sourceFolderPath) return;
       setSourceFolderPath(result.sourceFolderPath);
-
-      emitFeedback('info', `${copy.droppedPathSuccess} ${result.sourceFolderPath}`);
+      notify('info', `${copy.droppedPathSuccess} ${result.sourceFolderPath}`);
     } catch (error) {
-      emitFeedback('error', error?.message || copy.droppedPathUnexpectedError);
+      notify('error', describeError(error, copy, copy.droppedPathUnexpectedError));
     }
   };
 
-  const handleOrganizeFiles = async () => {
+  const handleOrganizeFiles = () => {
     if (!sourceFolderPath) {
-      emitFeedback('error', copy.sourceRequired);
-      return;
+      notify('error', copy.sourceRequired);
+      return Promise.resolve();
     }
-
-    setLoadingAction('organize');
-    setFeedback(null);
-
-    try {
-      const result = await window.electronAPI.organizeFiles({
-        sourceFolderPath,
-        destinationFolderPath: destinationFolderPath || sourceFolderPath,
-        organizationOptions
-      });
-
-      setHasUndo(result.canUndo);
-
-      emitFeedback('organize', copy.organizeSuccess(result));
-    } catch (error) {
-      emitFeedback('error', error?.message || copy.organizeUnexpectedError);
-    } finally {
-      setLoadingAction(null);
-    }
+    const payload = {
+      sourceFolderPath,
+      destinationFolderPath: destinationFolderPath || sourceFolderPath,
+      organizationOptions
+    };
+    return runAction(
+      'organize',
+      () => gateway.organizeFiles(payload),
+      copy.organizeSuccess,
+      copy.organizeUnexpectedError
+    );
   };
 
-  const handleUndoLastOrganization = async () => {
-    setLoadingAction('restore');
-    setFeedback(null);
-
-    try {
-      const result = await window.electronAPI.undoLastOrganization();
-      setHasUndo(result.canUndo);
-
-      emitFeedback('restore', copy.undoSuccess(result));
-    } catch (error) {
-      emitFeedback('error', error?.message || copy.undoUnexpectedError);
-    } finally {
-      setLoadingAction(null);
-    }
-  };
-
-  const handleClearFeedback = () => {
-    setFeedback(null);
-  };
+  const handleUndoLastOrganization = () =>
+    runAction('restore', gateway.undoLastOrganization, copy.undoSuccess, copy.undoUnexpectedError);
 
   return {
     sourceFolderPath,
     destinationFolderPath,
     hasUndo,
-    isLoading,
+    isLoading: Boolean(loadingAction),
     loadingAction,
-    feedback,
-    handleClearFeedback,
     handleResolveDroppedPath,
     handleSelectSourceFolder,
     handleSelectDestinationFolder,

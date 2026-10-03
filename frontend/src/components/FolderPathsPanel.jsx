@@ -1,3 +1,5 @@
+import { abbreviatePath } from '../utils/abbreviatePath';
+
 function FolderPathsPanel({
   sourceLabel,
   destinationLabel,
@@ -7,10 +9,7 @@ function FolderPathsPanel({
   destinationSelectHintAction,
   onSelectDestinationFolder
 }) {
-  const abbreviatedDestinationPath =
-    destinationPath.length > 72
-      ? `${destinationPath.slice(0, 32)}...${destinationPath.slice(-32)}`
-      : destinationPath;
+  const abbreviatedDestinationPath = abbreviatePath(destinationPath);
 
   return (
     <div className="grid gap-4 md:grid-cols-2">
