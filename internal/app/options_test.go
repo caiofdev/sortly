@@ -14,7 +14,7 @@ import (
 )
 
 func TestOptionsMatchesElectronWindow(t *testing.T) {
-	opts := Options(New(), fstest.MapFS{})
+	opts := Options(New(Deps{}), fstest.MapFS{})
 
 	cases := []struct {
 		name      string
@@ -41,7 +41,7 @@ func TestOptionsMatchesElectronWindow(t *testing.T) {
 }
 
 func TestOptionsWiresApp(t *testing.T) {
-	app := New()
+	app := New(Deps{})
 	assets := fstest.MapFS{"index.html": &fstest.MapFile{Data: []byte("<html></html>")}}
 
 	opts := Options(app, assets)
@@ -58,17 +58,17 @@ func TestOptionsWiresApp(t *testing.T) {
 }
 
 func TestOptionsDoesNotShareBackground(t *testing.T) {
-	first := Options(New(), fstest.MapFS{})
+	first := Options(New(Deps{}), fstest.MapFS{})
 	first.BackgroundColour.R = 255
 
-	second := Options(New(), fstest.MapFS{})
+	second := Options(New(Deps{}), fstest.MapFS{})
 	if second.BackgroundColour.R != 15 {
 		t.Fatalf("cor de fundo compartilhada entre instâncias: R = %d", second.BackgroundColour.R)
 	}
 }
 
 func TestStartupStoresContext(t *testing.T) {
-	app := New()
+	app := New(Deps{})
 	ctx := context.WithValue(context.Background(), runtimeKey{}, "runtime")
 
 	Options(app, fstest.MapFS{}).OnStartup(ctx)
