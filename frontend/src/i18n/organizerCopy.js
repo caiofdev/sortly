@@ -1,7 +1,6 @@
 const organizerCopy = {
   'pt-BR': {
     subtitle: 'Selecione origem e destino, clique em organizar e pronto.',
-    destinationButton: 'Selecionar pasta de destino',
     sourceLabel: 'Origem',
     destinationLabel: 'Destino',
     sourceEmpty: 'Nenhuma pasta de origem selecionada',
@@ -15,8 +14,6 @@ const organizerCopy = {
     dropSelectHintAction: 'selecione uma pasta',
     destinationSelectHintPrefix: '',
     destinationSelectHintAction: 'Selecione uma pasta de destino',
-    feedbackProgressRunning: 'Aplicando alterações...',
-    feedbackProgressDone: 'Alterações realizadas com sucesso.',
     notificationsTitle: 'Notificações',
     notificationsEmpty: 'Nenhum feedback ainda.',
     notificationsClear: 'Limpar',
@@ -31,7 +28,6 @@ const organizerCopy = {
   },
   en: {
     subtitle: 'Select source and destination, click organize, and done.',
-    destinationButton: 'Select destination folder',
     sourceLabel: 'Source',
     destinationLabel: 'Destination',
     sourceEmpty: 'No source folder selected',
@@ -45,8 +41,6 @@ const organizerCopy = {
     dropSelectHintAction: 'select a folder',
     destinationSelectHintPrefix: '',
     destinationSelectHintAction: 'Select a destination folder',
-    feedbackProgressRunning: 'Applying changes...',
-    feedbackProgressDone: 'Changes applied successfully.',
     notificationsTitle: 'Notifications',
     notificationsEmpty: 'No feedback yet.',
     notificationsClear: 'Clear',
