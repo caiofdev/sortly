@@ -15,6 +15,9 @@ import (
 //go:embed all:frontend/dist
 var assets embed.FS
 
+//go:embed build/appicon.png
+var icon []byte
+
 func main() {
 	log, closeLog := logging.OpenDefault(os.Stderr)
 	defer func() { _ = closeLog() }()
@@ -26,7 +29,7 @@ func main() {
 	}
 	log.Info("Sortly iniciado")
 
-	if err := wails.Run(app.Options(a, assets)); err != nil {
+	if err := wails.Run(app.Options(a, assets, icon)); err != nil {
 		log.Error("erro do Wails", "err", err)
 		os.Exit(1)
 	}

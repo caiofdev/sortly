@@ -16,6 +16,7 @@ Mantido por Caio Reis & Claude.
 - Vídeos sem faixa de áudio, como gravações de tela, agora entram na pasta da duração certa em vez de `duration-unknown`.
 - A mensagem ao organizar informa quantos arquivos não puderam ser movidos e quantos já estavam no lugar certo, quando houver.
 - O app guarda um registro de atividades (log) para ajudar a investigar problemas.
+- A fonte da interface vem dentro do app e não depende mais de internet. Antes, sem conexão, a tela usava outra fonte.
 
 ### Alterado
 - Se um arquivo não puder ser movido ou restaurado, os demais continuam. Os que falharam ao desfazer ficam guardados, e você pode tentar desfazer de novo.

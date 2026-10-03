@@ -5,6 +5,7 @@ import (
 
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
+	"github.com/wailsapp/wails/v2/pkg/options/linux"
 )
 
 // Valores da janela iguais aos da versão Electron (electron/bootstrap/appBootstrap.js).
@@ -27,8 +28,10 @@ const (
 var backgroundColour = options.RGBA{R: 15, G: 23, B: 42, A: 255}
 
 // Options monta a configuração da janela e do servidor de assets.
-// A janela abre maximizada e sem menu, como na versão Electron.
-func Options(a *App, assets fs.FS) *options.App {
+// A janela abre maximizada e sem menu, como na versão Electron. icon é o PNG
+// do app (build/appicon.png), usado como ícone da janela no Linux; no Windows
+// e no macOS o ícone vem do executável e do pacote .app.
+func Options(a *App, assets fs.FS, icon []byte) *options.App {
 	bg := backgroundColour
 
 	return &options.App{
@@ -46,6 +49,10 @@ func Options(a *App, assets fs.FS) *options.App {
 			EnableFileDrop:  true,
 			CSSDropProperty: DropTargetProperty,
 			CSSDropValue:    DropTargetValue,
+		},
+		Linux: &linux.Options{
+			Icon:        icon,
+			ProgramName: "sortly",
 		},
 		OnStartup: a.startup,
 		Bind: []interface{}{
