@@ -2,6 +2,7 @@
 // bindings gerados em wailsjs/go/app/App.js; enquanto a versão Electron
 // existir (até a remoção do Electron), usa window.electronAPI.
 import * as WailsApp from '../../wailsjs/go/app/App';
+import { OnFileDrop, OnFileDropOff } from '../../wailsjs/runtime/runtime';
 
 export const UNEXPECTED = 'UNEXPECTED';
 
@@ -11,7 +12,13 @@ const wailsBackend = {
   resolveDroppedPath: (path) => WailsApp.ResolveDroppedPath(path),
   getLastOrganizationState: () => WailsApp.GetLastOrganizationState(),
   organizeFiles: (payload) => WailsApp.OrganizeFiles(payload),
-  undoLastOrganization: () => WailsApp.UndoLastOrganization()
+  undoLastOrganization: () => WailsApp.UndoLastOrganization(),
+  // O Wails entrega os caminhos só quando o drop termina num elemento com
+  // --wails-drop-target: drop (useDropTarget = true).
+  subscribeFileDrop: (handler) => {
+    OnFileDrop((_x, _y, paths) => handler(paths), true);
+    return () => OnFileDropOff();
+  }
 };
 
 export function resolveBackend(win = window) {
@@ -40,6 +47,8 @@ export function toSortlyError(error) {
   return new SortlyError(code, message);
 }
 
+const noop = () => {};
+
 export function createGateway(getBackend = resolveBackend) {
   const call = async (method, ...args) => {
     const backend = getBackend();
@@ -59,7 +68,11 @@ export function createGateway(getBackend = resolveBackend) {
     resolveDroppedPath: (path) => call('resolveDroppedPath', path),
     getLastOrganizationState: () => call('getLastOrganizationState'),
     organizeFiles: (payload) => call('organizeFiles', payload),
-    undoLastOrganization: () => call('undoLastOrganization')
+    undoLastOrganization: () => call('undoLastOrganization'),
+    // Assina os arquivos soltos na janela e devolve a função que cancela a
+    // assinatura. Na versão Electron não há assinatura: o caminho vem do
+    // próprio evento de drop (File.path).
+    subscribeFileDrop: (handler) => getBackend()?.subscribeFileDrop?.(handler) ?? noop
   };
 }
 

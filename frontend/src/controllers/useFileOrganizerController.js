@@ -86,6 +86,18 @@ function useFileOrganizerController({
     }
   };
 
+  // Arquivos soltos no painel (Wails): usa o primeiro item, como antes.
+  const dropRef = useRef(handleResolveDroppedPath);
+  dropRef.current = handleResolveDroppedPath;
+
+  useEffect(
+    () =>
+      gateway.subscribeFileDrop((paths) => {
+        if (paths?.length) dropRef.current(paths[0]);
+      }),
+    [gateway]
+  );
+
   const handleOrganizeFiles = () => {
     if (!sourceFolderPath) {
       notify('error', copy.sourceRequired);
