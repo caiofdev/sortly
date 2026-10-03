@@ -16,6 +16,13 @@ const (
 	windowMinHeight = 600
 )
 
+// Arrastar e soltar: o Wails só entrega os caminhos quando o arquivo é solto
+// sobre um elemento com este estilo (o painel de arrastar e soltar).
+const (
+	DropTargetProperty = "--wails-drop-target"
+	DropTargetValue    = "drop"
+)
+
 // backgroundColour é o #0f172a usado enquanto a interface carrega.
 var backgroundColour = options.RGBA{R: 15, G: 23, B: 42, A: 255}
 
@@ -34,6 +41,11 @@ func Options(a *App, assets fs.FS) *options.App {
 		BackgroundColour: &bg,
 		AssetServer: &assetserver.Options{
 			Assets: assets,
+		},
+		DragAndDrop: &options.DragAndDrop{
+			EnableFileDrop:  true,
+			CSSDropProperty: DropTargetProperty,
+			CSSDropValue:    DropTargetValue,
 		},
 		OnStartup: a.startup,
 		Bind: []interface{}{

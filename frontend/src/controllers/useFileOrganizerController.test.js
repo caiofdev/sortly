@@ -5,6 +5,9 @@
 // handleResolveDroppedPath       |  3 | sucesso; sem pasta; erro com código
 // handleOrganizeFiles            |  2 | sem origem; com origem (destino vazio usa a origem)
 // handleUndoLastOrganization     |  1 | sucesso; NOTHING_TO_UNDO traduzido
+// assinatura de arquivos soltos   |  2 | vários itens (usa o primeiro); lista vazia; cancela ao desmontar
+//
+// Valor-limite: drop com 0 itens (ignorado), 1 e 2 itens (usa o primeiro).
 //
 // O gateway é falso: o controller nunca acessa window.go ou window.electronAPI.
 
@@ -17,6 +20,7 @@ import useFileOrganizerController from './useFileOrganizerController';
 function fakeGateway(overrides = {}) {
   return {
     getLastOrganizationState: vi.fn().mockResolvedValue({ hasUndo: false }),
+    subscribeFileDrop: vi.fn(() => vi.fn()),
     selectSourceFolder: vi.fn().mockResolvedValue('C:\\origem'),
     selectDestinationFolder: vi.fn().mockResolvedValue(''),
     resolveDroppedPath: vi.fn().mockResolvedValue({ sourceFolderPath: 'C:\\solta' }),
@@ -173,5 +177,32 @@ describe('organizar e desfazer', () => {
     gateway.undoLastOrganization.mockRejectedValue(new SortlyError('NOTHING_TO_UNDO'));
     await act(() => result.current.handleUndoLastOrganization());
     expect(notify).toHaveBeenLastCalledWith('error', 'Nenhuma separação recente para desfazer.');
+  });
+});
+
+describe('arquivos soltos no painel (Wails)', () => {
+  it('usa o primeiro item, ignora lista vazia e cancela ao desmontar', async () => {
+    const unsubscribe = vi.fn();
+    let onDrop;
+    const gateway = fakeGateway({
+      subscribeFileDrop: vi.fn((handler) => {
+        onDrop = handler;
+        return unsubscribe;
+      })
+    });
+    const { result, unmount, notify } = await setup(gateway);
+
+    await act(async () => onDrop(['C:/fotos/a.jpg', 'C:/docs/b.pdf']));
+    expect(gateway.resolveDroppedPath).toHaveBeenCalledWith('C:/fotos/a.jpg');
+    expect(gateway.resolveDroppedPath).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(result.current.sourceFolderPath).toBe('C:\\solta'));
+    expect(notify).toHaveBeenCalledWith('info', expect.stringContaining('arrastar e soltar'));
+
+    await act(async () => onDrop([]));
+    await act(async () => onDrop(null));
+    expect(gateway.resolveDroppedPath).toHaveBeenCalledTimes(1);
+
+    unmount();
+    expect(unsubscribe).toHaveBeenCalled();
   });
 });

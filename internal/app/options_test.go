@@ -29,6 +29,10 @@ func TestOptionsMatchesElectronWindow(t *testing.T) {
 		{"background", *opts.BackgroundColour, options.RGBA{R: 15, G: 23, B: 42, A: 255}},
 		{"menu", opts.Menu == nil, true},
 		{"frameless", opts.Frameless, false},
+		{"arrastar e soltar", opts.DragAndDrop.EnableFileDrop, true},
+		{"propriedade do alvo", opts.DragAndDrop.CSSDropProperty, "--wails-drop-target"},
+		{"valor do alvo", opts.DragAndDrop.CSSDropValue, "drop"},
+		{"drop do WebView ativo", opts.DragAndDrop.DisableWebViewDrop, false},
 	}
 
 	for _, tc := range cases {

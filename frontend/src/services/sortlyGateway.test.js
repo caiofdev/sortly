@@ -2,6 +2,7 @@
 // resolveBackend  |  2 | Wails; Electron; nenhum
 // toSortlyError   |  3 | string com código; Error com código; texto livre; vazio
 // createGateway   |  3 | sem backend; sucesso; erro normalizado
+// subscribeFileDrop |  2 | Wails (OnFileDrop com alvo + OnFileDropOff); Electron e sem backend (noop)
 //
 // Os bindings do Wails são lidos de window.go.app.App no momento da chamada.
 
@@ -82,5 +83,31 @@ describe('createGateway', () => {
     );
     const gateway = createGateway(() => backend);
     return Promise.all(Object.keys(backend).map((m) => expect(gateway[m]('arg')).resolves.toBe(m)));
+  });
+});
+
+describe('subscribeFileDrop', () => {
+  afterEach(() => {
+    delete window.go;
+    delete window.runtime;
+  });
+
+  it('no Wails, assina com alvo de drop e cancela com OnFileDropOff', () => {
+    window.go = { app: { App: {} } };
+    window.runtime = { OnFileDrop: vi.fn(), OnFileDropOff: vi.fn() };
+    const handler = vi.fn();
+
+    const unsubscribe = createGateway().subscribeFileDrop(handler);
+
+    expect(window.runtime.OnFileDrop).toHaveBeenCalledWith(expect.any(Function), true);
+    window.runtime.OnFileDrop.mock.calls[0][0](10, 20, ['C:/a.txt']);
+    expect(handler).toHaveBeenCalledWith(['C:/a.txt']);
+    unsubscribe();
+    expect(window.runtime.OnFileDropOff).toHaveBeenCalled();
+  });
+
+  it('no Electron e sem backend, não assina nada', () => {
+    expect(createGateway(() => ({})).subscribeFileDrop(vi.fn())).toBeTypeOf('function');
+    expect(createGateway(() => null).subscribeFileDrop(vi.fn())).toBeTypeOf('function');
   });
 });
