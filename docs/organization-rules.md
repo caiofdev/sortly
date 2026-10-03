@@ -24,6 +24,7 @@ Padrão da interface (primeiro uso): apenas **Extensão** ligado.
 - Subpastas são ignoradas e contadas em `ignoredFolders`.
 - Entradas que não são arquivo regular nem pasta (ex.: alguns tipos de link) são ignoradas silenciosamente.
 - Cada arquivo regular conta em `processedFiles`.
+- 🔧 Se o destino calculado é o próprio arquivo (destino = origem e nenhum critério gerou subpasta), a versão Electron o renomeava para `nome (1).ext`. Na versão Go ele fica onde está e conta em `unchangedFiles` (B8 ✅).
 
 ## 3. Extensão do arquivo
 
@@ -144,7 +145,7 @@ Ao final, a operação é salva em `~/.sortly/last-operation.json`:
 
 Esse formato **deve ser mantido** para que um desfazer pendente da versão Electron continue funcionando na versão Wails.
 
-🔧 Hoje o registro é sobrescrito mesmo quando nenhum arquivo é movido (B2) e não é salvo se um movimento falhar no meio (B1).
+🔧 Na versão Electron, o registro era sobrescrito mesmo quando nenhum arquivo era movido (B2) e não era salvo se um movimento falhasse no meio (B1). Na versão Go (`internal/organizer`), uma falha num arquivo não interrompe os demais: cada movimento concluído entra no registro e a falha é contada em `failedFiles` (B1 ✅). Se nada for movido, o registro anterior é preservado e o desfazer dele continua disponível (B2 ✅).
 
 🔧 Na versão Go (`internal/store`), a gravação é atômica: o JSON vai para um arquivo temporário na mesma pasta, que depois substitui o atual. Um crash no meio da gravação deixa o registro anterior intacto, e falhas são registradas no log (B5 ✅). O arquivo gravado é idêntico, byte a byte, ao da versão Electron, e um arquivo vazio ou corrompido é tratado como "nada para desfazer".
 
