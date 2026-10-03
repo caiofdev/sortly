@@ -159,6 +159,12 @@ Esse formato **deve ser mantido** para que um desfazer pendente da versão Elect
 - No Windows a comparação de caminhos ignora maiúsculas/minúsculas.
 - Ao final o registro é apagado.
 
+🔧 Na versão Go (`internal/undo`):
+
+- Uma falha num arquivo não interrompe os demais. O registro é regravado só com os itens que falharam, e o botão de desfazer continua disponível para tentar de novo (`failedFiles`). Na versão Electron, a primeira falha interrompia o desfazer.
+- A subida para remover pastas vazias para na raiz do destino mesmo que o caminho venha com maiúsculas/minúsculas diferentes no Windows; a raiz nunca é removida.
+- Um registro gravado pela versão Electron é desfeito normalmente. Testado: organizar com a versão 1.0 e desfazer com a versão Go devolve a árvore idêntica.
+
 O estado de desfazer sobrevive ao fechamento do app: ao abrir, a interface recupera origem e destino e avisa que é possível desfazer.
 
 ## 9. Arrastar e soltar
