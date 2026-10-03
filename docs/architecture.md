@@ -82,7 +82,24 @@ Princípios:
 - **`context.Context`** em operações longas, já preparado para cancelamento e progresso.
 - **Complexidade ciclomática ≤ 10 por função**, verificada no CI.
 
-### 2.2 Frontend
+### 2.2 Contrato com o frontend (bindings)
+
+Os métodos públicos de `internal/app.App` viram funções JavaScript geradas em `frontend/wailsjs/go/app/App.js` (com tipos em `frontend/wailsjs/go/models.ts`). Todas devolvem `Promise`.
+
+| Binding | Entrada | Saída | Códigos de erro |
+|---|---|---|---|
+| `SelectSourceFolder()` | — | caminho, ou `""` se cancelado | `UNEXPECTED` |
+| `SelectDestinationFolder()` | — | caminho, ou `""` se cancelado | `UNEXPECTED` |
+| `ResolveDroppedPath(path)` | caminho | `{ sourceFolderPath }` | `DROPPED_INVALID`, `DROPPED_MISSING`, `DROPPED_UNSUPPORTED` |
+| `GetLastOrganizationState()` | — | `{ hasUndo, sourceFolderPath, destinationFolderPath }` | — (registro corrompido = sem desfazer) |
+| `OrganizeFiles(req)` | `{ sourceFolderPath, destinationFolderPath, organizationOptions }` | `{ sourceFolderPath, destinationFolderPath, processedFiles, movedFiles, failedFiles, unchangedFiles, ignoredWithoutExtension, ignoredFolders, canUndo }` | `INVALID_SOURCE`, `INVALID_DESTINATION`, `NO_CRITERIA`, `RECORD_NOT_SAVED`, `UNEXPECTED` |
+| `UndoLastOrganization()` | — | `{ restoredFiles, renamedOnRestore, skippedMissing, failedFiles, canUndo }` | `NOTHING_TO_UNDO`, `UNEXPECTED` |
+
+Em caso de erro, a `Promise` é rejeitada e a mensagem é **só o código** (ex.: `NOTHING_TO_UNDO`). O detalhe completo vai para o log. Organizar e desfazer nunca rodam ao mesmo tempo (a fachada serializa as duas operações).
+
+**Log:** `internal/logging` grava em `sortly.log` na pasta de configuração do usuário (`%AppData%\Sortly\logs` no Windows, `~/Library/Application Support/Sortly/logs` no macOS, `~/.config/Sortly/logs` no Linux). Ao passar de 5 MB, o arquivo vira `sortly.log.1` na próxima abertura. Se a pasta não puder ser usada, o log vai para o stderr e o app abre normalmente.
+
+### 2.3 Frontend
 
 A interface **não muda visualmente**. A lógica é reorganizada ([ADR 0002](adr/0002-gateway-frontend.md)):
 
@@ -95,13 +112,14 @@ A interface **não muda visualmente**. A lógica é reorganizada ([ADR 0002](adr
 | `domain/organizationOptions.js` | Lista de critérios, valores padrão e a regra de "pelo menos um critério" |
 | `views/`, `components/` | Apenas apresentação |
 
-### 2.3 Estrutura de diretórios
+### 2.4 Estrutura de diretórios
 
 ```
 sortly/
   main.go, wails.json, go.mod   # raiz só com o ponto de entrada
   internal/                     # backend Go (não importável de fora do módulo)
-    app/                        # fachada do Wails + opções da janela
+    app/                        # fachada do Wails, opções da janela, arrastar e soltar
+    apperr/                     # erros com código (ADR 0004)
     {organizer,metadata,undo,store,fsutil,logging}/
   frontend/            # Vite + React + Tailwind
     src/{components,views,controllers,hooks,services,domain,utils,i18n}/
