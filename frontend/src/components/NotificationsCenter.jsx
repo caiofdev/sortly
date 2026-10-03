@@ -1,17 +1,15 @@
-function getItemTone(itemType) {
-  if (itemType === 'organize') {
-    return 'border-[#22C55E]/45 bg-[#22C55E]/12 text-[#b8ffcf]';
-  }
+const ALERT_TONE = 'border-rose-500/45 bg-rose-500/12 text-rose-200';
 
-  if (itemType === 'restore') {
-    return 'border-rose-500/45 bg-rose-500/12 text-rose-200';
-  }
+const TONE_BY_TYPE = {
+  organize: 'border-[#22C55E]/45 bg-[#22C55E]/12 text-[#b8ffcf]',
+  restore: ALERT_TONE,
+  error: ALERT_TONE
+};
 
-  if (itemType === 'error') {
-    return 'border-rose-500/45 bg-rose-500/12 text-rose-200';
-  }
+const DEFAULT_TONE = 'border-[#3B82F6]/45 bg-[#3B82F6]/12 text-[#bfdbfe]';
 
-  return 'border-[#3B82F6]/45 bg-[#3B82F6]/12 text-[#bfdbfe]';
+export function getItemTone(itemType) {
+  return TONE_BY_TYPE[itemType] ?? DEFAULT_TONE;
 }
 
 function NotificationsCenter({ labels, notifications, isOpen, onToggle, onClose, onClear }) {

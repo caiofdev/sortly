@@ -18,6 +18,8 @@ Criar um **gateway** (padrão Adapter) em `frontend/src/services/sortlyGateway.j
 - Expõe funções com o mesmo contrato usado hoje pela interface (`selectSourceFolder`, `organizeFiles`, …).
 - Converte os **códigos de erro** do backend em textos traduzidos ([ADR 0004](0004-erros-com-codigo.md)).
 - O controller recebe o gateway como dependência, o que permite substituí-lo por um mock no Vitest.
+- O gateway normaliza os erros em `SortlyError { code, message }`, aceitando a rejeição do Wails como string ou como `Error`. A tradução do código para o idioma atual fica em `i18n/describeError.js`.
+- Durante a migração, o gateway também reconhece `window.electronAPI`, para a versão Electron continuar funcionando até ser removida.
 
 ## Alternativas consideradas
 

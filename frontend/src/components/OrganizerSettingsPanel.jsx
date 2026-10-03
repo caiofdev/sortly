@@ -1,14 +1,10 @@
-function OrganizerSettingsPanel({ isOpen, onToggle, labels, options, onOptionChange }) {
-  const selectedCount = Object.values(options).filter(Boolean).length;
+import { OPTION_KEYS, canToggle } from '../domain/organizationOptions';
 
-  const settingsOptions = [
-    { key: 'byDuration', label: labels.settingsByDuration },
-    { key: 'byPages', label: labels.settingsByPages },
-    { key: 'byResolution', label: labels.settingsByResolution },
-    { key: 'byDate', label: labels.settingsByDate },
-    { key: 'bySize', label: labels.settingsBySize },
-    { key: 'byExtension', label: labels.settingsByExtension }
-  ];
+// Rótulo de cada critério: byDuration → labels.settingsByDuration.
+const labelKey = (key) => `settings${key[0].toUpperCase()}${key.slice(1)}`;
+
+function OrganizerSettingsPanel({ isOpen, onToggle, labels, options, onOptionChange }) {
+  const settingsOptions = OPTION_KEYS.map((key) => ({ key, label: labels[labelKey(key)] }));
 
   return (
     <div className="relative">
@@ -42,7 +38,7 @@ function OrganizerSettingsPanel({ isOpen, onToggle, labels, options, onOptionCha
         <div className="mt-3 space-y-2">
           {settingsOptions.map((item) => {
             const isChecked = Boolean(options[item.key]);
-            const shouldDisable = isChecked && selectedCount === 1;
+            const shouldDisable = !canToggle(options, item.key, false);
 
             return (
               <label

@@ -1,17 +1,15 @@
-import { useEffect, useState } from 'react';
+import { DEFAULT_LANGUAGE, SUPPORTED_LANGUAGES } from '../i18n/language';
+import usePersistentState from './usePersistentState';
 
 const LANGUAGE_STORAGE_KEY = 'sortly.language';
-const SUPPORTED_LANGUAGES = ['pt-BR', 'en'];
+
+const deserializeLanguage = (saved) =>
+  SUPPORTED_LANGUAGES.includes(saved) ? saved : DEFAULT_LANGUAGE;
 
 function useLanguagePreference() {
-  const [language, setLanguage] = useState(() => {
-    const savedLanguage = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
-    return SUPPORTED_LANGUAGES.includes(savedLanguage) ? savedLanguage : 'pt-BR';
+  const [language, setLanguage] = usePersistentState(LANGUAGE_STORAGE_KEY, {
+    deserialize: deserializeLanguage
   });
-
-  useEffect(() => {
-    window.localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
-  }, [language]);
 
   return {
     language,
