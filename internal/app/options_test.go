@@ -11,6 +11,7 @@ import (
 	"testing/fstest"
 
 	"github.com/wailsapp/wails/v2/pkg/options"
+	"github.com/wailsapp/wails/v2/pkg/options/linux"
 )
 
 func TestOptionsMatchesElectronWindow(t *testing.T) {
@@ -35,6 +36,8 @@ func TestOptionsMatchesElectronWindow(t *testing.T) {
 		{"drop do WebView ativo", opts.DragAndDrop.DisableWebViewDrop, false},
 		{"ícone da janela no Linux", string(opts.Linux.Icon), string(testIcon)},
 		{"nome do programa no Linux", opts.Linux.ProgramName, "sortly"},
+		{"sem GPU no WebView2 (Windows)", opts.Windows.WebviewGpuIsDisabled, true},
+		{"sem GPU no WebKitGTK (Linux)", opts.Linux.WebviewGpuPolicy, linux.WebviewGpuPolicyNever},
 	}
 
 	for _, tc := range cases {

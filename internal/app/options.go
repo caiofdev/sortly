@@ -6,6 +6,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 	"github.com/wailsapp/wails/v2/pkg/options/linux"
+	"github.com/wailsapp/wails/v2/pkg/options/windows"
 )
 
 // Valores da janela iguais aos da versão Electron (electron/bootstrap/appBootstrap.js).
@@ -50,9 +51,18 @@ func Options(a *App, assets fs.FS, icon []byte) *options.App {
 			CSSDropProperty: DropTargetProperty,
 			CSSDropValue:    DropTargetValue,
 		},
+		// Sem aceleração por GPU no WebView: a interface é estática e renderiza igual
+		// por software. No Windows, o processo de GPU do WebView2 respondia por ~80%
+		// da memória comprometida (docs/benchmark.md). No Linux, Never é o padrão do
+		// Wails quando options.Linux é nil (wailsapp/wails#2977) e precisa ser repetido
+		// aqui porque o ícone exige options.Linux. O macOS não tem opção equivalente.
+		Windows: &windows.Options{
+			WebviewGpuIsDisabled: true,
+		},
 		Linux: &linux.Options{
-			Icon:        icon,
-			ProgramName: "sortly",
+			Icon:             icon,
+			ProgramName:      "sortly",
+			WebviewGpuPolicy: linux.WebviewGpuPolicyNever,
 		},
 		OnStartup: a.startup,
 		Bind: []interface{}{

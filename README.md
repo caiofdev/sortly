@@ -51,7 +51,7 @@ As regras completas estão em [docs/organization-rules.md](docs/organization-rul
 
 ### Por que uma nova versão?
 
-A versão 1.0 foi feita com Electron, que embute um navegador inteiro em cada app. O Sortly está sendo reescrito com [Wails](https://wails.io) (Go + React), que usa o navegador já presente no sistema. O resultado é um app com a mesma interface, **instalador 9× menor** (8,8 MB em vez de 82 MB), **15× menos espaço em disco** e organização cerca de 2× mais rápida. No Windows, a economia de memória depende da aceleração por GPU do WebView2; os números estão em [docs/benchmark.md](docs/benchmark.md). Decisão em [docs/adr/0001-electron-para-wails.md](docs/adr/0001-electron-para-wails.md).
+A versão 1.0 foi feita com Electron, que embute um navegador inteiro em cada app. O Sortly está sendo reescrito com [Wails](https://wails.io) (Go + React), que usa o navegador já presente no sistema. O resultado é um app com a mesma interface, **instalador 9× menor** (8,8 MB em vez de 82 MB), **15× menos espaço em disco**, **cerca de 1/3 menos memória** no Windows (177 MB em vez de 260 MB em repouso; metade no pico ao organizar) e organização cerca de 2× mais rápida. Os números estão em [docs/benchmark.md](docs/benchmark.md). Decisão em [docs/adr/0001-electron-para-wails.md](docs/adr/0001-electron-para-wails.md).
 
 ### Instalação
 
@@ -160,7 +160,7 @@ When a file lacks the required information (for example, a video without a reada
 
 ### Why a new version?
 
-Version 1.0 was built with Electron, which bundles a full browser in every app. Sortly is being rewritten with [Wails](https://wails.io) (Go + React), which uses the browser already present in the operating system. The result is the same interface with a **9× smaller installer** (8.8 MB instead of 82 MB), **15× less disk space** and roughly 2× faster organizing. On Windows, memory savings depend on WebView2 GPU acceleration; see [docs/benchmark.md](docs/benchmark.md).
+Version 1.0 was built with Electron, which bundles a full browser in every app. Sortly is being rewritten with [Wails](https://wails.io) (Go + React), which uses the browser already present in the operating system. The result is the same interface with a **9× smaller installer** (8.8 MB instead of 82 MB), **15× less disk space**, **about 1/3 less memory** on Windows (177 MB instead of 260 MB at idle; half at peak while organizing) and roughly 2× faster organizing. See [docs/benchmark.md](docs/benchmark.md).
 
 ### Installation
 
