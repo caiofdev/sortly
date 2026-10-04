@@ -3,6 +3,7 @@ package app
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -420,5 +421,18 @@ func TestNewDefaultWithoutHome(t *testing.T) {
 	t.Setenv("home", "")
 	if _, err := NewDefault(nil); err == nil {
 		t.Fatal("sem pasta do usuário, NewDefault deveria falhar")
+	}
+}
+
+func TestStateJSONAlwaysHasLists(t *testing.T) {
+	a, _ := newTestApp(Deps{})
+	for name, state := range map[string]ViewState{"inicial": a.GetState(), "após limpar": a.ClearNotifications()} {
+		data, err := json.Marshal(state)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !strings.Contains(string(data), `"notifications":[]`) || !strings.Contains(string(data), `"criteria":[`) {
+			t.Errorf("%s: listas deveriam ser arrays, não null: %s", name, data)
+		}
 	}
 }

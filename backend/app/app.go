@@ -241,7 +241,8 @@ func (a *App) update(change func(*ViewState)) ViewState {
 	a.ensureLoaded()
 	change(&a.state)
 	snapshot := a.state
-	snapshot.Notifications = append([]Notification(nil), a.state.Notifications...)
+	// Lista sempre presente (nunca null no JSON): a interface percorre direto.
+	snapshot.Notifications = append([]Notification{}, a.state.Notifications...)
 	ctx, started := a.ctx, a.started
 	a.mu.Unlock()
 
