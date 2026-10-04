@@ -35,7 +35,7 @@ Base: [Effective Go](https://go.dev/doc/effective_go), [Go Code Review Comments]
 - [ ] Zero value útil ou construtor obrigatório documentado.
 - [ ] Receptor consistente no tipo (todos ponteiro ou todos valor); ponteiro quando muta ou o struct é grande.
 - [ ] Slices/mapas recebidos e guardados são copiados se o chamador puder alterá-los depois.
-- [ ] `nil` slice vs vazio: o JSON do registro exige `[]` (veja `store.encode`).
+- [ ] `nil` slice vs vazio: vira `null` no JSON. O registro exige `[]` (veja `store.encode`) e o estado da tela também (o frontend percorre as listas direto).
 - [ ] Exportar só o necessário; identificador exportado tem godoc começando pelo nome.
 - [ ] Nomes curtos e sem gagueira (`store.Store` ruim, `store.FileStore` ok); sem pacotes `util`/`common`/`helpers`.
 - [ ] Sem parâmetro booleano que muda o comportamento da função (prefira duas funções ou opções).

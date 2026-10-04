@@ -23,4 +23,6 @@ Regras que já falharam neste projeto e que a revisão deve conferir sempre. Cad
 
 ## Novos
 
+- Slice nil em struct enviada ao frontend vira `null` no JSON, e o JS que faz `.map` quebra a tela inteira. Toda lista de um binding é inicializada (`[]T{}`) e há teste do JSON. — #45 (2026-10-04)
+
 <!-- Acrescente aqui: - Regra generalizada. — PR/issue (AAAA-MM-DD) -->

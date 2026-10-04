@@ -1,20 +1,22 @@
 // Único ponto de acesso ao backend (ADR 0002): usa os bindings do Wails
-// gerados em wailsjs/go/app/App.js.
+// gerados em wailsjs/go/app/App.js. Todo binding devolve o estado completo
+// da tela (ADR 0005).
 import * as WailsApp from '../../wailsjs/go/app/App';
-import { OnFileDrop, OnFileDropOff } from '../../wailsjs/runtime/runtime';
+import { EventsOn, OnFileDrop, OnFileDropOff } from '../../wailsjs/runtime/runtime';
 
-export const UNEXPECTED = 'UNEXPECTED';
+export const STATE_EVENT = 'sortly:state';
 
 const wailsBackend = {
-  selectSourceFolder: () => WailsApp.SelectSourceFolder(),
-  selectDestinationFolder: () => WailsApp.SelectDestinationFolder(),
-  resolveDroppedPath: (path) => WailsApp.ResolveDroppedPath(path),
-  getLastOrganizationState: () => WailsApp.GetLastOrganizationState(),
-  organizeFiles: (source, destination) => WailsApp.OrganizeFiles(source, destination),
-  undoLastOrganization: () => WailsApp.UndoLastOrganization(),
-  getSettings: () => WailsApp.GetSettings(),
+  getState: () => WailsApp.GetState(),
+  selectSource: () => WailsApp.SelectSource(),
+  selectDestination: () => WailsApp.SelectDestination(),
+  dropPaths: (paths) => WailsApp.DropPaths(paths),
+  organize: () => WailsApp.Organize(),
+  undo: () => WailsApp.Undo(),
+  clearNotifications: () => WailsApp.ClearNotifications(),
   setLanguage: (language) => WailsApp.SetLanguage(language),
   setCriterion: (key, enabled) => WailsApp.SetCriterion(key, enabled),
+  subscribeState: (handler) => EventsOn(STATE_EVENT, handler),
   // O Wails entrega os caminhos só quando o drop termina num elemento com
   // --wails-drop-target: drop (useDropTarget = true).
   subscribeFileDrop: (handler) => {
@@ -28,51 +30,27 @@ export function resolveBackend(win = window) {
   return win.go?.app?.App ? wailsBackend : null;
 }
 
-// Erro do backend normalizado: code é o código estável (ex.: NOTHING_TO_UNDO)
-// quando existe; message guarda o texto original, para logs.
-export class SortlyError extends Error {
-  constructor(code, message) {
-    super(message || code);
-    this.name = 'SortlyError';
-    this.code = code;
-  }
-}
-
-const CODE_PATTERN = /^[A-Z][A-Z_]+$/;
-
-// O Wails rejeita com o código como string ou como Error.message.
-export function toSortlyError(error) {
-  const message = typeof error === 'string' ? error : error?.message || '';
-  const code = CODE_PATTERN.test(message) ? message : UNEXPECTED;
-  return new SortlyError(code, message);
-}
-
 const noop = () => {};
 
 export function createGateway(getBackend = resolveBackend) {
-  const call = async (method, ...args) => {
+  const call = (method, ...args) => {
     const backend = getBackend();
-    if (!backend) {
-      throw new SortlyError(UNEXPECTED, 'Backend indisponível');
-    }
-    try {
-      return await backend[method](...args);
-    } catch (error) {
-      throw toSortlyError(error);
-    }
+    return backend ? backend[method](...args) : Promise.reject(new Error('Backend indisponível'));
   };
+  const subscribe = (method, handler) => getBackend()?.[method]?.(handler) ?? noop;
 
   return {
-    selectSourceFolder: () => call('selectSourceFolder'),
-    selectDestinationFolder: () => call('selectDestinationFolder'),
-    resolveDroppedPath: (path) => call('resolveDroppedPath', path),
-    getLastOrganizationState: () => call('getLastOrganizationState'),
-    organizeFiles: (source, destination) => call('organizeFiles', source, destination),
-    undoLastOrganization: () => call('undoLastOrganization'),
-    getSettings: () => call('getSettings'),
+    getState: () => call('getState'),
+    selectSource: () => call('selectSource'),
+    selectDestination: () => call('selectDestination'),
+    dropPaths: (paths) => call('dropPaths', paths),
+    organize: () => call('organize'),
+    undo: () => call('undo'),
+    clearNotifications: () => call('clearNotifications'),
     setLanguage: (language) => call('setLanguage', language),
     setCriterion: (key, enabled) => call('setCriterion', key, enabled),
-    subscribeFileDrop: (handler) => getBackend()?.subscribeFileDrop?.(handler) ?? noop
+    subscribeState: (handler) => subscribe('subscribeState', handler),
+    subscribeFileDrop: (handler) => subscribe('subscribeFileDrop', handler)
   };
 }
 

@@ -1,32 +1,89 @@
 export namespace app {
 	
-	export class DroppedPath {
-	    sourceFolderPath: string;
+	export class Notification {
+	    id: number;
+	    kind: string;
+	    code: string;
+	    action?: string;
+	    path?: string;
+	    organize?: organizer.Result;
+	    undo?: undo.Result;
+	    // Go type: time
+	    at: any;
 	
 	    static createFrom(source: any = {}) {
-	        return new DroppedPath(source);
+	        return new Notification(source);
 	    }
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.sourceFolderPath = source["sourceFolderPath"];
+	        this.id = source["id"];
+	        this.kind = source["kind"];
+	        this.code = source["code"];
+	        this.action = source["action"];
+	        this.path = source["path"];
+	        this.organize = this.convertValues(source["organize"], organizer.Result);
+	        this.undo = this.convertValues(source["undo"], undo.Result);
+	        this.at = this.convertValues(source["at"], null);
 	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
 	}
-	export class OrganizationState {
-	    hasUndo: boolean;
+	export class ViewState {
 	    sourceFolderPath: string;
 	    destinationFolderPath: string;
+	    hasUndo: boolean;
+	    busy: string;
+	    settings: settings.View;
+	    notifications: Notification[];
 	
 	    static createFrom(source: any = {}) {
-	        return new OrganizationState(source);
+	        return new ViewState(source);
 	    }
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.hasUndo = source["hasUndo"];
 	        this.sourceFolderPath = source["sourceFolderPath"];
 	        this.destinationFolderPath = source["destinationFolderPath"];
+	        this.hasUndo = source["hasUndo"];
+	        this.busy = source["busy"];
+	        this.settings = this.convertValues(source["settings"], settings.View);
+	        this.notifications = this.convertValues(source["notifications"], Notification);
 	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
 	}
 
 }

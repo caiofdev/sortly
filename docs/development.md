@@ -45,7 +45,7 @@ O instalador e os pacotes de cada sistema estão em [release.md](release.md).
 
 ### Só o frontend no navegador
 
-`npm run dev` em `frontend/` abre a interface no navegador, sem backend: as ações mostram o erro padrão. Serve para ajustar layout; para testar o fluxo completo, use `wails dev`.
+`npm run dev` em `frontend/` abre a interface no navegador, sem backend: a tela aparece no estado inicial e as ações não fazem nada. Serve para ajustar layout; para testar o fluxo completo, use `wails dev`.
 
 ## 3. Estrutura do repositório
 
@@ -75,7 +75,7 @@ sortly/
 
 ### Bindings do frontend
 
-Os métodos públicos de `backend/app.App` viram funções em `frontend/wailsjs/go/app/App.js`. O `wails dev` e o `wails build` regeneram esses arquivos; depois de mudar a assinatura de um método, rode um dos dois e versione o resultado. O frontend não importa os bindings diretamente: tudo passa por `services/sortlyGateway.js` ([ADR 0002](adr/0002-gateway-frontend.md)).
+Os métodos públicos de `backend/app.App` viram funções em `frontend/wailsjs/go/app/App.js`. O `wails dev` e o `wails build` regeneram esses arquivos; depois de mudar a assinatura de um método, rode um dos dois e versione o resultado. O frontend não importa os bindings diretamente: tudo passa por `services/sortlyGateway.js`, e cada binding devolve o estado completo da tela ([ADR 0005](adr/0005-estado-da-tela-no-backend.md)).
 
 ## 4. Testes e qualidade
 

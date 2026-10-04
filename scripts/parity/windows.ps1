@@ -224,6 +224,11 @@ try {
   $resAgain = (Find-Element 'Resolution' -type ([Windows.Automation.ControlType]::CheckBox)).GetCurrentPattern([Windows.Automation.TogglePattern]::Pattern).Current.ToggleState -eq 'On'
   Click 'Organization settings'
   Check 'WIN_PREFS_WEBVIEW' ($enAgain -and $resAgain) 'idioma e critério mantidos após apagar os dados do WebView'
+  # Limpar as notificações devolve uma lista vazia; a tela precisa continuar lá (#45).
+  Click 'Notifications'; Start-Sleep -Milliseconds 500
+  Click 'Clear'; Start-Sleep -Milliseconds 500
+  Click 'Notifications'; Start-Sleep -Milliseconds 500
+  Check 'WIN_CLEAR' ($null -ne (Find-Element 'Organize files' 5)) 'tela continua após limpar as notificações'
   Rename-Item $b8 "$work\b8-renomeada"
   Click 'Organize files'; Start-Sleep -Seconds 2
   $notice = Last-Notice

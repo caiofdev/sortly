@@ -1,6 +1,6 @@
 # ADR 0002 — Gateway no frontend para acesso ao backend
 
-- **Status:** Aceita
+- **Status:** Substituída pela [ADR 0005](0005-estado-da-tela-no-backend.md). O gateway continua sendo o único módulo que importa os bindings, mas o controller, a normalização de erros e o `describeError` saíram.
 - **Data:** 2026-10-02
 - **Autores:** Caio Reis, Claude
 

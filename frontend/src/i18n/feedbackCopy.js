@@ -12,6 +12,7 @@ const feedbackCopy = {
     droppedPathUnexpectedError: 'Não foi possível usar o item arrastado.',
     droppedPathSuccess: 'Origem definida por arrastar e soltar.',
     settingsSaveError: 'Não foi possível salvar a preferência.',
+    unexpectedError: 'Erro inesperado.',
     recoveredLastOrganization: 'Última organização recuperada. Você pode desfazer essa alteração.',
     organizeSuccess: (result) =>
       `Organização concluida: ${result.movedFiles} arquivo(s) movido(s). Origem: ${result.sourceFolderPath}. Destino: ${result.destinationFolderPath}. Processados: ${result.processedFiles}. Ignorados sem extensão: ${result.ignoredWithoutExtension}. Pastas ignoradas: ${result.ignoredFolders}.` +
@@ -47,6 +48,7 @@ const feedbackCopy = {
     droppedPathUnexpectedError: 'Could not use the dropped item.',
     droppedPathSuccess: 'Source folder set from drag and drop.',
     settingsSaveError: 'Could not save the preference.',
+    unexpectedError: 'Unexpected error.',
     recoveredLastOrganization: 'Last organization recovered. You can undo this change.',
     organizeSuccess: (result) =>
       `Organization complete: ${result.movedFiles} file(s) moved. Source: ${result.sourceFolderPath}. Destination: ${result.destinationFolderPath}. Processed: ${result.processedFiles}. Ignored without extension: ${result.ignoredWithoutExtension}. Ignored folders: ${result.ignoredFolders}.` +
