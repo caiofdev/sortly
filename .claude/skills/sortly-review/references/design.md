@@ -42,5 +42,5 @@
 - [ ] Nomes revelam intenção; sem abreviação obscura; booleanos como pergunta (`hasUndo`, `isDir`).
 - [ ] Função cabe na tela e tem um nível de abstração.
 - [ ] Retorno antecipado em vez de `else` aninhado.
-- [ ] Comentário explica o porquê; comentário que repete o código é achado 🔵.
+- [ ] Comentário explica o porquê; comentário que repete o código, tabela de CC em arquivo de teste ou narrativa da migração ("como na versão Electron") é achado 🔵.
 - [ ] Números mágicos viram constantes com nome (80 notificações, 10 000 tentativas, 5 MB de log).
