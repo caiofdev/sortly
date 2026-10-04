@@ -46,7 +46,7 @@
   "build": {
     "appId": "com.sortly.app",
     "productName": "Sortly",
-    "copyright": "Copyright © 2026 Jorge",
+    "copyright": "Copyright © 2026 Caio Fernandes dos Reis",
     "executableName": "Sortly",
     "artifactName": "Sortly-${version}.${ext}",
     "directories": {
