@@ -19,6 +19,14 @@ func TestView(t *testing.T) {
 		}
 	})
 
+	t.Run("sem critério ligado, nenhum fica travado", func(t *testing.T) {
+		for _, c := range (Settings{Language: "en"}).View().Criteria {
+			if c.Enabled || c.Locked {
+				t.Fatalf("%s = %+v, want desligado e destravado", c.Key, c)
+			}
+		}
+	})
+
 	t.Run("com dois ligados, nenhum fica travado", func(t *testing.T) {
 		got := Settings{Language: "en", Options: criteria.Options{ByDate: true, ByExtension: true}}.View()
 		for _, c := range got.Criteria {
