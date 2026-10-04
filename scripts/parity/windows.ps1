@@ -1,6 +1,6 @@
 ﻿<#
 .SYNOPSIS
-  Roteiro automatizado de paridade do Sortly no Windows (docs/checklist-paridade.md).
+  Roteiro automatizado de paridade do Sortly no Windows (itens manuais na issue #40).
 
 .DESCRIPTION
   Usa a interface do app (UI Automation) com uma pasta de usuário temporária e

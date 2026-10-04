@@ -91,11 +91,18 @@ go test ./...    # backend
 cd frontend && npm test   # frontend
 ```
 
-Detalhes, critérios e o que a CI executa: [docs/testing.md](docs/testing.md).
+Detalhes, critérios e o que a CI executa: [docs/development.md](docs/development.md#4-testes-e-qualidade).
 
 ### Documentação
 
-A documentação técnica fica em [docs/](docs/README.md): arquitetura, regras de organização, decisões (ADRs) e code review.
+A documentação técnica fica em [docs/](docs/):
+
+- [architecture.md](docs/architecture.md): arquitetura e contrato entre backend e frontend;
+- [organization-rules.md](docs/organization-rules.md): regras de organização e desfazer;
+- [development.md](docs/development.md): ambiente, testes e fluxo de contribuição;
+- [release.md](docs/release.md): versões e pacotes;
+- [benchmark.md](docs/benchmark.md): memória, velocidade e tamanho comparados à 1.0;
+- [adr/](docs/adr/): decisões de arquitetura.
 
 ### Contribuindo
 
@@ -105,7 +112,7 @@ Commits seguem o padrão semântico com o número da issue:
 feat(sortly-12): adiciona drag and drop nativo
 ```
 
-Cada issue tem sua própria branch (`sortly-N-descricao`), que sai de `main` e volta para ela por pull request. Os PRs abrem já preenchidos com o [template](.github/pull_request_template.md): issue, resumo, testes (complexidade ciclomática e valor-limite), checklist e autores. O fluxo completo está em [docs/README.md](docs/README.md#fluxo-de-contribuição).
+Cada issue tem sua própria branch (`sortly-N-descricao`), que sai de `main` e volta para ela por pull request. Os PRs abrem já preenchidos com o [template](.github/pull_request_template.md): issue, resumo, testes (complexidade ciclomática e valor-limite), checklist e autores. O fluxo completo está em [docs/development.md](docs/development.md#6-fluxo-de-contribuição).
 
 O que muda para o usuário é registrado no [CHANGELOG](CHANGELOG.md).
 
@@ -191,7 +198,7 @@ cd frontend && npm test
 
 ### Documentation
 
-Technical documentation (in Portuguese) lives in [docs/](docs/README.md).
+Technical documentation (in Portuguese) lives in [docs/](docs/): architecture, organization rules, development and testing, release, benchmark and ADRs.
 
 ### Contributing
 
