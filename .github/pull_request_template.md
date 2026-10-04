@@ -45,7 +45,7 @@ Closes #<!-- número -->
 
 ### Complexidade ciclomática
 
-<!-- Uma linha por função nova ou alterada. Casos ≥ CC; CC ≤ 10. -->
+<!-- Uma linha por função nova ou alterada, com os números de `go run ./scripts/cccases`. Casos ≥ CC; CC ≤ 10. -->
 
 | Função | CC | Casos |
 |---|---|---|

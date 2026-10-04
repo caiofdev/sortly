@@ -1,20 +1,5 @@
 package undo
 
-// função                 | CC | casos
-// NewService             |  2 | com e sem logger
-// Service.Undo           |  2 | TestUndoNothingToUndo; demais testes
-// Service.load           |  4 | sem registro; corrompido; lista vazia; erro de leitura; válido
-// Service.inversePlan    |  3 | TestUndoReverseOrder; TestUndoSkipsMissing
-// countRenamed           |  4 | TestUndoRenamesWhenOccupied; TestUndoRestoresAndCleans (sem renomear)
-// remaining              |  6 | TestUndoPartialFailure; TestUndoCanceled; TestUndoSkipsMissing (pulado não fica)
-// Service.updateRecord   |  4 | tudo desfeito; sobra item; Clear falha; Save falha
-// Service.cleanup        |  4 | com raiz; sem raiz (TestUndoWithoutRoot); raiz = origem (destino vazio)
-// removeEmptyAncestors   |  3 | para exatamente na raiz; caixa diferente no Windows; fora da raiz
-// cleanupCandidates      |  4 | TestCleanupCandidates: só createdFolders; só pastas dos itens; repetidas
-//
-// Valor-limite: 0 itens no registro (nada para desfazer) e 1 item; pasta com 0 e 1 arquivo;
-// subida que termina exatamente na raiz; registro vazio, corrompido e legado.
-
 import (
 	"bytes"
 	"context"

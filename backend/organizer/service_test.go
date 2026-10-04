@@ -1,17 +1,5 @@
 package organizer
 
-// função             | CC | casos
-// NewService         |  2 | com e sem fuso
-// Service.Organize   |  3 | TestOrganize*: validação falha; origem ilegível; fluxo completo
-// Service.record     |  3 | TestOrganize*: nada movido (B2); salvo; falha ao salvar
-// Service.canUndo    |  3 | TestOrganize*: movido e salvo; movido sem salvar; nada movido com e sem registro anterior
-// validate           |  7 | TestValidate (9 casos)
-// isDir              |  1 | via TestValidate
-//
-// Regressões: B1 (falha parcial ainda grava o journal), B2 (organizar sem mover nada não
-// apaga o desfazer anterior), B6 (erros com código), B7 (resultado sem mensagem), B8
-// (arquivo já no lugar não é renomeado).
-
 import (
 	"context"
 	"encoding/json"

@@ -1,9 +1,3 @@
-// função                         | CC | casos
-// estado inicial (lazy init)     |  4 | sem valor salvo; valor válido; byExtension ausente; JSON inválido
-// updateOrganizationOption (set) |  4 | desmarcar o último (bloqueado); desmarcar com 2 marcados; marcar novo; desmarcar já desmarcado
-//
-// Valor-limite: quantidade de critérios marcados = 1 (bloqueia) e 2 (permite).
-
 import { describe, expect, it } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
 import useOrganizationOptions from './useOrganizationOptions';

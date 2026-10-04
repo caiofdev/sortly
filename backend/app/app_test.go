@@ -1,19 +1,5 @@
 package app
 
-// função                     | CC | casos
-// New                        |  2 | com e sem logger
-// SelectSourceFolder         |  1 | TestSelectFolders (título de origem)
-// SelectDestinationFolder    |  1 | TestSelectFolders (título de destino)
-// pick                       |  1 | TestSelectFolders (escolhido; cancelado), TestSelectFolderError
-// ResolveDroppedPath         |  1 | TestResolveDroppedPathFacade
-// GetLastOrganizationState   |  3 | TestGetLastOrganizationState: com registro; sem itens; corrompido
-// OrganizeFiles              |  2 | TestOrganizeFiles: sucesso; erro com código; erro sem código
-// UndoLastOrganization       |  2 | TestUndoLastOrganization: sucesso; nada para desfazer
-// toFrontend                 |  2 | via os testes acima (nil e erro)
-// NewDefault                 |  2 | TestNewDefault: com e sem pasta do usuário
-//
-// Valor-limite: registro com 0 itens (sem desfazer) e 1 item (com desfazer).
-
 import (
 	"bytes"
 	"context"
@@ -195,7 +181,6 @@ func TestNewDefault(t *testing.T) {
 	if err != nil || a.deps.Organizer == nil || a.deps.Undoer == nil || a.deps.Records == nil || a.deps.PickDir == nil {
 		t.Fatalf("NewDefault = (%+v, %v)", a, err)
 	}
-	// Sem registro, nada a desfazer.
 	if got := a.GetLastOrganizationState(); got.HasUndo {
 		t.Fatalf("estado = %+v", got)
 	}

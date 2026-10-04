@@ -4,8 +4,6 @@ import feedbackCopy from '../i18n/feedbackCopy';
 import { getCopy } from '../i18n/language';
 import defaultGateway from '../services/sortlyGateway';
 
-// Estado da tela e ações do organizador. Fala com o backend só pelo gateway e
-// avisa o usuário pelo notify (useNotifications).
 function useFileOrganizerController({
   language,
   organizationOptions,
@@ -51,7 +49,6 @@ function useFileOrganizerController({
     }
   };
 
-  // Fluxo comum de organizar e desfazer: carregando → backend → aviso → fim.
   const runAction = async (kind, call, successMessage, fallbackMessage) => {
     setLoadingAction(kind);
     try {
@@ -86,7 +83,7 @@ function useFileOrganizerController({
     }
   };
 
-  // Arquivos soltos no painel (Wails): usa o primeiro item, como antes.
+  // Vários itens soltos de uma vez: usa o primeiro.
   const dropRef = useRef(handleResolveDroppedPath);
   dropRef.current = handleResolveDroppedPath;
 

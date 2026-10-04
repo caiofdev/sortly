@@ -1,7 +1,7 @@
 package criteria
 
 // RawOptions são os critérios como chegam do frontend. ByExtension é ponteiro
-// porque, como na versão Electron, ele vale true quando não é informado.
+// porque, como na versão 1.0, ele vale true quando não é informado.
 type RawOptions struct {
 	ByDuration   bool  `json:"byDuration"`
 	ByPages      bool  `json:"byPages"`

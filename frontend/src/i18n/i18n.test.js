@@ -1,12 +1,3 @@
-// função                | CC | casos
-// getCopy               |  2 | idioma existente; idioma desconhecido
-// toLocale              |  2 | pt-BR; en
-// describeError         |  2 | código traduzido; UNEXPECTED, texto livre, código sem tradução e nulo
-// organizeSuccess       |  3 | sem falhas/inalterados; com 1 de cada (PT e EN)
-// undoSuccess           |  2 | sem falhas; com falhas
-//
-// Valor-limite: failedFiles / unchangedFiles = 0 (mensagem igual à anterior) e 1 (acrescenta trecho).
-
 import { describe, expect, it } from 'vitest';
 import { SortlyError } from '../services/sortlyGateway';
 import { describeError } from './describeError';

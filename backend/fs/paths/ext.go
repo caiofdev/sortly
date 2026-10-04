@@ -3,7 +3,7 @@ package paths
 import "path/filepath"
 
 // Ext devolve a extensão do nome, com o ponto, seguindo exatamente o
-// path.extname do Node usado na versão Electron. Difere de filepath.Ext em
+// path.extname do Node, usado na versão 1.0. Difere de filepath.Ext em
 // arquivos ocultos: Ext(".gitignore") == "" (filepath.Ext devolve ".gitignore").
 //
 //	"foto.JPG" -> ".JPG"    "backup.tar.gz" -> ".gz"    "README" -> ""

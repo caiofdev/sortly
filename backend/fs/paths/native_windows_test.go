@@ -2,9 +2,6 @@
 
 package paths
 
-// função      | CC | casos
-// Native  |  6 | TestNativePath: vazio; já estendido; absoluto com ponto final; UNC; relativo; com ".."
-
 import (
 	"os"
 	"path/filepath"

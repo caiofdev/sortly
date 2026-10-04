@@ -12,12 +12,17 @@ linters:
     - errorlint # uso correto de errors.Is / errors.As / %w
     - unparam
     - unconvert
+    - revive # godoc nos identificadores exportados
   settings:
     gocyclo:
       # reporta funções com complexidade > 10
       min-complexity: 10
     cyclop:
       max-complexity: 10
+    revive:
+      rules:
+        - name: exported
+        - name: package-comments
 
 formatters:
   enable:

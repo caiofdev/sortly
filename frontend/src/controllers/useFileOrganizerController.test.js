@@ -1,16 +1,3 @@
-// função                        | CC | casos
-// efeito inicial                 |  5 | com desfazer (recupera caminhos + aviso); sem desfazer; erro do backend
-// selectFolder                   |  3 | escolhida; cancelada; erro
-// runAction                      |  2 | sucesso; erro
-// drop (handleResolveDroppedPath) |  3 | sucesso; sem pasta; erro com código
-// handleOrganizeFiles            |  2 | sem origem; com origem (destino vazio usa a origem)
-// handleUndoLastOrganization     |  1 | sucesso; NOTHING_TO_UNDO traduzido
-// assinatura de arquivos soltos   |  2 | vários itens (usa o primeiro); lista vazia; cancela ao desmontar
-//
-// Valor-limite: drop com 0 itens (ignorado), 1 e 2 itens (usa o primeiro).
-//
-// O gateway é falso: o controller nunca acessa window.go.
-
 import { describe, expect, it, vi } from 'vitest';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { DEFAULT_OPTIONS } from '../domain/organizationOptions';
@@ -103,7 +90,6 @@ describe('seleção de pastas', () => {
   });
 });
 
-// Solta um arquivo no painel: chama o handler assinado em gateway.subscribeFileDrop.
 async function drop(gateway, paths) {
   const onDrop = gateway.subscribeFileDrop.mock.calls.at(-1)[0];
   await act(async () => onDrop(paths));

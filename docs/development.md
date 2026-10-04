@@ -97,7 +97,7 @@ A complexidade ciclomática conta os caminhos independentes de uma função: com
   go run ./scripts/cccases -strict    # sai com código 1 se houver casos < CC
   ```
 
-  A contagem é heurística (linhas de tabela percorridas com `range`, `t.Run` e ifs de asserção fora de laço). "Sem teste direto" indica função exercitada só por outras funções, o que nem sempre é problema. As tabelas `função | CC | casos` nos arquivos de teste estão sendo substituídas por este relatório (#43).
+  A contagem é heurística (linhas de tabela percorridas com `range`, `t.Run` e ifs de asserção fora de laço). "Sem teste direto" indica função exercitada só por outras funções, o que nem sempre é problema.
 
   A tabela CC × casos das funções alteradas vai na seção "Testes" do pull request.
 
@@ -155,7 +155,7 @@ npm run test:watch    # Vitest em modo observação
 
 | Job | Sistema | Passos |
 |---|---|---|
-| Go · lint | Ubuntu | `golangci-lint` (gofmt, goimports, govet, staticcheck, errcheck, gocyclo, cyclop, errorlint, …) e o relatório de `scripts/cccases` no resumo do job (informativo) |
+| Go · lint | Ubuntu | `golangci-lint` (gofmt, goimports, govet, staticcheck, errcheck, gocyclo, cyclop, errorlint, revive, …) e o relatório de `scripts/cccases` no resumo do job (informativo) |
 | Go · testes | Ubuntu, Windows, macOS | `go vet`, `go test` (com `-race` no Linux e no macOS), cobertura de `backend/` no Ubuntu |
 | Frontend | Ubuntu | `npm ci`, ESLint, Prettier, Vitest, `vite build` |
 
@@ -186,6 +186,6 @@ Para testar sem mexer nos seus dados, abra o app com outra pasta de usuário. No
 4. Abra o pull request para `main`. Ele abre preenchido com o [template](../.github/pull_request_template.md): issue (`Closes #N`), tipo, resumo, mudanças por área, defeitos corrigidos com o teste de regressão de cada um, testes (tabela CC × casos e valor-limite), interface (sem mudança visual ou capturas de antes e depois), checklist, riscos e autores. Seções que não se aplicam podem ser removidas; as tabelas de testes são obrigatórias em PRs de código.
 5. Atualize `CHANGELOG.md` → `[Não lançado]` quando o usuário perceber a mudança, em linguagem simples.
 
-**Código:** comentários e documentação em português; complexidade ciclomática ≤ 10 por função; Go formatado com `gofmt`/`goimports` e JavaScript com Prettier. Decisões de arquitetura com troca real (algo que poderia ter sido diferente) ganham uma ADR em [`adr/`](adr/) (`NNNN-titulo-curto.md`: Contexto, Decisão, Alternativas, Consequências); uma ADR não é editada para mudar de ideia, e sim substituída por outra.
+**Código:** comentários e documentação em português. Comentário explica o *porquê* de um trecho difícil (formato de arquivo, comportamento do sistema operacional, compatibilidade com a 1.0); o que o código já diz não ganha comentário. Identificadores exportados do Go têm godoc de uma linha começando pelo nome (regra `exported` do `revive`). Os testes não trazem tabela de CC: o relatório do `cccases` faz esse papel. Complexidade ciclomática ≤ 10 por função; Go formatado com `gofmt`/`goimports` e JavaScript com Prettier. Decisões de arquitetura com troca real (algo que poderia ter sido diferente) ganham uma ADR em [`adr/`](adr/) (`NNNN-titulo-curto.md`: Contexto, Decisão, Alternativas, Consequências); uma ADR não é editada para mudar de ideia, e sim substituída por outra.
 
 O [`.claude/CLAUDE.md`](../.claude/CLAUDE.md) resume estrutura, comandos e este fluxo para o Claude.

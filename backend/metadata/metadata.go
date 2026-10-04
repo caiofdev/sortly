@@ -3,7 +3,7 @@
 //
 // O pacote só lê valores; os nomes de pasta ("1920x1080", "pages-12",
 // "duration-00h01m00s", "unknown") são responsabilidade do organizador.
-// O comportamento segue as bibliotecas da versão Electron (image-size,
+// O comportamento segue as bibliotecas da versão 1.0 (image-size,
 // music-metadata, pdf-lib e JSZip), conferido contra elas nas mesmas fixtures.
 package metadata
 

@@ -1,11 +1,5 @@
 package files
 
-// função          | CC | casos
-// Exists          |  1 | TestExists: arquivo; pasta; inexistente
-// RemoveEmptyDir  |  3 | TestRemoveEmptyDir: vazia; com conteúdo; arquivo; inexistente
-//
-// Valor-limite: pasta com 0 itens (removida) e com 1 item (preservada).
-
 import (
 	"os"
 	"path/filepath"

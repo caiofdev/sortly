@@ -1,9 +1,3 @@
-// função       | CC | casos
-// handleDrop   |  1 | desliga o destaque (o caminho vem pelo gateway)
-// dragover/leave |  1 | destaque liga e desliga
-//
-// O painel é a área de drop do Wails: estilo --wails-drop-target: drop.
-
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import organizerCopy from '../i18n/organizerCopy';

@@ -1,11 +1,5 @@
 package criteria
 
-// função              | CC | casos
-// RawOptions.Normalize |  2 | TestNormalize: byExtension ausente; true; false
-// Options.Any          |  1 | TestAny: 0, 1 e 6 critérios
-//
-// Valor-limite: nenhum critério (0) e o mínimo válido (1).
-
 import "testing"
 
 func TestNormalize(t *testing.T) {

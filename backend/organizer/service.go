@@ -128,7 +128,8 @@ func (s *Service) canUndo(out Outcome, saveErr error) bool {
 	return err == nil && previous.CanUndo()
 }
 
-// validate segue a ordem da versão Electron: origem, destino, critérios.
+// validate checa origem, destino e critérios nessa ordem, que decide qual erro
+// o usuário vê quando há mais de um problema.
 // Destino vazio usa a própria origem; destino inexistente será criado.
 func validate(req Request) (src, dst string, opts criteria.Options, err error) {
 	src = req.SourceFolderPath

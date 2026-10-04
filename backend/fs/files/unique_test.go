@@ -1,14 +1,5 @@
 package files
 
-// função            | CC | casos
-// Reserve           |  4 | TestReserve: livre; ocupado; vários ocupados; pasta com o nome; pasta pai inexistente; limite
-// candidateName     |  2 | TestCandidateName: n = 0; n > 0 (com e sem extensão, oculto, ponto final)
-// isOccupied        |  2 | TestIsOccupied: ErrExist; outro erro com algo no caminho; outro erro sem nada
-// closeReservation  |  2 | TestCloseReservation: sucesso (via TestReserve); arquivo já fechado
-//
-// Valor-limite: tentativas = limite - 1 (ainda encontra nome) e = limite (ErrNoAvailableName);
-// nome que já termina em " (1)".
-
 import (
 	"errors"
 	"io/fs"

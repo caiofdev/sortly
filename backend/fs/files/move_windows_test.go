@@ -2,9 +2,6 @@
 
 package files
 
-// Regressão: nomes que terminam em ponto ("arquivo.") são movidos sem perder o ponto,
-// como na versão Electron (achado na checagem de paridade da issue #8).
-
 import (
 	"os"
 	"path/filepath"
@@ -13,6 +10,8 @@ import (
 	"github.com/caiofdev/sortly/backend/fs/paths"
 )
 
+// Nomes que terminam em ponto, comuns em arquivos vindos de Linux e macOS,
+// perdem o ponto no Win32 sem o prefixo de paths.Native (#8).
 func TestMoveUniqueTrailingDot(t *testing.T) {
 	dir := t.TempDir()
 	src := filepath.Join(dir, "arquivo.")

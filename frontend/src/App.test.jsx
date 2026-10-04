@@ -1,5 +1,3 @@
-// Teste de fumaça: a tela principal monta e consulta o estado da última organização.
-
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import App from './App';

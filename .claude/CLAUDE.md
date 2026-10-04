@@ -61,7 +61,7 @@ cd frontend && npm run lint && npm run format:check && npm test   # ESLint (comp
 - **Complexidade ciclomática ≤ 10** por função (Go e JS); a CI falha acima disso.
 - **Testes:** cada função com CC = N tem pelo menos N casos (confira com `go run ./scripts/cccases`); fronteiras testadas em limite − 1, limite e limite + 1; todo bug corrigido ganha teste de regressão. Go: testes em tabela, `t.TempDir()`, fakes das interfaces. Frontend: Vitest + React Testing Library.
 - **Go:** injeção de dependências por construtor; interfaces pequenas declaradas no pacote que as usa; erros com `%w` e códigos de `apperr`; `context.Context` em operações longas.
-- **Comentários:** explique o *porquê* de trechos difíceis e documente identificadores exportados; não descreva o que o código já diz.
+- **Comentários:** explique o *porquê* de trechos difíceis e documente identificadores exportados (godoc de uma linha, cobrado pelo `revive`); não descreva o que o código já diz nem conte a história da migração. Testes não têm tabela de CC: use `go run ./scripts/cccases`.
 - **Frontend:** a direção é o frontend só renderizar (#45); não acrescente regra de negócio no JS.
 
 ## Invariantes (não quebre sem uma ADR nova)

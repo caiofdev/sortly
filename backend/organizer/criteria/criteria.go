@@ -70,12 +70,10 @@ func New(meta MetadataReader, loc *time.Location) []Rule {
 	}
 }
 
-// fileExt devolve a extensão como a versão Electron: path.extname, sem o ponto, minúscula.
 func fileExt(name string) string {
 	return strings.ToLower(strings.TrimPrefix(paths.Ext(name), "."))
 }
 
-// segmentOrUnknown devolve o segmento ou, se a leitura falhou, prefix + "unknown".
 func segmentOrUnknown(prefix, segment string, err error) string {
 	if err != nil {
 		return prefix + "unknown"

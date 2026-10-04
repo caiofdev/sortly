@@ -23,7 +23,7 @@ type PageCounter interface {
 }
 
 // pageCounters associa cada extensão (minúscula, sem ponto) ao seu contador.
-// ".doc" não tem contador: o organizador o coloca em "pages-unknown", como antes.
+// ".doc" não tem contador: o organizador o coloca em "pages-unknown".
 var pageCounters = map[string]PageCounter{
 	"pdf":  pdfCounter{},
 	"docx": zipRegexCounter{entry: "docProps/app.xml", pattern: regexp.MustCompile(`(?i)<Pages>(\d+)</Pages>`)},
@@ -48,7 +48,6 @@ func Pages(ctx context.Context, path, ext string) (int, error) {
 	return n, nil
 }
 
-// pdfCounter conta as páginas reais do PDF com o pdfcpu.
 type pdfCounter struct{}
 
 func (pdfCounter) CountPages(ctx context.Context, path string) (int, error) {

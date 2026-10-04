@@ -87,7 +87,7 @@ func (plan *Plan) add(ctx context.Context, entry fs.DirEntry, rules []criteria.R
 
 	info, err := entry.Info()
 	if err != nil {
-		// Sumiu entre a listagem e a leitura: segue com os demais, como antes.
+		// Sumiu entre a listagem e a leitura: segue com os demais.
 		return nil
 	}
 	file := criteria.NewFile(plan.Source, info)

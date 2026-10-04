@@ -1,10 +1,5 @@
 package app
 
-// função          | CC | casos
-// Options         |  1 | TestOptionsMatchesElectronWindow, TestOptionsWiresApp, TestOptionsDoesNotShareBackground
-// New             |  1 | TestStartupStoresContext
-// App.startup     |  1 | TestStartupStoresContext
-
 import (
 	"context"
 	"testing"
@@ -14,7 +9,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options/linux"
 )
 
-func TestOptionsMatchesElectronWindow(t *testing.T) {
+func TestOptionsWindow(t *testing.T) {
 	opts := Options(New(Deps{}), fstest.MapFS{}, testIcon)
 
 	cases := []struct {

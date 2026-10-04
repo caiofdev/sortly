@@ -2,9 +2,6 @@
 
 package paths
 
-// função      | CC | casos
-// Native  |  1 | TestNativePath
-
 import "testing"
 
 func TestNativePath(t *testing.T) {

@@ -1,3 +1,5 @@
+// Command sortly abre o app: monta as dependências do backend e entrega a
+// janela ao Wails, com o frontend embutido.
 package main
 
 import (

@@ -1,8 +1,3 @@
-// função                  | CC | casos
-// getItemTone             |  2 | organize; restore e error (mesmo tom); info / desconhecido (padrão)
-// OrganizerSettingsPanel  |  1 | 6 checkboxes na ordem; último marcado desabilitado
-// FolderPathsPanel        |  1 | caminho de 73 caracteres abreviado; title com o caminho completo
-
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { DEFAULT_OPTIONS } from '../domain/organizationOptions';

@@ -1,10 +1,5 @@
 package apperr
 
-// função     | CC | casos
-// New        |  1 | TestError
-// Error.*    |  1 | TestError
-// CodeOf     |  3 | TestCodeOf: nil; com código (direto, envolvido, unido); sem código
-
 import (
 	"errors"
 	"fmt"

@@ -1,9 +1,5 @@
 package criteria
 
-// Valor-limite das regras: tamanho (0 B, 1 B, 1 MB, 1 MB + 1, 2 MB, 2 MB + 1), data
-// (23:59:59 e 00:00:00 locais, virada de ano, 29/02), duração (0,4 / 0,5 / 59 / 60 /
-// 3599 / 3600 s), extensão ("arquivo", "arquivo.", ".gitignore", "A.TAR.GZ").
-
 import (
 	"context"
 	"errors"
@@ -16,7 +12,6 @@ import (
 	"github.com/caiofdev/sortly/backend/metadata"
 )
 
-// fakeMeta devolve valores fixos para os critérios de metadados.
 type fakeMeta struct {
 	size     metadata.Size
 	sizeErr  error
