@@ -19,6 +19,11 @@
   o repouso "puro" (sem acessibilidade) é medido com -IdleOnly, sem nenhuma
   consulta de UI Automation, e as ações rodam com acessibilidade nas duas versões.
 
+  Electron: a versão 2.0 não traz mais o Electron. Para -App electron, rode este
+  script num checkout que ainda o tem (o mesmo das medições em docs/benchmark.md):
+    git worktree add ../sortly-electron 22dd905
+    cd ../sortly-electron; npm install; npm run build:renderer
+
 .EXAMPLE
   powershell -File scripts/benchmark/memory.ps1 -App wails -IdleOnly
   powershell -File scripts/benchmark/memory.ps1 -App wails

@@ -2,9 +2,9 @@
 
 > Autores: Caio Reis, Claude
 
-Este documento descreve **o comportamento atual** do Sortly (versão 1.0, Electron) e serve como especificação de paridade para a reescrita em Go. Divergências planejadas estão marcadas com 🔧 e detalhadas em [code-review.md](code-review.md).
+Este documento descreve o comportamento do Sortly. Ele nasceu como especificação de paridade da versão 1.0 (Electron) para a reescrita em Go: o comportamento é o mesmo, e as diferenças intencionais estão marcadas com 🔧 e detalhadas em [code-review.md](code-review.md).
 
-Referência de código atual: `electron/services/organizeFilesService.js`, `electron/services/undoOrganizationService.js`, `electron/models/pathModel.js`.
+Implementação: `internal/organizer`, `internal/metadata`, `internal/undo` e `internal/fsutil`. O código da 1.0 (`electron/services/organizeFilesService.js`, `undoOrganizationService.js`, `models/pathModel.js`) está no histórico do git.
 
 ## 1. Entrada
 

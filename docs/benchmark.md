@@ -56,15 +56,23 @@ A renderização passa a ser por software. Capturas da janela nativa com e sem G
 
 ## Como reproduzir
 
-```powershell
-wails build                                   # build/bin/Sortly.exe
-npm install                                   # runtime do Electron em node_modules/
-cd frontend; npm run build; cd ..             # frontend usado pela versão Electron
+Wails (versão atual):
 
-powershell -File scripts/benchmark/memory.ps1 -App electron -IdleOnly   # repouso sem acessibilidade
-powershell -File scripts/benchmark/memory.ps1 -App electron             # organizar + desfazer (1000 arquivos)
-powershell -File scripts/benchmark/memory.ps1 -App wails -IdleOnly
-powershell -File scripts/benchmark/memory.ps1 -App wails
+```powershell
+wails build                                                           # build/bin/Sortly.exe
+powershell -File scripts/benchmark/memory.ps1 -App wails -IdleOnly    # repouso sem acessibilidade
+powershell -File scripts/benchmark/memory.ps1 -App wails              # organizar + desfazer (1000 arquivos)
+```
+
+Electron 1.0: o Electron foi removido na 2.0 ([#16](https://github.com/caiofdev/sortly/issues/16)). As medições usaram o commit `22dd905`, o último com as duas versões e o mesmo frontend:
+
+```powershell
+git worktree add ../sortly-electron 22dd905
+cd ../sortly-electron
+npm install                                   # runtime do Electron e dependências do frontend
+npm run build:renderer                        # frontend usado pela versão Electron
+powershell -File scripts/benchmark/memory.ps1 -App electron -IdleOnly
+powershell -File scripts/benchmark/memory.ps1 -App electron
 ```
 
 O script soma a memória de **toda a árvore de processos** do app a cada 200 ms. As ações são feitas pela interface, com UI Automation (os mesmos cliques de um usuário), porque o loader de WebView2 do Wails bloqueia a depuração remota (`WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS`).
@@ -75,4 +83,4 @@ A UI Automation liga a árvore de acessibilidade, que aumenta a memória. Por is
 
 - Uma única máquina, com GPU dedicada NVIDIA. Em GPUs integradas, o processo de GPU tende a ocupar menos memória.
 - macOS e Linux não foram medidos. O WKWebView e o WebKitGTK não usam a arquitetura multiprocesso do Chromium, e a diferença para o Electron tende a ser maior nessas plataformas.
-- A versão Electron medida usa o frontend refatorado desta branch, com a mesma interface. A configuração do Electron e o backend Node são os da versão 1.0.
+- A versão Electron medida usa o frontend refatorado da 2.0, com a mesma interface. A configuração do Electron e o backend Node são os da versão 1.0.

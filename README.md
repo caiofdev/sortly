@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="src/assets/app-logo.svg" alt="Sortly" width="96" />
+  <img src="frontend/src/assets/app-logo.svg" alt="Sortly" width="96" />
 </p>
 
 <h1 align="center">Sortly</h1>
@@ -30,10 +30,12 @@ A ideia é resolver aquela pasta de Downloads ou de Documentos que virou bagunç
 </p>
 
 <p align="center">
-  <img src="docs/images/demo.gif" alt="Demonstração: arrastar uma pasta, organizar e desfazer" width="720" />
+  <img src="docs/images/demo.gif" alt="Demonstração: escolher os critérios, organizar e desfazer" width="720" />
 </p>
 
-> As imagens serão adicionadas em `docs/images/` ao final da migração.
+| Critérios de organização | Notificações |
+|---|---|
+| <img src="docs/images/screenshot-settings.png" alt="Painel de critérios de organização" width="360" /> | <img src="docs/images/screenshot-notifications.png" alt="Painel de notificações após organizar" width="360" /> |
 
 ### Funcionalidades
 
@@ -51,7 +53,7 @@ As regras completas estão em [docs/organization-rules.md](docs/organization-rul
 
 ### Por que uma nova versão?
 
-A versão 1.0 foi feita com Electron, que embute um navegador inteiro em cada app. O Sortly está sendo reescrito com [Wails](https://wails.io) (Go + React), que usa o navegador já presente no sistema. O resultado é um app com a mesma interface, **instalador 9× menor** (8,8 MB em vez de 82 MB), **15× menos espaço em disco**, **cerca de 1/3 menos memória** no Windows (177 MB em vez de 260 MB em repouso; metade no pico ao organizar) e organização cerca de 2× mais rápida. Os números estão em [docs/benchmark.md](docs/benchmark.md). Decisão em [docs/adr/0001-electron-para-wails.md](docs/adr/0001-electron-para-wails.md).
+A versão 1.0 foi feita com Electron, que embute um navegador inteiro em cada app. A versão 2.0 foi reescrita com [Wails](https://wails.io) (Go + React), que usa o navegador já presente no sistema. O resultado é um app com a mesma interface, **instalador 9× menor** (8,8 MB em vez de 82 MB), **15× menos espaço em disco**, **cerca de 1/3 menos memória** no Windows (177 MB em vez de 260 MB em repouso; metade no pico ao organizar) e organização cerca de 2× mais rápida. Os números estão em [docs/benchmark.md](docs/benchmark.md). Decisão em [docs/adr/0001-electron-para-wails.md](docs/adr/0001-electron-para-wails.md).
 
 ### Instalação
 
@@ -59,31 +61,23 @@ Baixe o instalador na aba [Releases](https://github.com/caiofdev/sortly/releases
 
 | Sistema | Formato |
 |---|---|
-| Windows | instalador `.exe` |
-| macOS | `.dmg` *(a partir da versão 2.0)* |
-| Linux | `.deb` / AppImage *(a partir da versão 2.0)* |
+| Windows 10/11 | instalador `.exe` (atualiza a versão 1.0 e mantém o desfazer pendente) |
+| macOS 10.13+ | `.dmg` (Intel e Apple Silicon) |
+| Linux (Debian/Ubuntu) | `.deb` |
+
+Detalhes de cada pacote em [docs/release.md](docs/release.md).
 
 ### Desenvolvimento
 
-> 🚧 A migração para Wails está em andamento na branch `wails-rewrite` ([milestone](https://github.com/caiofdev/sortly/milestone/1)). Até ela terminar, o app roda com Electron.
-
-A interface fica em `frontend/` e é compartilhada pelas duas versões.
-
-**Versão atual (Electron)** — requer Node.js 20+:
-
-```bash
-npm install      # instala também as dependências de frontend/
-npm run dev      # modo desenvolvimento
-npm run build    # gera o instalador em release/
-```
-
-**Versão Wails** — requer Go 1.25+, Node.js 20+ e a [Wails CLI v2](https://wails.io/docs/gettingstarted/installation). Por enquanto a janela abre com a interface, mas as ações ainda não estão ligadas ao backend Go:
+Requer Go 1.25+, Node.js 20+ e a [Wails CLI v2](https://wails.io/docs/gettingstarted/installation). No Linux, também `libgtk-3-dev` e `libwebkit2gtk-4.1-dev`.
 
 ```bash
 wails doctor     # verifica o ambiente
-wails dev        # modo desenvolvimento
-wails build      # gera build/bin/Sortly.exe
+wails dev        # modo desenvolvimento, com recarga do frontend
+wails build      # gera build/bin/Sortly(.exe)
 ```
+
+O backend em Go fica em `internal/` e a interface React em `frontend/`. Estrutura, comandos e convenções: [docs/development.md](docs/development.md).
 
 ### Testes
 
@@ -111,7 +105,7 @@ Commits seguem o padrão semântico com o número da issue:
 feat(sortly-12): adiciona drag and drop nativo
 ```
 
-Cada issue tem sua própria branch (`sortly-N-descricao`), que sai de `wails-rewrite` e volta para ela por pull request. Os PRs abrem já preenchidos com o [template](.github/pull_request_template.md): issue, resumo, testes (complexidade ciclomática e valor-limite), checklist e autores. O fluxo completo está em [docs/README.md](docs/README.md#fluxo-de-contribuição).
+Cada issue tem sua própria branch (`sortly-N-descricao`), que sai de `main` e volta para ela por pull request. Os PRs abrem já preenchidos com o [template](.github/pull_request_template.md): issue, resumo, testes (complexidade ciclomática e valor-limite), checklist e autores. O fluxo completo está em [docs/README.md](docs/README.md#fluxo-de-contribuição).
 
 O que muda para o usuário é registrado no [CHANGELOG](CHANGELOG.md).
 
@@ -141,10 +135,12 @@ It is meant for that Downloads or Documents folder that became a mess — no mov
 </p>
 
 <p align="center">
-  <img src="docs/images/demo.gif" alt="Demo: drop a folder, organize and undo" width="720" />
+  <img src="docs/images/demo.gif" alt="Demo: choose the criteria, organize and undo" width="720" />
 </p>
 
-> Images will be added to `docs/images/` when the migration is complete.
+| Organization criteria | Notifications |
+|---|---|
+| <img src="docs/images/screenshot-settings.png" alt="Organization criteria panel" width="360" /> | <img src="docs/images/screenshot-notifications.png" alt="Notifications panel after organizing" width="360" /> |
 
 ### Features
 
@@ -160,7 +156,7 @@ When a file lacks the required information (for example, a video without a reada
 
 ### Why a new version?
 
-Version 1.0 was built with Electron, which bundles a full browser in every app. Sortly is being rewritten with [Wails](https://wails.io) (Go + React), which uses the browser already present in the operating system. The result is the same interface with a **9× smaller installer** (8.8 MB instead of 82 MB), **15× less disk space**, **about 1/3 less memory** on Windows (177 MB instead of 260 MB at idle; half at peak while organizing) and roughly 2× faster organizing. See [docs/benchmark.md](docs/benchmark.md).
+Version 1.0 was built with Electron, which bundles a full browser in every app. Version 2.0 was rewritten with [Wails](https://wails.io) (Go + React), which uses the browser already present in the operating system. The result is the same interface with a **9× smaller installer** (8.8 MB instead of 82 MB), **15× less disk space**, **about 1/3 less memory** on Windows (177 MB instead of 260 MB at idle; half at peak while organizing) and roughly 2× faster organizing. See [docs/benchmark.md](docs/benchmark.md).
 
 ### Installation
 
@@ -168,29 +164,21 @@ Download the installer from [Releases](https://github.com/caiofdev/sortly/releas
 
 | System | Format |
 |---|---|
-| Windows | `.exe` installer |
-| macOS | `.dmg` *(from version 2.0)* |
-| Linux | `.deb` / AppImage *(from version 2.0)* |
+| Windows 10/11 | `.exe` installer (upgrades version 1.0 and keeps a pending undo) |
+| macOS 10.13+ | `.dmg` (Intel and Apple Silicon) |
+| Linux (Debian/Ubuntu) | `.deb` |
 
 ### Development
 
-> 🚧 The Wails migration is in progress on the `wails-rewrite` branch ([milestone](https://github.com/caiofdev/sortly/milestone/1)). Until it is done, the app runs on Electron.
-
-**Current version (Electron)** — requires Node.js 20+:
-
-```bash
-npm install
-npm run dev
-npm run build
-```
-
-**Wails version** — requires Go 1.25+, Node.js 20+ and the [Wails CLI v2](https://wails.io/docs/gettingstarted/installation):
+Requires Go 1.25+, Node.js 20+ and the [Wails CLI v2](https://wails.io/docs/gettingstarted/installation). On Linux, also `libgtk-3-dev` and `libwebkit2gtk-4.1-dev`.
 
 ```bash
 wails doctor
 wails dev
 wails build
 ```
+
+The Go backend lives in `internal/` and the React UI in `frontend/`. See [docs/development.md](docs/development.md) (in Portuguese).
 
 ### Tests
 
