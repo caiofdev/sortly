@@ -1,9 +1,3 @@
-// função          | CC | casos
-// abbreviatePath  |  2 | 0, 72 e 73 caracteres
-// createId        |  2 | com crypto.randomUUID; sem (contador)
-//
-// Valor-limite: caminho com MAX_PATH_LENGTH (72, mantém) e 73 caracteres (abrevia).
-
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MAX_PATH_LENGTH, abbreviatePath } from './abbreviatePath';
 import { createId } from './createId';

@@ -34,7 +34,6 @@ function OrganizerView({
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#0B1220] text-[#F8FAFC]">
-      {/* Camadas de fundo: gradientes suaves + grid sutil para profundidade */}
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_10%_10%,rgba(59,130,246,0.18),transparent_40%),radial-gradient(circle_at_90%_90%,rgba(34,197,94,0.14),transparent_35%),radial-gradient(circle_at_50%_50%,rgba(168,85,247,0.06),transparent_60%)]" />
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.03]"

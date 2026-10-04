@@ -1,11 +1,3 @@
-// função          | CC | casos
-// resolveBackend  |  2 | Wails; fora do Wails
-// toSortlyError   |  3 | string com código; Error com código; texto livre; vazio
-// createGateway   |  3 | sem backend; sucesso; erro normalizado
-// subscribeFileDrop |  2 | Wails (OnFileDrop com alvo + OnFileDropOff); sem backend (noop)
-//
-// Os bindings do Wails são lidos de window.go.app.App no momento da chamada.
-
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { SortlyError, createGateway, resolveBackend, toSortlyError } from './sortlyGateway';
 

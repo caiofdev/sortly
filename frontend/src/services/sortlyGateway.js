@@ -66,8 +66,6 @@ export function createGateway(getBackend = resolveBackend) {
     getLastOrganizationState: () => call('getLastOrganizationState'),
     organizeFiles: (payload) => call('organizeFiles', payload),
     undoLastOrganization: () => call('undoLastOrganization'),
-    // Assina os arquivos soltos na janela e devolve a função que cancela a
-    // assinatura (sem backend, não assina nada).
     subscribeFileDrop: (handler) => getBackend()?.subscribeFileDrop?.(handler) ?? noop
   };
 }

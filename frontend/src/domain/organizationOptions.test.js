@@ -1,11 +1,3 @@
-// função            | CC | casos
-// countSelected     |  1 | 0, 1 e 6 marcados
-// canToggle         |  3 | desmarcar o último (bloqueia); desmarcar com 2; marcar; desmarcar já desmarcado
-// toggleOption      |  2 | permitido; bloqueado (mesma referência)
-// normalizeOptions  |  2 | completa padrões; byExtension ausente; byExtension false; null
-//
-// Valor-limite: quantidade de critérios marcados = 1 (bloqueia desmarcar) e 2 (permite).
-
 import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_OPTIONS,

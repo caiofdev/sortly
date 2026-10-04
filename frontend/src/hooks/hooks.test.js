@@ -1,12 +1,3 @@
-// função                  | CC | casos
-// usePersistentState      |  1 | lê o salvo; grava ao mudar
-// readStorage/writeStorage|  2 | localStorage indisponível (leitura e gravação)
-// useLanguagePreference   |  2 | idioma salvo válido; inválido
-// useNotifications.notify |  1 | ordem (mais recente primeiro); limite 80/81; horário por idioma
-// clearNotifications      |  1 | limpa
-//
-// Valor-limite: 80 notificações (todas ficam) e 81 (a mais antiga sai).
-
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
 import useLanguagePreference from './useLanguagePreference';
