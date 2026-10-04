@@ -2,9 +2,16 @@ name: Release
 
 # Ao criar uma tag de versão (ex.: v2.0.0), gera os pacotes das três plataformas
 # e anexa a um rascunho de release. Passo a passo em docs/release.md.
+# Em pull requests que mexem no empacotamento, só gera os pacotes (artefatos do
+# workflow), para validar instalador, .dmg e .deb antes de uma versão.
 on:
   push:
     tags: ['v*']
+  pull_request:
+    paths:
+      - 'build/**'
+      - 'wails.json'
+      - '.github/workflows/release.yml'
 
 permissions:
   contents: write
@@ -39,11 +46,11 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Versão da tag = productVersion do wails.json
+      - name: Versão (productVersion do wails.json; numa tag, precisa ser igual)
         run: |
-          tag="${GITHUB_REF_NAME#v}"
           app="$(node -p "require('./wails.json').info.productVersion")"
-          if [ "$tag" != "$app" ]; then
+          tag="${GITHUB_REF_NAME#v}"
+          if [ "$GITHUB_REF_TYPE" = "tag" ] && [ "$tag" != "$app" ]; then
             echo "::error::A tag v$tag não bate com info.productVersion ($app) do wails.json"
             exit 1
           fi
@@ -105,6 +112,7 @@ jobs:
   release:
     name: Rascunho de release
     needs: build
+    if: github.ref_type == 'tag'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v5

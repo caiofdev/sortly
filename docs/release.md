@@ -27,6 +27,8 @@ Como gerar uma nova versão do Sortly e o que cada pacote contém.
    - cria um **rascunho** de release no GitHub com os arquivos anexados.
 5. Revise o rascunho, cole as notas da versão a partir do CHANGELOG e publique.
 
+Em pull requests que alteram `build/**`, `wails.json` ou o próprio workflow, o `release.yml` também roda, mas só gera os pacotes como artefatos do workflow, sem criar release. Assim o instalador, o `.dmg` e o `.deb` são validados antes de uma versão.
+
 ## 3. Pacotes gerados
 
 | Plataforma | Arquivo | Conteúdo |
