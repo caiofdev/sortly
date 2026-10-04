@@ -1,6 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { SortlyError } from '../services/sortlyGateway';
-import { describeError } from './describeError';
 import feedbackCopy from './feedbackCopy';
 import { getCopy, toLocale } from './language';
 
@@ -20,6 +18,12 @@ const BACKEND_CODES = [
   'INVALID_LANGUAGE',
   'SETTINGS_NOT_SAVED'
 ];
+const NOTICE_TEXTS = [
+  'sourceRequired',
+  'recoveredLastOrganization',
+  'droppedPathSuccess',
+  'unexpectedError'
+];
 
 describe('language', () => {
   it('getCopy usa o idioma pedido ou o padrão', () => {
@@ -34,6 +38,11 @@ describe('language', () => {
 });
 
 describe('códigos de erro do backend (ADR 0004)', () => {
+  it.each(NOTICE_TEXTS)('%s existe em PT e EN', (key) => {
+    expect(pt[key]).toBeTruthy();
+    expect(en[key]).toBeTruthy();
+  });
+
   it.each(BACKEND_CODES)('%s tem tradução em PT e EN', (code) => {
     expect(pt.errors[code]).toBeTruthy();
     expect(en.errors[code]).toBeTruthy();
@@ -44,31 +53,6 @@ describe('códigos de erro do backend (ADR 0004)', () => {
     expect(pt.errors.INVALID_DESTINATION).toBe('Pasta de destino inválida.');
     expect(pt.errors.NO_CRITERIA).toBe('Selecione ao menos um criterio de organizacao.');
     expect(pt.errors.NOTHING_TO_UNDO).toBe('Nenhuma separação recente para desfazer.');
-  });
-});
-
-describe('describeError', () => {
-  it('traduz o código no idioma atual', () => {
-    const error = new SortlyError('NOTHING_TO_UNDO', 'NOTHING_TO_UNDO');
-    expect(describeError(error, pt, 'padrão')).toBe('Nenhuma separação recente para desfazer.');
-    expect(describeError(error, en, 'default')).toBe('No recent organization to undo.');
-  });
-
-  it('UNEXPECTED vindo do backend usa o texto padrão', () => {
-    expect(describeError(new SortlyError('UNEXPECTED', 'UNEXPECTED'), pt, 'padrão')).toBe('padrão');
-  });
-
-  it('texto livre, backend indisponível e código sem tradução usam o texto padrão', () => {
-    expect(describeError(new SortlyError('UNEXPECTED', 'TypeError: x'), pt, 'padrão')).toBe(
-      'padrão'
-    );
-    expect(describeError(new SortlyError('UNEXPECTED', 'Backend indisponível'), pt, 'padrão')).toBe(
-      'padrão'
-    );
-    expect(describeError(new SortlyError('NOVO_CODIGO', 'NOVO_CODIGO'), pt, 'padrão')).toBe(
-      'padrão'
-    );
-    expect(describeError(null, pt, 'padrão')).toBe('padrão');
   });
 });
 

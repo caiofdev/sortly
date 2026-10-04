@@ -1,82 +1,70 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { SortlyError, createGateway, resolveBackend, toSortlyError } from './sortlyGateway';
+import { STATE_EVENT, createGateway, resolveBackend } from './sortlyGateway';
+
+const METHODS = [
+  ['getState', 'GetState', []],
+  ['selectSource', 'SelectSource', []],
+  ['selectDestination', 'SelectDestination', []],
+  ['dropPaths', 'DropPaths', [['C:/a.txt']]],
+  ['organize', 'Organize', []],
+  ['undo', 'Undo', []],
+  ['clearNotifications', 'ClearNotifications', []],
+  ['setLanguage', 'SetLanguage', ['en']],
+  ['setCriterion', 'SetCriterion', ['byDate', true]]
+];
 
 describe('resolveBackend', () => {
   afterEach(() => {
     delete window.go;
   });
 
-  it('usa os bindings do Wails quando presentes', async () => {
-    window.go = {
-      app: { App: { GetLastOrganizationState: vi.fn().mockResolvedValue({ hasUndo: true }) } }
-    };
-    const backend = resolveBackend(window);
-    await expect(backend.getLastOrganizationState()).resolves.toEqual({ hasUndo: true });
-  });
-
   it('fora do Wails devolve null', () => {
     expect(resolveBackend({})).toBeNull();
   });
-});
 
-describe('toSortlyError', () => {
-  it.each([
-    ['string com código (janela nativa)', 'NOTHING_TO_UNDO', 'NOTHING_TO_UNDO'],
-    ['Error com código (navegador)', new Error('DROPPED_MISSING'), 'DROPPED_MISSING'],
-    ['texto livre (erro do runtime)', new Error('TypeError: falha inesperada'), 'UNEXPECTED'],
-    ['erro vazio', undefined, 'UNEXPECTED']
-  ])('%s', (_, input, code) => {
-    const error = toSortlyError(input);
-    expect(error).toBeInstanceOf(SortlyError);
-    expect(error.code).toBe(code);
+  it.each(METHODS)('%s chama o binding %s com os argumentos', async (method, binding, args) => {
+    const fn = vi.fn().mockResolvedValue({ busy: '' });
+    window.go = { app: { App: { [binding]: fn } } };
+    await expect(resolveBackend(window)[method](...args)).resolves.toEqual({ busy: '' });
+    expect(fn).toHaveBeenCalledWith(...args);
   });
 });
 
 describe('createGateway', () => {
-  it('sem backend rejeita com UNEXPECTED', async () => {
+  it('sem backend, as ações rejeitam e as assinaturas não fazem nada', async () => {
     const gateway = createGateway(() => null);
-    await expect(gateway.selectSourceFolder()).rejects.toMatchObject({ code: 'UNEXPECTED' });
+    await expect(gateway.organize()).rejects.toThrow('Backend indisponível');
+    expect(gateway.subscribeState(vi.fn())).toBeTypeOf('function');
+    expect(gateway.subscribeFileDrop(vi.fn())).toBeTypeOf('function');
   });
 
-  it('repassa argumentos e resultado', async () => {
-    const backend = { organizeFiles: vi.fn().mockResolvedValue({ movedFiles: 2 }) };
-    const gateway = createGateway(() => backend);
-    await expect(gateway.organizeFiles('origem', 'destino')).resolves.toEqual({ movedFiles: 2 });
-    expect(backend.organizeFiles).toHaveBeenCalledWith('origem', 'destino');
-  });
-
-  it('normaliza o erro do backend', async () => {
-    const backend = { undoLastOrganization: vi.fn().mockRejectedValue('NOTHING_TO_UNDO') };
-    const gateway = createGateway(() => backend);
-    await expect(gateway.undoLastOrganization()).rejects.toMatchObject({ code: 'NOTHING_TO_UNDO' });
-  });
-
-  it('expõe os 9 métodos da API', () => {
-    const backend = Object.fromEntries(
-      [
-        'selectSourceFolder',
-        'selectDestinationFolder',
-        'resolveDroppedPath',
-        'getLastOrganizationState',
-        'organizeFiles',
-        'undoLastOrganization',
-        'getSettings',
-        'setLanguage',
-        'setCriterion'
-      ].map((m) => [m, vi.fn().mockResolvedValue(m)])
-    );
-    const gateway = createGateway(() => backend);
-    return Promise.all(Object.keys(backend).map((m) => expect(gateway[m]('arg')).resolves.toBe(m)));
+  it.each(METHODS)('%s repassa argumentos e resultado', async (method, _binding, args) => {
+    const backend = { [method]: vi.fn().mockResolvedValue('estado') };
+    await expect(createGateway(() => backend)[method](...args)).resolves.toBe('estado');
+    expect(backend[method]).toHaveBeenCalledWith(...args);
   });
 });
 
-describe('subscribeFileDrop', () => {
+describe('assinaturas no Wails', () => {
   afterEach(() => {
     delete window.go;
     delete window.runtime;
   });
 
-  it('no Wails, assina com alvo de drop e cancela com OnFileDropOff', () => {
+  it('estado: assina o evento sortly:state e devolve o cancelamento do Wails', () => {
+    const off = vi.fn();
+    window.go = { app: { App: {} } };
+    window.runtime = { EventsOnMultiple: vi.fn(() => off) };
+    const handler = vi.fn();
+
+    const unsubscribe = createGateway().subscribeState(handler);
+
+    expect(window.runtime.EventsOnMultiple).toHaveBeenCalledWith(STATE_EVENT, handler, -1);
+    unsubscribe();
+    expect(off).toHaveBeenCalled();
+  });
+
+  it('arquivos soltos: assina com alvo de drop e cancela com OnFileDropOff', () => {
     window.go = { app: { App: {} } };
     window.runtime = { OnFileDrop: vi.fn(), OnFileDropOff: vi.fn() };
     const handler = vi.fn();
@@ -88,9 +76,5 @@ describe('subscribeFileDrop', () => {
     expect(handler).toHaveBeenCalledWith(['C:/a.txt']);
     unsubscribe();
     expect(window.runtime.OnFileDropOff).toHaveBeenCalled();
-  });
-
-  it('sem backend, não assina nada', () => {
-    expect(createGateway(() => null).subscribeFileDrop(vi.fn())).toBeTypeOf('function');
   });
 });

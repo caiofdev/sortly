@@ -1,44 +1,37 @@
-import useFileOrganizerController from './controllers/useFileOrganizerController';
-import useNotifications from './hooks/useNotifications';
-import useSettings from './hooks/useSettings';
+import { useMemo } from 'react';
+import useViewState from './hooks/useViewState';
+import { toNotificationItems } from './i18n/notifications';
 import OrganizerView from './views/OrganizerView';
 
 function App() {
-  const { settings, setLanguage, setCriterion } = useSettings();
-  const { language, criteria } = settings;
-  const { notifications, notify, clearNotifications } = useNotifications(language);
+  const { state, ready, actions } = useViewState();
+  const { language, criteria } = state.settings;
+  const notifications = useMemo(
+    () => toNotificationItems(state.notifications, language),
+    [state.notifications, language]
+  );
 
-  const {
-    sourceFolderPath,
-    destinationFolderPath,
-    hasUndo,
-    isLoading,
-    loadingAction,
-    handleSelectSourceFolder,
-    handleSelectDestinationFolder,
-    handleOrganizeFiles,
-    handleUndoLastOrganization,
-    handleLanguageChange,
-    handleCriterionChange
-  } = useFileOrganizerController({ language, notify, setLanguage, setCriterion });
+  if (!ready) {
+    return null;
+  }
 
   return (
     <OrganizerView
       language={language}
       criteria={criteria}
-      sourceFolderPath={sourceFolderPath}
-      destinationFolderPath={destinationFolderPath}
-      hasUndo={hasUndo}
-      isLoading={isLoading}
-      loadingAction={loadingAction}
+      sourceFolderPath={state.sourceFolderPath}
+      destinationFolderPath={state.destinationFolderPath}
+      hasUndo={state.hasUndo}
+      isLoading={Boolean(state.busy)}
+      loadingAction={state.busy || null}
       notifications={notifications}
-      onClearNotifications={clearNotifications}
-      onLanguageChange={handleLanguageChange}
-      onCriterionChange={handleCriterionChange}
-      onSelectSourceFolder={handleSelectSourceFolder}
-      onSelectDestinationFolder={handleSelectDestinationFolder}
-      onOrganizeFiles={handleOrganizeFiles}
-      onUndoLastOrganization={handleUndoLastOrganization}
+      onClearNotifications={actions.clearNotifications}
+      onLanguageChange={actions.setLanguage}
+      onCriterionChange={actions.setCriterion}
+      onSelectSourceFolder={actions.selectSource}
+      onSelectDestinationFolder={actions.selectDestination}
+      onOrganizeFiles={actions.organize}
+      onUndoLastOrganization={actions.undo}
     />
   );
 }

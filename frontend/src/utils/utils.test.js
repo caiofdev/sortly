@@ -1,6 +1,5 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { MAX_PATH_LENGTH, abbreviatePath } from './abbreviatePath';
-import { createId } from './createId';
 
 describe('abbreviatePath', () => {
   it('72 caracteres: mantém o caminho inteiro', () => {
@@ -16,19 +15,5 @@ describe('abbreviatePath', () => {
 
   it('vazio continua vazio', () => {
     expect(abbreviatePath('')).toBe('');
-  });
-});
-
-describe('createId', () => {
-  afterEach(() => vi.unstubAllGlobals());
-
-  it('usa crypto.randomUUID quando disponível', () => {
-    vi.stubGlobal('crypto', { randomUUID: () => 'uuid-fixo' });
-    expect(createId()).toBe('uuid-fixo');
-  });
-
-  it('sem crypto.randomUUID, gera ids diferentes', () => {
-    vi.stubGlobal('crypto', undefined);
-    expect(createId()).not.toBe(createId());
   });
 });
