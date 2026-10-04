@@ -4,10 +4,10 @@ Base: [react.dev](https://react.dev) (especialmente "You Might Not Need an Effec
 
 ## Papel do frontend no Sortly
 
-- [ ] O frontend renderiza e traduz; regra de negócio (validação, decisão, limites, estado da organização) mora no Go (#45). Lógica nova no JS é achado 🟠, salvo apresentação pura.
+- [ ] O frontend renderiza e traduz; regra de negócio (validação, decisão, limites, estado da organização) mora no Go (ADR 0005). Lógica nova no JS é achado 🟠, salvo apresentação pura.
 - [ ] Acesso ao backend só pelo gateway (`services/sortlyGateway.js`), nunca `window.go` direto em componente.
 - [ ] Textos vêm do i18n (`i18n/*`), em PT e EN; nenhum texto fixo em componente; chaves novas existem nos dois idiomas.
-- [ ] Erro do backend traduzido pelo código (`describeError`), nunca exibindo `error.message` cru.
+- [ ] Notificações traduzidas pelo código em `i18n/notifications.js`; código novo do backend tem texto em PT e EN (ou cai no texto padrão da ação).
 
 ## Hooks
 

@@ -22,14 +22,12 @@ backend/            backend Go (pacotes por responsabilidade; teste sempre ao la
   apperr/           erros com código estável
   logging/          slog em arquivo
   tests/            testes de integração (só API pública, disco de verdade)
-frontend/src/       React: components/, views/, controllers/, hooks/, services/, i18n/
+frontend/src/       React só de apresentação: components/, views/, hooks/useViewState, services/sortlyGateway, i18n/
 frontend/wailsjs/   bindings gerados pelo Wails (versionados; regenerados por wails dev/build)
 build/              ícones, manifesto Windows, Info.plist, NSIS (windows/installer), nfpm (linux)
 scripts/            check-coverage.sh, cccases/ (CC × casos), benchmark/ e parity/ (PowerShell)
 docs/               architecture.md, organization-rules.md, development.md (inclui testes e fluxo), release.md, benchmark.md, adr/, images/
 ```
-
-A #45 leva o estado da tela para o Go; atualize este arquivo quando ela entrar.
 
 ## Comandos
 
@@ -63,14 +61,14 @@ cd frontend && npm run lint && npm run format:check && npm test   # ESLint (comp
 - **Testes:** cada função com CC = N tem pelo menos N casos (confira com `go run ./scripts/cccases`); fronteiras testadas em limite − 1, limite e limite + 1; todo bug corrigido ganha teste de regressão. Go: testes em tabela, `t.TempDir()`, fakes das interfaces. Frontend: Vitest + React Testing Library.
 - **Go:** injeção de dependências por construtor; interfaces pequenas declaradas no pacote que as usa; erros com `%w` e códigos de `apperr`; `context.Context` em operações longas.
 - **Comentários:** explique o *porquê* de trechos difíceis e documente identificadores exportados (godoc de uma linha, cobrado pelo `revive`); não descreva o que o código já diz nem conte a história da migração. Testes não têm tabela de CC: use `go run ./scripts/cccases`.
-- **Frontend:** a direção é o frontend só renderizar (#45); não acrescente regra de negócio no JS.
+- **Frontend só renderiza (ADR 0005):** o estado da tela mora em `backend/app` (`ViewState`); cada binding devolve o estado completo e erros viram notificações. Nada de regra, validação ou estado de negócio no JS. Toda lista enviada ao frontend é array no JSON, nunca `null`.
 
 ## Invariantes (não quebre sem uma ADR nova)
 
 - Nomes das pastas criadas e o formato de `~/.sortly/last-operation.json` são os da versão 1.0 (um desfazer pendente da 1.0 funciona na 2.0). Especificação em `docs/organization-rules.md`.
 - O backend devolve **dados e códigos de erro**, nunca texto para o usuário; o i18n fica inteiro no frontend (ADR 0004).
 - A interface não muda visualmente sem pedido explícito.
-- Decisões registradas em `docs/adr/`: 0001 Electron → Wails, 0002 gateway no frontend, 0003 Strategy + registry nas regras, 0004 erros com código.
+- Decisões registradas em `docs/adr/`: 0001 Electron → Wails, 0002 gateway no frontend (substituída), 0003 Strategy + registry nas regras, 0004 erros com código, 0005 estado da tela no backend.
 
 ## Armadilhas do ambiente
 

@@ -11,13 +11,13 @@ O Wails usa o WebView nativo do sistema (WebView2 no Windows, WKWebView no macOS
 ```mermaid
 flowchart LR
   subgraph Frontend["Frontend — React 18 + Tailwind (WebView nativo)"]
-    UI[Componentes<br/>sem mudança visual] --> Ctrl[useFileOrganizerController]
-    Ctrl --> Notif[useNotifications]
-    Ctrl --> GW[services/sortlyGateway]
+    UI[Componentes<br/>e i18n] --> VS[useViewState]
+    VS --> GW[services/sortlyGateway]
   end
-  GW -- "bindings gerados<br/>wailsjs/go/app/App" --> App
+  GW -- "bindings: ação → ViewState" --> App
+  App -. "evento sortly:state" .-> GW
   subgraph Backend["Backend — Go"]
-    App[App<br/>fachada fina] --> Org[organizer<br/>Planner · Executor]
+    App[App<br/>ViewState · notificações] --> Org[organizer<br/>Planner · Executor]
     Org --> Crit[organizer/criteria<br/>uma regra por critério]
     App --> Undo[undo]
     Crit --> Meta[metadata<br/>imagem · mp4 · páginas]
@@ -38,7 +38,7 @@ flowchart LR
 | Pacote | Responsabilidade |
 |---|---|
 | `main` (`main.go`) | Embute `frontend/dist`, monta as dependências e chama `wails.Run`. Fica na raiz porque o `go:embed` não aceita `..` e a CLI do Wails v2 compila o pacote da pasta do `wails.json` |
-| `backend/app` | Fachada `App` exposta ao frontend (só delega aos serviços), drop nativo, opções da janela (`Options`) e composição das dependências (`wire.go`) |
+| `backend/app` | Fachada `App` exposta ao frontend: guarda o estado da tela (`ViewState`, notificações), delega as regras aos serviços e emite `sortly:state`; também as opções da janela (`Options`) e a composição das dependências (`wire.go`) |
 | `backend/organizer` | Validação do pedido, `Planner` (calcula o plano, sem efeitos colaterais), `Executor` (aplica os movimentos e mantém o journal), erros com código ([ADR 0004](adr/0004-erros-com-codigo.md)) |
 | `backend/organizer/criteria` | Os seis critérios, um por arquivo, atrás da interface `Rule` e do registry `New` ([ADR 0003](adr/0003-strategy-regras.md)); `Options` (com a ordem de exibição `Keys` e o acesso por chave) e `File` |
 | `backend/settings` | Preferências (idioma e critérios) em `~/.sortly/settings.json`: lê uma vez, aceita só valores válidos, recusa desligar o último critério e grava com `files.WriteAtomic`; monta a visão para a tela (`View`) |
@@ -59,35 +59,46 @@ Princípios:
 
 ## 3. Contrato com o frontend (bindings)
 
-Os métodos públicos de `backend/app.App` viram funções JavaScript geradas em `frontend/wailsjs/go/app/App.js` (com tipos em `frontend/wailsjs/go/models.ts`). Todas devolvem `Promise`.
+O frontend só renderiza ([ADR 0005](adr/0005-estado-da-tela-no-backend.md)). A fachada `backend/app.App` guarda o estado da tela, e **todo binding devolve o estado completo** (`ViewState`). Os métodos viram funções JavaScript em `frontend/wailsjs/go/app/App.js`, com tipos em `models.ts`.
 
-| Binding | Entrada | Saída | Códigos de erro |
-|---|---|---|---|
-| `SelectSourceFolder()` | — | caminho, ou `""` se cancelado | `UNEXPECTED` |
-| `SelectDestinationFolder()` | — | caminho, ou `""` se cancelado | `UNEXPECTED` |
-| `ResolveDroppedPath(path)` | caminho | `{ sourceFolderPath }` | `DROPPED_INVALID`, `DROPPED_MISSING`, `DROPPED_UNSUPPORTED` |
-| `GetLastOrganizationState()` | — | `{ hasUndo, sourceFolderPath, destinationFolderPath }` | — (registro corrompido = sem desfazer) |
-| `OrganizeFiles(source, destination)` | caminhos; os critérios vêm das preferências salvas | `{ sourceFolderPath, destinationFolderPath, processedFiles, movedFiles, failedFiles, unchangedFiles, ignoredWithoutExtension, ignoredFolders, canUndo }` | `INVALID_SOURCE`, `INVALID_DESTINATION`, `NO_CRITERIA`, `RECORD_NOT_SAVED`, `UNEXPECTED` |
-| `UndoLastOrganization()` | — | `{ restoredFiles, renamedOnRestore, skippedMissing, failedFiles, canUndo }` | `NOTHING_TO_UNDO`, `UNEXPECTED` |
-| `GetSettings()` | — | `{ language, criteria: [{ key, enabled, locked }] }`, critérios na ordem dos checkboxes | — (arquivo ausente ou inválido = padrão) |
-| `SetLanguage(language)` | `pt-BR` ou `en` | a mesma visão de `GetSettings` | `INVALID_LANGUAGE`, `SETTINGS_NOT_SAVED` |
-| `SetCriterion(key, enabled)` | chave (`byDate`…) e valor | a mesma visão de `GetSettings` | `UNKNOWN_CRITERION`, `LAST_CRITERION`, `SETTINGS_NOT_SAVED` |
+| Binding | O que faz |
+|---|---|
+| `GetState()` | Devolve o estado. Na primeira chamada, recupera a última organização desfazível e avisa (`RECOVERED_LAST_ORGANIZATION`) |
+| `SelectSource()` / `SelectDestination()` | Abre o seletor de pasta; cancelar não muda nada |
+| `DropPaths(paths)` | Define a origem a partir do primeiro item solto (a pasta, ou a pasta do arquivo) |
+| `Organize()` | Organiza a origem no destino (vazio = a própria origem) com os critérios salvos. Sem origem: `SOURCE_REQUIRED` |
+| `Undo()` | Desfaz a última organização |
+| `ClearNotifications()` | Apaga o histórico de notificações |
+| `SetLanguage(language)` / `SetCriterion(key, enabled)` | Alteram as preferências (`backend/settings`) |
 
-Em caso de erro, a `Promise` é rejeitada e a mensagem é **só o código** (ex.: `NOTHING_TO_UNDO`). O detalhe completo vai para o log. Organizar e desfazer nunca rodam ao mesmo tempo (a fachada serializa as duas operações).
+```
+ViewState {
+  sourceFolderPath, destinationFolderPath: string
+  hasUndo: bool
+  busy: "" | "organize" | "restore"          // ação em andamento
+  settings: { language, criteria: [{ key, enabled, locked }] }
+  notifications: [{ id, kind, code, action, path?, organize?, undo?, at }]   // até 80, a mais recente primeiro
+}
+```
+
+- **Erros não rejeitam a promessa:** viram uma notificação `kind: "error"` com o código (`INVALID_SOURCE`, `NOTHING_TO_UNDO`, `DROPPED_MISSING`, `LAST_CRITERION`, `UNEXPECTED`…) e a ação que falhou. O detalhe vai para o log. O frontend traduz o código, ou usa o texto padrão da ação quando o código não tem tradução própria (ADR 0004).
+- **Notificações de sucesso** também são códigos com dados: `ORGANIZE_DONE` (com `organize`: movidos, falhas, ignorados…), `UNDO_DONE` (com `undo`) e `SOURCE_DROPPED` (com `path`).
+- **Evento `sortly:state`:** emitido a cada mudança, com o estado inteiro. É por ele que a tela mostra "Organizando…" enquanto a chamada de `Organize` ainda não terminou.
+- **Organizar e desfazer não rodam juntos:** uma chamada durante a outra devolve o estado sem fazer nada.
+- **Listas são sempre arrays** no JSON, nunca `null`.
 
 **Log:** `backend/logging` grava em `sortly.log` na pasta de configuração do usuário (`%AppData%\Sortly\logs` no Windows, `~/Library/Application Support/Sortly/logs` no macOS, `~/.config/Sortly/logs` no Linux). Ao passar de 5 MB, o arquivo vira `sortly.log.1` na próxima abertura. Se a pasta não puder ser usada, o log vai para o stderr e o app abre normalmente.
 
 ## 4. Frontend
 
-A interface é a mesma da versão 1.0. A lógica foi reorganizada ([ADR 0002](adr/0002-gateway-frontend.md)):
+A interface é a mesma da versão 1.0, e o frontend não tem regra de negócio ([ADR 0005](adr/0005-estado-da-tela-no-backend.md)):
 
 | Módulo | Responsabilidade |
 |---|---|
-| `services/sortlyGateway.js` | Único ponto de acesso ao backend. Encapsula os bindings Wails e traduz códigos de erro |
-| `controllers/useFileOrganizerController.js` | Estado da tela e ações (`selectFolder`, `runAction`) |
-| `hooks/useNotifications.js` | Histórico de notificações (limite de 80) |
-| `hooks/useSettings.js` | Guarda a visão das preferências devolvida pelo backend (sem regra própria) |
-| `views/`, `components/` | Apenas apresentação |
+| `services/sortlyGateway.js` | Único módulo que importa os bindings e o runtime do Wails |
+| `hooks/useViewState.js` | Espelho do `ViewState`: estado inicial, evento `sortly:state`, arquivos soltos (`DropPaths`) e as ações |
+| `i18n/` | Textos PT/EN; `notifications.js` transforma notificações estruturadas em frases no idioma atual |
+| `views/`, `components/` | Apresentação, painéis abertos ou fechados e destaque ao arrastar |
 
 A estrutura de pastas do repositório está em [development.md](development.md#3-estrutura-do-repositório).
 

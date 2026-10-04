@@ -10,6 +10,7 @@ Mantido por Caio Reis & Claude.
 
 ### Alterado
 - O idioma e os critérios escolhidos ficam salvos na pasta `.sortly` do usuário, junto do registro para desfazer. Eles não se perdem mais quando os dados internos da janela do app são limpos.
+- O app abre direto no idioma escolhido, sem mostrar o português por um instante.
 
 ## [2.0.0] - 2026-10-04
 
