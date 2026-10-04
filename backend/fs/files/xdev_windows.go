@@ -1,6 +1,6 @@
 //go:build windows
 
-package fsutil
+package files
 
 import "syscall"
 

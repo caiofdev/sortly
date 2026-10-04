@@ -1,4 +1,4 @@
-package fsutil
+package files
 
 // função            | CC | casos
 // Reserve           |  4 | TestReserve: livre; ocupado; vários ocupados; pasta com o nome; pasta pai inexistente; limite

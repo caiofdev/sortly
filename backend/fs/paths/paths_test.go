@@ -1,9 +1,9 @@
-package fsutil
+package paths
 
 // função      | CC | casos
-// PathsEqual  |  1 | TestExportedPathHelpers
+// Equal  |  1 | TestExportedPathHelpers
 // IsInside    |  1 | TestExportedPathHelpers
-// pathsEqual  |  1 | TestPathsEqual (5 casos)
+// equal  |  1 | TestPathsEqual (5 casos)
 // isInside    |  3 | TestIsInside: igual; dentro; prefixo sem separador; pai; raiz com separador; caixa
 // normalize   |  3 | TestNormalize: absoluto; relativo; com e sem ignorar caixa
 //
@@ -35,8 +35,8 @@ func TestPathsEqual(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			if got := pathsEqual(tc.a, tc.b, tc.fold); got != tc.want {
-				t.Errorf("pathsEqual(%q, %q, %v) = %v, want %v", tc.a, tc.b, tc.fold, got, tc.want)
+			if got := equal(tc.a, tc.b, tc.fold); got != tc.want {
+				t.Errorf("equal(%q, %q, %v) = %v, want %v", tc.a, tc.b, tc.fold, got, tc.want)
 			}
 		})
 	}
@@ -95,8 +95,8 @@ func TestExportedPathHelpers(t *testing.T) {
 	root := t.TempDir()
 	child := filepath.Join(root, "a")
 
-	if !PathsEqual(root, root) {
-		t.Error("PathsEqual(root, root) = false")
+	if !Equal(root, root) {
+		t.Error("Equal(root, root) = false")
 	}
 	if !IsInside(child, root) {
 		t.Error("IsInside(child, root) = false")
@@ -105,7 +105,7 @@ func TestExportedPathHelpers(t *testing.T) {
 		t.Error("IsInside(root, child) = true")
 	}
 	// No Windows a comparação ignora maiúsculas; nos demais sistemas, não.
-	if got := PathsEqual(child, strings.ToUpper(child)); got != caseInsensitive && strings.ToUpper(child) != child {
-		t.Errorf("PathsEqual com caixa diferente = %v, caseInsensitive = %v", got, caseInsensitive)
+	if got := Equal(child, strings.ToUpper(child)); got != caseInsensitive && strings.ToUpper(child) != child {
+		t.Errorf("Equal com caixa diferente = %v, caseInsensitive = %v", got, caseInsensitive)
 	}
 }

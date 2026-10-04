@@ -1,4 +1,4 @@
-package fsutil
+package files
 
 // função          | CC | casos
 // Exists          |  1 | TestExists: arquivo; pasta; inexistente

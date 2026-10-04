@@ -28,7 +28,8 @@ import (
 	"testing"
 
 	"github.com/caiofdev/sortly/backend/apperr"
-	"github.com/caiofdev/sortly/backend/fsutil"
+	"github.com/caiofdev/sortly/backend/fs/files"
+
 	"github.com/caiofdev/sortly/backend/organizer"
 	"github.com/caiofdev/sortly/backend/store"
 )
@@ -194,7 +195,7 @@ func TestRemoveEmptyAncestorsCaseInsensitiveRoot(t *testing.T) {
 
 	NewService(newStore(t), nil).removeEmptyAncestors(filepath.Join(root, "pdf"), strings.ToUpper(root))
 
-	if !fsutil.Exists(root) || fsutil.Exists(filepath.Join(root, "pdf")) {
+	if !files.Exists(root) || files.Exists(filepath.Join(root, "pdf")) {
 		t.Fatal("a raiz não pode ser removida por ter caixa diferente; a subpasta sim")
 	}
 }
@@ -317,7 +318,7 @@ func (f *fakeMover) Apply(_ context.Context, plan organizer.Plan) (organizer.Out
 			out.FailedFiles++
 			continue
 		}
-		final, err := fsutil.MoveUnique(m.From, m.To)
+		final, err := files.MoveUnique(m.From, m.To)
 		if err != nil {
 			return out, err
 		}

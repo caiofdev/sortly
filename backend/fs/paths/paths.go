@@ -1,4 +1,4 @@
-package fsutil
+package paths
 
 import (
 	"path/filepath"
@@ -10,10 +10,10 @@ import (
 // no Windows, "C:\Fotos" e "c:\fotos" são o mesmo caminho.
 var caseInsensitive = runtime.GOOS == "windows"
 
-// PathsEqual informa se dois caminhos apontam para o mesmo lugar,
+// Equal informa se dois caminhos apontam para o mesmo lugar,
 // depois de torná-los absolutos e limpos.
-func PathsEqual(a, b string) bool {
-	return pathsEqual(a, b, caseInsensitive)
+func Equal(a, b string) bool {
+	return equal(a, b, caseInsensitive)
 }
 
 // IsInside informa se child é igual a root ou está dentro dele.
@@ -22,7 +22,7 @@ func IsInside(child, root string) bool {
 	return isInside(child, root, caseInsensitive)
 }
 
-func pathsEqual(a, b string, fold bool) bool {
+func equal(a, b string, fold bool) bool {
 	return normalize(a, fold) == normalize(b, fold)
 }
 

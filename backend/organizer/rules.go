@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/caiofdev/sortly/backend/fsutil"
+	"github.com/caiofdev/sortly/backend/fs/paths"
 	"github.com/caiofdev/sortly/backend/metadata"
 )
 
@@ -64,7 +64,7 @@ func NewRules(meta MetadataReader, loc *time.Location) []SegmentRule {
 
 // fileExt devolve a extensão como a versão Electron: path.extname, sem o ponto, minúscula.
 func fileExt(name string) string {
-	return strings.ToLower(strings.TrimPrefix(fsutil.Ext(name), "."))
+	return strings.ToLower(strings.TrimPrefix(paths.Ext(name), "."))
 }
 
 // segmentOrUnknown devolve o segmento ou, se a leitura falhou, prefix + "unknown".

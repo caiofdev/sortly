@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"path/filepath"
 
-	"github.com/caiofdev/sortly/backend/fsutil"
+	"github.com/caiofdev/sortly/backend/fs/files"
 	"github.com/caiofdev/sortly/backend/store"
 )
 
@@ -28,7 +28,7 @@ func NewExecutor(log *slog.Logger) *Executor {
 	if log == nil {
 		log = slog.New(slog.DiscardHandler)
 	}
-	return &Executor{mkdirAll: fsutil.MkdirAll, move: fsutil.MoveUnique, log: log}
+	return &Executor{mkdirAll: files.MkdirAll, move: files.MoveUnique, log: log}
 }
 
 // Apply move os arquivos do plano. Uma falha em um arquivo não interrompe os

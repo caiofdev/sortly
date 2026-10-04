@@ -1,4 +1,4 @@
-package fsutil
+package files
 
 // função          | CC | casos
 // Move            |  3 | TestMove: mesmo volume; erro que não é de volume; outro volume (fallback)

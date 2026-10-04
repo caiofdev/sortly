@@ -8,7 +8,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/caiofdev/sortly/backend/fsutil"
+	"github.com/caiofdev/sortly/backend/fs/paths"
 )
 
 // Move é um arquivo a mover. To é o destino desejado; o nome final pode
@@ -106,7 +106,7 @@ func (plan *Plan) add(ctx context.Context, entry fs.DirEntry, rules []SegmentRul
 func (plan *Plan) addMove(file File, segments []string) {
 	parts := append(append([]string{plan.Destination}, segments...), file.Name)
 	to := filepath.Join(parts...)
-	if fsutil.PathsEqual(file.Path, to) {
+	if paths.Equal(file.Path, to) {
 		plan.UnchangedFiles++
 		return
 	}

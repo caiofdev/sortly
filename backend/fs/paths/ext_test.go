@@ -1,4 +1,4 @@
-package fsutil
+package paths
 
 // função    | CC | casos
 // Ext       |  6 | TestExt: sem ponto; ponto inicial (oculto); ".."; "..."; extensão simples; dupla; ponto final; caminho com pasta

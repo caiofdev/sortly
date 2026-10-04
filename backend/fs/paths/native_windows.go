@@ -1,6 +1,6 @@
 //go:build windows
 
-package fsutil
+package paths
 
 import (
 	"os"
@@ -8,11 +8,11 @@ import (
 	"strings"
 )
 
-// nativePath converte para o formato estendido do Windows (\\?\C:\...), que
+// Native converte para o formato estendido do Windows (\\?\C:\...), que
 // desliga a normalização do Win32. Sem isso, nomes que terminam em ponto ou
 // espaço ("arquivo.", vindos de Linux/macOS) perdem o final e o arquivo
 // "some". O caminho devolvido aos chamadores continua no formato normal.
-func nativePath(p string) string {
+func Native(p string) string {
 	if p == "" || strings.HasPrefix(p, `\\?\`) {
 		return p
 	}
