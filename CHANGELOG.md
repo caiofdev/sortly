@@ -31,7 +31,7 @@ Mantido por Caio Reis & Claude.
 - Arquivos com nome terminado em ponto não podiam ser organizados no Windows.
 
 ### Em andamento
-- Nova versão do Sortly construída com Wails, com o objetivo de usar **muito menos memória** e manter exatamente a mesma interface. Acompanhe na [milestone](https://github.com/caiofdev/sortly/milestone/1).
+- Nova versão do Sortly construída com Wails, com a mesma interface. Organizar 1000 arquivos ficou cerca de 2× mais rápido no teste; a redução de memória no Windows está em andamento ([#34](https://github.com/caiofdev/sortly/issues/34)). Acompanhe na [milestone](https://github.com/caiofdev/sortly/milestone/1).
 
 ## [1.0.0] - 2026-03-27
 

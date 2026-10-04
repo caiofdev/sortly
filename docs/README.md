@@ -10,6 +10,8 @@
 |---|---|
 | [architecture.md](architecture.md) | Arquitetura atual (Electron) e arquitetura alvo (Wails v2 + Go + React), com diagramas |
 | [organization-rules.md](organization-rules.md) | Regras de negócio: critérios de organização, nomes de pastas, conflitos e desfazer |
+| [benchmark.md](benchmark.md) | Memória, velocidade e tamanho: Electron 1.0 × Wails 2.0 (Windows) |
+| [checklist-paridade.md](checklist-paridade.md) | Roteiro de paridade por plataforma, com os resultados no Windows |
 | [code-review.md](code-review.md) | Revisão do código atual: defeitos (B1–B7) e refatorações planejadas |
 | [release.md](release.md) | Versionamento, como gerar uma versão e o que cada pacote (Windows, macOS, Linux) contém |
 | [testing.md](testing.md) | Estratégia de testes (complexidade ciclomática e valor-limite), CI e como rodar localmente |
