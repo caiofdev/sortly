@@ -21,7 +21,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/caiofdev/sortly/internal/metadata"
+	"github.com/caiofdev/sortly/backend/metadata"
 )
 
 func TestPlanScenarios(t *testing.T) {

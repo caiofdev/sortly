@@ -5,8 +5,8 @@ import (
 	"log/slog"
 	"path/filepath"
 
-	"github.com/caiofdev/sortly/internal/fsutil"
-	"github.com/caiofdev/sortly/internal/store"
+	"github.com/caiofdev/sortly/backend/fsutil"
+	"github.com/caiofdev/sortly/backend/store"
 )
 
 // Outcome é o journal da execução: o que foi movido de fato.

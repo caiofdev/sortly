@@ -8,7 +8,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/caiofdev/sortly/internal/fsutil"
+	"github.com/caiofdev/sortly/backend/fsutil"
 )
 
 // Move é um arquivo a mover. To é o destino desejado; o nome final pode

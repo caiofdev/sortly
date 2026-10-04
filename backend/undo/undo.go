@@ -12,10 +12,10 @@ import (
 	"log/slog"
 	"path/filepath"
 
-	"github.com/caiofdev/sortly/internal/apperr"
-	"github.com/caiofdev/sortly/internal/fsutil"
-	"github.com/caiofdev/sortly/internal/organizer"
-	"github.com/caiofdev/sortly/internal/store"
+	"github.com/caiofdev/sortly/backend/apperr"
+	"github.com/caiofdev/sortly/backend/fsutil"
+	"github.com/caiofdev/sortly/backend/organizer"
+	"github.com/caiofdev/sortly/backend/store"
 )
 
 // ErrNothingToUndo indica que não há organização para desfazer (ADR 0004).

@@ -12,7 +12,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/caiofdev/sortly/internal/store"
+	"github.com/caiofdev/sortly/backend/store"
 )
 
 // Request é o pedido de organização, no formato enviado pelo frontend.

@@ -9,5 +9,5 @@ build/bin/
 frontend/dist/*
 !frontend/dist/.gitkeep
 frontend/package.json.md5
-coverage-internal.out
+coverage-backend.out
 build/windows/installer/tmp/

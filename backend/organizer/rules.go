@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/caiofdev/sortly/internal/fsutil"
-	"github.com/caiofdev/sortly/internal/metadata"
+	"github.com/caiofdev/sortly/backend/fsutil"
+	"github.com/caiofdev/sortly/backend/metadata"
 )
 
 const bytesPerMB = 1024 * 1024

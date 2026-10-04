@@ -4,7 +4,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/caiofdev/sortly/internal/apperr"
+	"github.com/caiofdev/sortly/backend/apperr"
 )
 
 // Erros de arrastar e soltar (ADR 0004).

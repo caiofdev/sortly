@@ -23,9 +23,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/caiofdev/sortly/internal/apperr"
-	"github.com/caiofdev/sortly/internal/metadata"
-	"github.com/caiofdev/sortly/internal/store"
+	"github.com/caiofdev/sortly/backend/apperr"
+	"github.com/caiofdev/sortly/backend/metadata"
+	"github.com/caiofdev/sortly/backend/store"
 )
 
 func TestValidate(t *testing.T) {

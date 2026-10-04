@@ -3,7 +3,7 @@ package organizer
 import (
 	"errors"
 
-	"github.com/caiofdev/sortly/internal/apperr"
+	"github.com/caiofdev/sortly/backend/apperr"
 )
 
 // Erros com código devolvidos ao frontend (ADR 0004).

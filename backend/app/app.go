@@ -1,5 +1,5 @@
 // Package app contém a fachada exposta ao frontend pelo Wails e a
-// configuração da janela. A fachada só delega aos serviços de internal/ e
+// configuração da janela. A fachada só delega aos serviços de backend/ e
 // converte os erros em códigos (ADR 0004); a lógica de negócio fica nos pacotes.
 package app
 
@@ -9,10 +9,10 @@ import (
 	"log/slog"
 	"sync"
 
-	"github.com/caiofdev/sortly/internal/apperr"
-	"github.com/caiofdev/sortly/internal/organizer"
-	"github.com/caiofdev/sortly/internal/store"
-	"github.com/caiofdev/sortly/internal/undo"
+	"github.com/caiofdev/sortly/backend/apperr"
+	"github.com/caiofdev/sortly/backend/organizer"
+	"github.com/caiofdev/sortly/backend/store"
+	"github.com/caiofdev/sortly/backend/undo"
 )
 
 // Títulos dos seletores de pasta (os mesmos da versão Electron).

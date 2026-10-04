@@ -7,10 +7,10 @@ import (
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
-	"github.com/caiofdev/sortly/internal/metadata"
-	"github.com/caiofdev/sortly/internal/organizer"
-	"github.com/caiofdev/sortly/internal/store"
-	"github.com/caiofdev/sortly/internal/undo"
+	"github.com/caiofdev/sortly/backend/metadata"
+	"github.com/caiofdev/sortly/backend/organizer"
+	"github.com/caiofdev/sortly/backend/store"
+	"github.com/caiofdev/sortly/backend/undo"
 )
 
 // NewDefault monta a fachada com os serviços reais: registro em

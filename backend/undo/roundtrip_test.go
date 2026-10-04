@@ -16,8 +16,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/caiofdev/sortly/internal/metadata"
-	"github.com/caiofdev/sortly/internal/organizer"
+	"github.com/caiofdev/sortly/backend/metadata"
+	"github.com/caiofdev/sortly/backend/organizer"
 )
 
 func TestOrganizeThenUndoRestoresIdenticalTree(t *testing.T) {

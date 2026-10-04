@@ -31,7 +31,7 @@ func main() {
 
 	dirs := flag.Args()
 	if len(dirs) == 0 {
-		dirs = []string{"internal"}
+		dirs = []string{"backend"}
 	}
 	os.Exit(run(os.Stdout, dirs, *minCC, *strict))
 }

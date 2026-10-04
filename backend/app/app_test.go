@@ -24,10 +24,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/caiofdev/sortly/internal/apperr"
-	"github.com/caiofdev/sortly/internal/organizer"
-	"github.com/caiofdev/sortly/internal/store"
-	"github.com/caiofdev/sortly/internal/undo"
+	"github.com/caiofdev/sortly/backend/apperr"
+	"github.com/caiofdev/sortly/backend/organizer"
+	"github.com/caiofdev/sortly/backend/store"
+	"github.com/caiofdev/sortly/backend/undo"
 )
 
 type fakeOrganizer struct {

@@ -69,7 +69,7 @@ npm test
 <!-- Passos manuais, se houver (ex.: wails dev → arrastar uma pasta → organizar → desfazer). -->
 
 - [ ] Testes automatizados passando localmente
-- [ ] Cobertura de `internal/...` ≥ 85%
+- [ ] Cobertura de `backend/...` ≥ 85%
 - [ ] Verificação manual feita (descrita acima)
 
 ## 🖼️ Interface

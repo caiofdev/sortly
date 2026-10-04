@@ -25,7 +25,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/caiofdev/sortly/internal/metadata"
+	"github.com/caiofdev/sortly/backend/metadata"
 )
 
 // fakeMeta devolve valores fixos para os critérios de metadados.

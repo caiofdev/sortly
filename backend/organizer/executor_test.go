@@ -18,7 +18,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/caiofdev/sortly/internal/store"
+	"github.com/caiofdev/sortly/backend/store"
 )
 
 func TestApplySuccess(t *testing.T) {
