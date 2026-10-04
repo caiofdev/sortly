@@ -1,7 +1,7 @@
 name: Release
 
-# Gera os executáveis ao criar uma tag de versão (ex.: v2.0.0) e anexa a um
-# rascunho de release. Instalador, ícones e assinatura são refinados na issue de empacotamento.
+# Ao criar uma tag de versão (ex.: v2.0.0), gera os pacotes das três plataformas
+# e anexa a um rascunho de release. Passo a passo em docs/release.md.
 on:
   push:
     tags: ['v*']
@@ -11,6 +11,7 @@ permissions:
 
 env:
   WAILS_VERSION: v2.16.0
+  NFPM_VERSION: v2.47.0
 
 jobs:
   build:
@@ -38,6 +39,16 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - name: Versão da tag = productVersion do wails.json
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          app="$(node -p "require('./wails.json').info.productVersion")"
+          if [ "$tag" != "$app" ]; then
+            echo "::error::A tag v$tag não bate com info.productVersion ($app) do wails.json"
+            exit 1
+          fi
+          echo "VERSION=$app" >> "$GITHUB_ENV"
+
       - uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
@@ -62,22 +73,29 @@ jobs:
       - name: Build
         run: wails build -clean -platform ${{ matrix.platform }} ${{ matrix.flags }}
 
-      - name: Empacotar artefatos
+      - name: Empacotar (Windows)
+        if: runner.os == 'Windows'
         run: |
           mkdir -p dist-release
-          version="${GITHUB_REF_NAME#v}"
-          case "$RUNNER_OS" in
-            Windows)
-              cp build/bin/*-installer.exe "dist-release/Sortly-${version}-windows-amd64-installer.exe"
-              cp build/bin/Sortly.exe "dist-release/Sortly-${version}-windows-amd64.exe"
-              ;;
-            macOS)
-              ditto -c -k --keepParent build/bin/Sortly.app "dist-release/Sortly-${version}-macos-universal.zip"
-              ;;
-            Linux)
-              tar -czf "dist-release/Sortly-${version}-linux-amd64.tar.gz" -C build/bin Sortly
-              ;;
-          esac
+          cp build/bin/Sortly-amd64-installer.exe "dist-release/Sortly-${VERSION}-windows-amd64-setup.exe"
+          cp build/bin/Sortly.exe "dist-release/Sortly-${VERSION}-windows-amd64-portable.exe"
+
+      - name: Empacotar (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          mkdir -p dist-release dmg
+          cp -R build/bin/Sortly.app dmg/
+          ln -s /Applications dmg/Applications
+          hdiutil create -volname Sortly -srcfolder dmg -ov -format UDZO "dist-release/Sortly-${VERSION}-macos-universal.dmg"
+          ditto -c -k --keepParent build/bin/Sortly.app "dist-release/Sortly-${VERSION}-macos-universal.zip"
+
+      - name: Empacotar (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          mkdir -p dist-release
+          go install github.com/goreleaser/nfpm/v2/cmd/nfpm@${NFPM_VERSION}
+          nfpm package --config build/linux/nfpm.yaml --packager deb --target "dist-release/Sortly-${VERSION}-linux-amd64.deb"
+          tar -czf "dist-release/Sortly-${VERSION}-linux-amd64.tar.gz" -C build/bin Sortly
 
       - uses: actions/upload-artifact@v4
         with:
