@@ -1,4 +1,4 @@
-package undo
+package tests
 
 // Teste ponta a ponta: organizar com todos os critérios e desfazer devolve a
 // árvore idêntica à original (mesmos caminhos, conteúdos e datas de modificação),
@@ -19,6 +19,8 @@ import (
 	"github.com/caiofdev/sortly/backend/metadata"
 	"github.com/caiofdev/sortly/backend/organizer"
 	"github.com/caiofdev/sortly/backend/organizer/criteria"
+	"github.com/caiofdev/sortly/backend/store"
+	"github.com/caiofdev/sortly/backend/undo"
 )
 
 func TestOrganizeThenUndoRestoresIdenticalTree(t *testing.T) {
@@ -42,7 +44,7 @@ func roundTrip(t *testing.T, inPlace bool) {
 		dst = src
 	}
 	before := treeHash(t, src)
-	st := newStore(t)
+	st := store.New(filepath.Join(t.TempDir(), "last-operation.json"), nil)
 	yes := true
 	req := organizer.Request{
 		SourceFolderPath:      src,
@@ -60,7 +62,7 @@ func roundTrip(t *testing.T, inPlace bool) {
 		t.Fatal("a organização deveria ter mudado a árvore")
 	}
 
-	got, err := NewService(st, nil).Undo(context.Background())
+	got, err := undo.NewService(st, nil).Undo(context.Background())
 	if err != nil || got.RestoredFiles != org.MovedFiles || got.CanUndo {
 		t.Fatalf("Undo = (%+v, %v), want %d restaurados", got, err, org.MovedFiles)
 	}
@@ -68,7 +70,7 @@ func roundTrip(t *testing.T, inPlace bool) {
 		t.Fatalf("árvore depois do desfazer difere da original\nantes:  %s\ndepois: %s", before, after)
 	}
 	if !inPlace {
-		assertTree(t, dst)
+		assertEmptyTree(t, dst)
 	}
 	assertNoRecord(t, st)
 }
@@ -140,4 +142,33 @@ func treeHash(t *testing.T, root string) string {
 	sort.Strings(lines)
 	sum := sha256.Sum256([]byte(fmt.Sprint(lines)))
 	return fmt.Sprintf("%d arquivos, %s", len(lines), hex.EncodeToString(sum[:8]))
+}
+
+func assertNoRecord(t *testing.T, st *store.FileStore) {
+	t.Helper()
+	if op, err := st.Load(); op != nil || err != nil {
+		t.Fatalf("o registro deveria ter sido apagado: (%+v, %v)", op, err)
+	}
+}
+
+// assertEmptyTree falha se sobrou algum arquivo ou pasta dentro de root.
+func assertEmptyTree(t *testing.T, root string) {
+	t.Helper()
+	entries, err := os.ReadDir(root)
+	if err != nil && !os.IsNotExist(err) {
+		t.Fatal(err)
+	}
+	for _, e := range entries {
+		t.Errorf("sobrou %s em %s", e.Name(), root)
+	}
+}
+
+func writeFile(t *testing.T, path, content string) {
+	t.Helper()
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+		t.Fatal(err)
+	}
 }
