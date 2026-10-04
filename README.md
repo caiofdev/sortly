@@ -77,7 +77,7 @@ wails dev        # modo desenvolvimento, com recarga do frontend
 wails build      # gera build/bin/Sortly(.exe)
 ```
 
-O backend em Go fica em `internal/` e a interface React em `frontend/`. Estrutura, comandos e convenções: [docs/development.md](docs/development.md).
+O backend em Go fica em `backend/` e a interface React em `frontend/`. Estrutura, comandos e convenções: [docs/development.md](docs/development.md).
 
 ### Testes
 
@@ -185,7 +185,7 @@ wails dev
 wails build
 ```
 
-The Go backend lives in `internal/` and the React UI in `frontend/`. See [docs/development.md](docs/development.md) (in Portuguese).
+The Go backend lives in `backend/` and the React UI in `frontend/`. See [docs/development.md](docs/development.md) (in Portuguese).
 
 ### Tests
 

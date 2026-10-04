@@ -4,7 +4,7 @@
 
 Comportamento do Sortly ao organizar e desfazer. É a especificação que os testes seguem: nomes de pastas, fronteiras e formato do registro não mudam sem uma decisão registrada, porque um desfazer pendente da versão 1.0 precisa continuar funcionando.
 
-Implementação: `internal/organizer` (regras, planejamento e execução), `internal/metadata` (resolução, duração e páginas), `internal/fsutil` (mover e nomes), `internal/store` (registro) e `internal/undo`.
+Implementação: `backend/organizer` (planejamento e execução), `backend/organizer/criteria` (um arquivo por critério), `backend/metadata` (resolução, duração e páginas), `backend/fs` (mover, nomes e caminhos), `backend/store` (registro) e `backend/undo`.
 
 ## 1. Entrada
 

@@ -43,3 +43,7 @@ A contagem de páginas usa a mesma ideia: `map[string]PageCounter`, com um únic
 - Um critério novo exige só uma struct nova e uma linha no registry (OCP).
 - A ordem das pastas fica explícita num único lugar.
 - Há uma indireção a mais em relação ao código original.
+
+## Atualização
+
+Na #42, a interface `SegmentRule` passou a se chamar `Rule` e o registry `NewRules` passou a ser `New`, no pacote `backend/organizer/criteria`, com cada critério no próprio arquivo. A decisão não mudou.

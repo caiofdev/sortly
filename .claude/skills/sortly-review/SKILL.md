@@ -56,12 +56,12 @@ Objetivo: encontrar o que uma revisão humana costuma deixar passar — casos de
 
 | # | Sev. | Arquivo | Achado |
 |---|---|---|---|
-| 1 | 🔴 | internal/undo/undo.go:142 | Desfazer apaga pasta com arquivo do usuário |
+| 1 | 🔴 | backend/undo/undo.go:142 | Desfazer apaga pasta com arquivo do usuário |
 
-### 1. 🔴 Desfazer apaga pasta com arquivo do usuário — `internal/undo/undo.go:142`
+### 1. 🔴 Desfazer apaga pasta com arquivo do usuário — `backend/undo/undo.go:142`
 **Cenário:** organizar → usuário cria `notas.txt` em `pdf/` → desfazer → `pdf/` é removida com o arquivo.
 **Por quê:** `RemoveAll` em vez de remover só pasta vazia.
-**Correção:** usar `fsutil.RemoveEmptyDir`; teste de regressão com arquivo extra na pasta.
+**Correção:** usar `files.RemoveEmptyDir`; teste de regressão com arquivo extra na pasta.
 ```
 
 Ordene do mais grave para o menos grave. Cite `arquivo:linha`. Uma correção por achado, curta.

@@ -38,7 +38,7 @@ type Planner struct {
 	readDir func(string) ([]fs.DirEntry, error)
 }
 
-// NewPlanner cria o planejador com o registry de regras dado (veja NewRules).
+// NewPlanner cria o planejador com o registry de regras dado (veja criteria.New).
 func NewPlanner(rules []criteria.Rule) *Planner {
 	return &Planner{rules: rules, readDir: os.ReadDir}
 }

@@ -53,13 +53,19 @@ O instalador e os pacotes de cada sistema estão em [release.md](release.md).
 sortly/
   main.go                 # ponto de entrada: embute frontend/dist e chama wails.Run
   wails.json              # configuração do Wails e versão do app (info.productVersion)
-  internal/               # backend Go (detalhes em architecture.md)
+  backend/                # backend Go (pacotes em architecture.md)
+    app/                  # fachada do Wails, drop, janela, composição
+    organizer/            # planejamento e execução; criteria/ com um critério por arquivo
+    undo/  store/  metadata/  apperr/  logging/
+    fs/paths/             # caminhos (extensão, comparação, prefixo do Windows)
+    fs/files/             # mover, reservar nome, pastas
+    tests/                # testes de integração (só API pública)
   frontend/
     src/                  # React + Tailwind
     wailsjs/              # bindings gerados pelo Wails (versionados)
   build/                  # ícones, manifesto do Windows, Info.plist, NSIS e nfpm
   scripts/
-    check-coverage.sh     # cobertura mínima de internal/
+    check-coverage.sh     # cobertura mínima de backend/
     cccases/              # complexidade ciclomática × casos de teste
     benchmark/memory.ps1  # benchmark de memória no Windows (benchmark.md)
     parity/windows.ps1    # roteiro de paridade pela interface no Windows
@@ -69,7 +75,7 @@ sortly/
 
 ### Bindings do frontend
 
-Os métodos públicos de `internal/app.App` viram funções em `frontend/wailsjs/go/app/App.js`. O `wails dev` e o `wails build` regeneram esses arquivos; depois de mudar a assinatura de um método, rode um dos dois e versione o resultado. O frontend não importa os bindings diretamente: tudo passa por `services/sortlyGateway.js` ([ADR 0002](adr/0002-gateway-frontend.md)).
+Os métodos públicos de `backend/app.App` viram funções em `frontend/wailsjs/go/app/App.js`. O `wails dev` e o `wails build` regeneram esses arquivos; depois de mudar a assinatura de um método, rode um dos dois e versione o resultado. O frontend não importa os bindings diretamente: tudo passa por `services/sortlyGateway.js` ([ADR 0002](adr/0002-gateway-frontend.md)).
 
 ## 4. Testes e qualidade
 
@@ -86,8 +92,8 @@ A complexidade ciclomática conta os caminhos independentes de uma função: com
 - **Rastreabilidade:** [`scripts/cccases`](../scripts/cccases) cruza a CC de cada função Go com os casos de teste que a chamam e aponta as funções com casos < CC. A CI publica o relatório no resumo do job "Go · lint" (informativo, não bloqueia). No frontend, a contagem é manual (cada `it` ou linha de `it.each`).
 
   ```bash
-  go run ./scripts/cccases            # funções com CC ≥ 2 em internal/
-  go run ./scripts/cccases -min 1 internal/undo
+  go run ./scripts/cccases            # funções com CC ≥ 2 em backend/
+  go run ./scripts/cccases -min 1 backend/undo
   go run ./scripts/cccases -strict    # sai com código 1 se houver casos < CC
   ```
 
@@ -121,7 +127,7 @@ As regras completas, com os valores esperados, estão em [organization-rules.md]
 
 ### 4.4 Cobertura
 
-- **Mínimo de 85%** nos pacotes Go em `internal/`, verificado por [`scripts/check-coverage.sh`](../scripts/check-coverage.sh).
+- **Mínimo de 85%** nos pacotes Go em `backend/`, verificado por [`scripts/check-coverage.sh`](../scripts/check-coverage.sh).
 - O pacote `main` (inicialização do Wails) não entra na meta.
 
 ### 4.5 Como rodar localmente
@@ -132,7 +138,7 @@ As regras completas, com os valores esperados, estão em [organization-rules.md]
 go vet ./...
 go test ./...
 golangci-lint run ./...          # lint, formatação e complexidade
-bash scripts/check-coverage.sh   # cobertura de internal/ (mínimo 85%)
+bash scripts/check-coverage.sh   # cobertura de backend/ (mínimo 85%)
 go test -race ./...              # Linux e macOS (no Windows exige gcc)
 ```
 
@@ -150,7 +156,7 @@ npm run test:watch    # Vitest em modo observação
 | Job | Sistema | Passos |
 |---|---|---|
 | Go · lint | Ubuntu | `golangci-lint` (gofmt, goimports, govet, staticcheck, errcheck, gocyclo, cyclop, errorlint, …) e o relatório de `scripts/cccases` no resumo do job (informativo) |
-| Go · testes | Ubuntu, Windows, macOS | `go vet`, `go test` (com `-race` no Linux e no macOS), cobertura de `internal/` no Ubuntu |
+| Go · testes | Ubuntu, Windows, macOS | `go vet`, `go test` (com `-race` no Linux e no macOS), cobertura de `backend/` no Ubuntu |
 | Frontend | Ubuntu | `npm ci`, ESLint, Prettier, Vitest, `vite build` |
 
 No Linux, o Wails precisa de `libgtk-3-dev` e `libwebkit2gtk-4.1-dev`, além da build tag `webkit2_41`.

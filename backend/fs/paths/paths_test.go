@@ -3,7 +3,7 @@ package paths
 // função      | CC | casos
 // Equal  |  1 | TestExportedPathHelpers
 // IsInside    |  1 | TestExportedPathHelpers
-// equal  |  1 | TestPathsEqual (5 casos)
+// equal  |  1 | TestEqual (5 casos)
 // isInside    |  3 | TestIsInside: igual; dentro; prefixo sem separador; pai; raiz com separador; caixa
 // normalize   |  3 | TestNormalize: absoluto; relativo; com e sem ignorar caixa
 //
@@ -17,7 +17,7 @@ import (
 	"testing"
 )
 
-func TestPathsEqual(t *testing.T) {
+func TestEqual(t *testing.T) {
 	base := t.TempDir()
 
 	cases := []struct {

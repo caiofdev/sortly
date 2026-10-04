@@ -14,7 +14,7 @@ Regras que já falharam neste projeto e que a revisão deve conferir sempre. Cad
 
 ## Da reescrita em Wails
 
-- Nome de arquivo terminado em ponto não funciona no Windows sem o prefixo `\\?\`: todo acesso a disco passa por `nativePath`. — #8
+- Nome de arquivo terminado em ponto não funciona no Windows sem o prefixo `\\?\`: todo acesso a disco passa por `paths.Native`. — #8
 - Vídeo sem faixa de áudio tem duração no `mvhd`; não assuma que todo mp4 tem áudio. — #7
 - `options.Linux` não nil desliga padrões do Wails (política de GPU): ao preencher uma struct de opções, confira o que o padrão fazia. — #34
 - O loader de WebView2 do Wails apaga `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS`; não planeje automação por CDP. — #15
