@@ -97,6 +97,8 @@ Para testar sem mexer nos seus dados, abra o app com outra pasta de usuário. No
 
 ## 6. Convenções
 
+- **Claude Code:** o [`.claude/CLAUDE.md`](../.claude/CLAUDE.md) resume estrutura, comandos e fluxo para o Claude. Antes de abrir um PR, rode a skill `/sortly-review` ([`.claude/skills/sortly-review`](../.claude/skills/sortly-review/SKILL.md)): ela roda lint, testes e `scripts/cccases`, percorre checklists de Go, React, testes, design, sistema operacional e segurança e devolve achados por severidade. A revisão humana continua obrigatória.
+
 - **Branches:** uma por issue, `sortly-N-descricao-curta`, criada e ligada à issue com:
 
   ```bash
