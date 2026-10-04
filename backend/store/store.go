@@ -13,6 +13,8 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+
+	"github.com/caiofdev/sortly/backend/fs/files"
 )
 
 // ErrCorrupted indica que o arquivo existe, mas não é um registro válido.
@@ -46,9 +48,6 @@ type FileStore struct {
 	path string
 	log  *slog.Logger
 }
-
-// Substituível nos testes para simular falha na troca atômica do arquivo.
-var renameFile = os.Rename
 
 // DefaultPath devolve ~/.sortly/last-operation.json, o mesmo caminho da versão 1.0.
 func DefaultPath() (string, error) {
@@ -91,18 +90,14 @@ func (s *FileStore) Load() (*Operation, error) {
 	return op, nil
 }
 
-// Save grava o registro de forma atômica: escreve um arquivo temporário na
-// mesma pasta e o renomeia por cima do atual. Um crash no meio da gravação
+// Save grava o registro com files.WriteAtomic: um crash no meio da gravação
 // deixa o registro anterior intacto, nunca um JSON pela metade.
 func (s *FileStore) Save(op Operation) error {
 	data, err := encode(op)
 	if err != nil {
 		return s.fail("codificar", err)
 	}
-	if err := os.MkdirAll(filepath.Dir(s.path), 0o755); err != nil {
-		return s.fail("criar pasta", err)
-	}
-	if err := s.writeAtomic(data); err != nil {
+	if err := files.WriteAtomic(s.path, data); err != nil {
 		return s.fail("gravar", err)
 	}
 	return nil
@@ -112,23 +107,6 @@ func (s *FileStore) Save(op Operation) error {
 func (s *FileStore) Clear() error {
 	if err := os.Remove(s.path); err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return s.fail("apagar", err)
-	}
-	return nil
-}
-
-func (s *FileStore) writeAtomic(data []byte) error {
-	tmp, err := os.CreateTemp(filepath.Dir(s.path), ".last-operation-*.tmp")
-	if err != nil {
-		return err
-	}
-	_, writeErr := tmp.Write(data)
-	if err := errors.Join(writeErr, tmp.Sync(), tmp.Close()); err != nil {
-		_ = os.Remove(tmp.Name())
-		return err
-	}
-	if err := renameFile(tmp.Name(), s.path); err != nil {
-		_ = os.Remove(tmp.Name())
-		return err
 	}
 	return nil
 }

@@ -8,6 +8,9 @@ Mantido por Caio Reis & Claude.
 
 ## [Não lançado]
 
+### Alterado
+- O idioma e os critérios escolhidos ficam salvos na pasta `.sortly` do usuário, junto do registro para desfazer. Eles não se perdem mais quando os dados internos da janela do app são limpos.
+
 ## [2.0.0] - 2026-10-04
 
 Nova versão do Sortly, reconstruída por dentro com a mesma interface. Por Caio Reis & Claude.

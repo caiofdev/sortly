@@ -10,8 +10,11 @@ const wailsBackend = {
   selectDestinationFolder: () => WailsApp.SelectDestinationFolder(),
   resolveDroppedPath: (path) => WailsApp.ResolveDroppedPath(path),
   getLastOrganizationState: () => WailsApp.GetLastOrganizationState(),
-  organizeFiles: (payload) => WailsApp.OrganizeFiles(payload),
+  organizeFiles: (source, destination) => WailsApp.OrganizeFiles(source, destination),
   undoLastOrganization: () => WailsApp.UndoLastOrganization(),
+  getSettings: () => WailsApp.GetSettings(),
+  setLanguage: (language) => WailsApp.SetLanguage(language),
+  setCriterion: (key, enabled) => WailsApp.SetCriterion(key, enabled),
   // O Wails entrega os caminhos só quando o drop termina num elemento com
   // --wails-drop-target: drop (useDropTarget = true).
   subscribeFileDrop: (handler) => {
@@ -64,8 +67,11 @@ export function createGateway(getBackend = resolveBackend) {
     selectDestinationFolder: () => call('selectDestinationFolder'),
     resolveDroppedPath: (path) => call('resolveDroppedPath', path),
     getLastOrganizationState: () => call('getLastOrganizationState'),
-    organizeFiles: (payload) => call('organizeFiles', payload),
+    organizeFiles: (source, destination) => call('organizeFiles', source, destination),
     undoLastOrganization: () => call('undoLastOrganization'),
+    getSettings: () => call('getSettings'),
+    setLanguage: (language) => call('setLanguage', language),
+    setCriterion: (key, enabled) => call('setCriterion', key, enabled),
     subscribeFileDrop: (handler) => getBackend()?.subscribeFileDrop?.(handler) ?? noop
   };
 }

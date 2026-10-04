@@ -29,6 +29,8 @@ flowchart LR
     App --> Log[logging<br/>slog]
   end
   Store --> JSON[(~/.sortly/<br/>last-operation.json)]
+  App --> Settings[settings]
+  Settings --> Prefs[(~/.sortly/<br/>settings.json)]
 ```
 
 ## 2. Pacotes Go
@@ -38,11 +40,12 @@ flowchart LR
 | `main` (`main.go`) | Embute `frontend/dist`, monta as dependências e chama `wails.Run`. Fica na raiz porque o `go:embed` não aceita `..` e a CLI do Wails v2 compila o pacote da pasta do `wails.json` |
 | `backend/app` | Fachada `App` exposta ao frontend (só delega aos serviços), drop nativo, opções da janela (`Options`) e composição das dependências (`wire.go`) |
 | `backend/organizer` | Validação do pedido, `Planner` (calcula o plano, sem efeitos colaterais), `Executor` (aplica os movimentos e mantém o journal), erros com código ([ADR 0004](adr/0004-erros-com-codigo.md)) |
-| `backend/organizer/criteria` | Os seis critérios, um por arquivo, atrás da interface `Rule` e do registry `New` ([ADR 0003](adr/0003-strategy-regras.md)); opções (`RawOptions` → `Options`) e `File` |
+| `backend/organizer/criteria` | Os seis critérios, um por arquivo, atrás da interface `Rule` e do registry `New` ([ADR 0003](adr/0003-strategy-regras.md)); `Options` (com a ordem de exibição `Keys` e o acesso por chave) e `File` |
+| `backend/settings` | Preferências (idioma e critérios) em `~/.sortly/settings.json`: lê uma vez, aceita só valores válidos, recusa desligar o último critério e grava com `files.WriteAtomic`; monta a visão para a tela (`View`) |
 | `backend/metadata` | Leitura de resolução de imagens, duração de mp4 e contagem de páginas (`PageCounter` por extensão) |
 | `backend/undo` | Reverte o journal da última operação e remove as pastas que ficaram vazias |
 | `backend/store` | `OperationStore`: lê e grava o registro da última operação de forma atômica, no mesmo formato JSON da versão 1.0 |
-| `backend/fs/files` | Operações em disco: `Move` (rename com fallback entre volumes), `MoveUnique`/`Reserve` (nome livre com criação exclusiva), `MkdirAll`, `Exists`, `RemoveEmptyDir` |
+| `backend/fs/files` | Operações em disco: `WriteAtomic` (temporário + sync + rename), `Move` (rename com fallback entre volumes), `MoveUnique`/`Reserve` (nome livre com criação exclusiva), `MkdirAll`, `Exists`, `RemoveEmptyDir` |
 | `backend/fs/paths` | Caminhos sem tocar no disco: `Ext` (como o `path.extname` do Node), `Equal`/`IsInside` (caixa de cada sistema) e `Native` (prefixo `\\?\` no Windows) |
 | `backend/apperr` | Erros com código estável ([ADR 0004](adr/0004-erros-com-codigo.md)) |
 | `backend/logging` | Configuração do `log/slog` em arquivo |
@@ -64,8 +67,11 @@ Os métodos públicos de `backend/app.App` viram funções JavaScript geradas em
 | `SelectDestinationFolder()` | — | caminho, ou `""` se cancelado | `UNEXPECTED` |
 | `ResolveDroppedPath(path)` | caminho | `{ sourceFolderPath }` | `DROPPED_INVALID`, `DROPPED_MISSING`, `DROPPED_UNSUPPORTED` |
 | `GetLastOrganizationState()` | — | `{ hasUndo, sourceFolderPath, destinationFolderPath }` | — (registro corrompido = sem desfazer) |
-| `OrganizeFiles(req)` | `{ sourceFolderPath, destinationFolderPath, organizationOptions }` | `{ sourceFolderPath, destinationFolderPath, processedFiles, movedFiles, failedFiles, unchangedFiles, ignoredWithoutExtension, ignoredFolders, canUndo }` | `INVALID_SOURCE`, `INVALID_DESTINATION`, `NO_CRITERIA`, `RECORD_NOT_SAVED`, `UNEXPECTED` |
+| `OrganizeFiles(source, destination)` | caminhos; os critérios vêm das preferências salvas | `{ sourceFolderPath, destinationFolderPath, processedFiles, movedFiles, failedFiles, unchangedFiles, ignoredWithoutExtension, ignoredFolders, canUndo }` | `INVALID_SOURCE`, `INVALID_DESTINATION`, `NO_CRITERIA`, `RECORD_NOT_SAVED`, `UNEXPECTED` |
 | `UndoLastOrganization()` | — | `{ restoredFiles, renamedOnRestore, skippedMissing, failedFiles, canUndo }` | `NOTHING_TO_UNDO`, `UNEXPECTED` |
+| `GetSettings()` | — | `{ language, criteria: [{ key, enabled, locked }] }`, critérios na ordem dos checkboxes | — (arquivo ausente ou inválido = padrão) |
+| `SetLanguage(language)` | `pt-BR` ou `en` | a mesma visão de `GetSettings` | `INVALID_LANGUAGE`, `SETTINGS_NOT_SAVED` |
+| `SetCriterion(key, enabled)` | chave (`byDate`…) e valor | a mesma visão de `GetSettings` | `UNKNOWN_CRITERION`, `LAST_CRITERION`, `SETTINGS_NOT_SAVED` |
 
 Em caso de erro, a `Promise` é rejeitada e a mensagem é **só o código** (ex.: `NOTHING_TO_UNDO`). O detalhe completo vai para o log. Organizar e desfazer nunca rodam ao mesmo tempo (a fachada serializa as duas operações).
 
@@ -80,8 +86,7 @@ A interface é a mesma da versão 1.0. A lógica foi reorganizada ([ADR 0002](ad
 | `services/sortlyGateway.js` | Único ponto de acesso ao backend. Encapsula os bindings Wails e traduz códigos de erro |
 | `controllers/useFileOrganizerController.js` | Estado da tela e ações (`selectFolder`, `runAction`) |
 | `hooks/useNotifications.js` | Histórico de notificações (limite de 80) |
-| `hooks/usePersistentState.js` | Estado salvo no `localStorage` (idioma e critérios) |
-| `domain/organizationOptions.js` | Lista de critérios, valores padrão e a regra de "pelo menos um critério" |
+| `hooks/useSettings.js` | Guarda a visão das preferências devolvida pelo backend (sem regra própria) |
 | `views/`, `components/` | Apenas apresentação |
 
 A estrutura de pastas do repositório está em [development.md](development.md#3-estrutura-do-repositório).
@@ -91,4 +96,4 @@ A estrutura de pastas do repositório está em [development.md](development.md#3
 - Os nomes das pastas criadas são idênticos.
 - O formato de `~/.sortly/last-operation.json` é o mesmo, então um desfazer pendente da versão 1.0 funciona na 2.0.
 - Os textos em português exibidos ao usuário continuam os mesmos.
-- As preferências no `localStorage` **não** são migradas, porque a origem do WebView muda. O usuário volta aos padrões (português, critério Extensão) uma única vez.
+- As preferências da 1.0 ficavam no `localStorage` do Electron e **não** são migradas. Na 2.0 elas ficam em `~/.sortly/settings.json`, fora do WebView. O usuário volta aos padrões (português, critério Extensão) uma única vez.

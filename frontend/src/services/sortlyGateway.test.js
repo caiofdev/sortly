@@ -41,10 +41,8 @@ describe('createGateway', () => {
   it('repassa argumentos e resultado', async () => {
     const backend = { organizeFiles: vi.fn().mockResolvedValue({ movedFiles: 2 }) };
     const gateway = createGateway(() => backend);
-    await expect(gateway.organizeFiles({ sourceFolderPath: 'x' })).resolves.toEqual({
-      movedFiles: 2
-    });
-    expect(backend.organizeFiles).toHaveBeenCalledWith({ sourceFolderPath: 'x' });
+    await expect(gateway.organizeFiles('origem', 'destino')).resolves.toEqual({ movedFiles: 2 });
+    expect(backend.organizeFiles).toHaveBeenCalledWith('origem', 'destino');
   });
 
   it('normaliza o erro do backend', async () => {
@@ -53,7 +51,7 @@ describe('createGateway', () => {
     await expect(gateway.undoLastOrganization()).rejects.toMatchObject({ code: 'NOTHING_TO_UNDO' });
   });
 
-  it('expõe os 6 métodos da API', () => {
+  it('expõe os 9 métodos da API', () => {
     const backend = Object.fromEntries(
       [
         'selectSourceFolder',
@@ -61,7 +59,10 @@ describe('createGateway', () => {
         'resolveDroppedPath',
         'getLastOrganizationState',
         'organizeFiles',
-        'undoLastOrganization'
+        'undoLastOrganization',
+        'getSettings',
+        'setLanguage',
+        'setCriterion'
       ].map((m) => [m, vi.fn().mockResolvedValue(m)])
     );
     const gateway = createGateway(() => backend);

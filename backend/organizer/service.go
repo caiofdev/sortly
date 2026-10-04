@@ -16,11 +16,11 @@ import (
 	"github.com/caiofdev/sortly/backend/store"
 )
 
-// Request é o pedido de organização, no formato enviado pelo frontend.
+// Request é o pedido de organização. Options vem das preferências salvas.
 type Request struct {
-	SourceFolderPath      string              `json:"sourceFolderPath"`
-	DestinationFolderPath string              `json:"destinationFolderPath"`
-	OrganizationOptions   criteria.RawOptions `json:"organizationOptions"`
+	SourceFolderPath      string
+	DestinationFolderPath string
+	Options               criteria.Options
 }
 
 // Result resume a organização. Não traz mensagem pronta: o frontend monta o
@@ -143,7 +143,7 @@ func validate(req Request) (src, dst string, opts criteria.Options, err error) {
 	if info, statErr := os.Stat(dst); statErr == nil && !info.IsDir() {
 		return "", "", criteria.Options{}, fmt.Errorf("%w: %q", ErrInvalidDestination, dst)
 	}
-	opts = req.OrganizationOptions.Normalize()
+	opts = req.Options
 	if !opts.Any() {
 		return "", "", criteria.Options{}, ErrNoCriteria
 	}

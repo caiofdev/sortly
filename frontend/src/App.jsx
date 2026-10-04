@@ -1,12 +1,11 @@
 import useFileOrganizerController from './controllers/useFileOrganizerController';
-import useLanguagePreference from './hooks/useLanguagePreference';
 import useNotifications from './hooks/useNotifications';
-import useOrganizationOptions from './hooks/useOrganizationOptions';
+import useSettings from './hooks/useSettings';
 import OrganizerView from './views/OrganizerView';
 
 function App() {
-  const { language, setLanguage } = useLanguagePreference();
-  const { organizationOptions, updateOrganizationOption } = useOrganizationOptions();
+  const { settings, setLanguage, setCriterion } = useSettings();
+  const { language, criteria } = settings;
   const { notifications, notify, clearNotifications } = useNotifications(language);
 
   const {
@@ -18,13 +17,15 @@ function App() {
     handleSelectSourceFolder,
     handleSelectDestinationFolder,
     handleOrganizeFiles,
-    handleUndoLastOrganization
-  } = useFileOrganizerController({ language, organizationOptions, notify });
+    handleUndoLastOrganization,
+    handleLanguageChange,
+    handleCriterionChange
+  } = useFileOrganizerController({ language, notify, setLanguage, setCriterion });
 
   return (
     <OrganizerView
       language={language}
-      organizationOptions={organizationOptions}
+      criteria={criteria}
       sourceFolderPath={sourceFolderPath}
       destinationFolderPath={destinationFolderPath}
       hasUndo={hasUndo}
@@ -32,8 +33,8 @@ function App() {
       loadingAction={loadingAction}
       notifications={notifications}
       onClearNotifications={clearNotifications}
-      onLanguageChange={setLanguage}
-      onOptionChange={updateOrganizationOption}
+      onLanguageChange={handleLanguageChange}
+      onCriterionChange={handleCriterionChange}
       onSelectSourceFolder={handleSelectSourceFolder}
       onSelectDestinationFolder={handleSelectDestinationFolder}
       onOrganizeFiles={handleOrganizeFiles}

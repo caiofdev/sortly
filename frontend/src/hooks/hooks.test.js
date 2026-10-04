@@ -1,49 +1,6 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
-import useLanguagePreference from './useLanguagePreference';
 import useNotifications, { MAX_NOTIFICATIONS } from './useNotifications';
-import usePersistentState from './usePersistentState';
-
-describe('usePersistentState', () => {
-  afterEach(() => vi.restoreAllMocks());
-
-  it('lê o valor salvo e grava ao mudar', () => {
-    window.localStorage.setItem('k', '5');
-    const { result } = renderHook(() =>
-      usePersistentState('k', { deserialize: (v) => Number(v ?? 0), serialize: String })
-    );
-    expect(result.current[0]).toBe(5);
-    act(() => result.current[1](6));
-    expect(window.localStorage.getItem('k')).toBe('6');
-  });
-
-  it('localStorage indisponível não quebra a interface', () => {
-    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
-      throw new Error('bloqueado');
-    });
-    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
-      throw new Error('cota');
-    });
-    const { result } = renderHook(() =>
-      usePersistentState('k', { deserialize: (v) => v ?? 'padrão' })
-    );
-    expect(result.current[0]).toBe('padrão');
-    expect(() => act(() => result.current[1]('novo'))).not.toThrow();
-  });
-});
-
-describe('useLanguagePreference', () => {
-  it.each([
-    ['en', 'en'],
-    ['fr', 'pt-BR'],
-    [null, 'pt-BR']
-  ])('salvo %s → %s (formato texto puro, compatível)', (saved, expected) => {
-    if (saved) window.localStorage.setItem('sortly.language', saved);
-    const { result } = renderHook(() => useLanguagePreference());
-    expect(result.current.language).toBe(expected);
-    expect(window.localStorage.getItem('sortly.language')).toBe(expected);
-  });
-});
 
 describe('useNotifications', () => {
   it('mais recente primeiro, com id, tipo, mensagem e horário', () => {

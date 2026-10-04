@@ -31,69 +31,8 @@ export namespace app {
 
 }
 
-export namespace criteria {
-	
-	export class RawOptions {
-	    byDuration: boolean;
-	    byPages: boolean;
-	    byResolution: boolean;
-	    byDate: boolean;
-	    bySize: boolean;
-	    byExtension?: boolean;
-	
-	    static createFrom(source: any = {}) {
-	        return new RawOptions(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.byDuration = source["byDuration"];
-	        this.byPages = source["byPages"];
-	        this.byResolution = source["byResolution"];
-	        this.byDate = source["byDate"];
-	        this.bySize = source["bySize"];
-	        this.byExtension = source["byExtension"];
-	    }
-	}
-
-}
-
 export namespace organizer {
 	
-	export class Request {
-	    sourceFolderPath: string;
-	    destinationFolderPath: string;
-	    organizationOptions: criteria.RawOptions;
-	
-	    static createFrom(source: any = {}) {
-	        return new Request(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.sourceFolderPath = source["sourceFolderPath"];
-	        this.destinationFolderPath = source["destinationFolderPath"];
-	        this.organizationOptions = this.convertValues(source["organizationOptions"], criteria.RawOptions);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
 	export class Result {
 	    sourceFolderPath: string;
 	    destinationFolderPath: string;
@@ -121,6 +60,59 @@ export namespace organizer {
 	        this.ignoredFolders = source["ignoredFolders"];
 	        this.canUndo = source["canUndo"];
 	    }
+	}
+
+}
+
+export namespace settings {
+	
+	export class Criterion {
+	    key: string;
+	    enabled: boolean;
+	    locked: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new Criterion(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.key = source["key"];
+	        this.enabled = source["enabled"];
+	        this.locked = source["locked"];
+	    }
+	}
+	export class View {
+	    language: string;
+	    criteria: Criterion[];
+	
+	    static createFrom(source: any = {}) {
+	        return new View(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.language = source["language"];
+	        this.criteria = this.convertValues(source["criteria"], Criterion);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
 	}
 
 }

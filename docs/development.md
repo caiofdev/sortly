@@ -169,7 +169,7 @@ O workflow [`release.yml`](../.github/workflows/release.yml) roda quando uma tag
 |---|---|
 | Registro do último organizar (desfazer) | `~/.sortly/last-operation.json`, o mesmo da versão 1.0 |
 | Log | `%AppData%\Sortly\logs` (Windows), `~/Library/Application Support/Sortly/logs` (macOS), `~/.config/Sortly/logs` (Linux) |
-| Idioma e critérios | `localStorage` do WebView |
+| Idioma e critérios | `~/.sortly/settings.json` (some com a pasta `~/.sortly`, não com os dados do WebView) |
 
 Para testar sem mexer nos seus dados, abra o app com outra pasta de usuário. No Windows, defina `USERPROFILE`, `APPDATA` e `LOCALAPPDATA` apontando para uma pasta temporária, como fazem os scripts em `scripts/`.
 

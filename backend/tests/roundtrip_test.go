@@ -45,12 +45,11 @@ func roundTrip(t *testing.T, inPlace bool) {
 	}
 	before := treeHash(t, src)
 	st := store.New(filepath.Join(t.TempDir(), "last-operation.json"), nil)
-	yes := true
 	req := organizer.Request{
 		SourceFolderPath:      src,
 		DestinationFolderPath: dst,
-		OrganizationOptions: criteria.RawOptions{
-			ByExtension: &yes, ByDate: true, BySize: true, ByResolution: true, ByDuration: true, ByPages: true,
+		Options: criteria.Options{
+			ByExtension: true, ByDate: true, BySize: true, ByResolution: true, ByDuration: true, ByPages: true,
 		},
 	}
 
