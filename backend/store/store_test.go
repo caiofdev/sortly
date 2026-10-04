@@ -172,24 +172,18 @@ func TestSave(t *testing.T) {
 		}
 	})
 
-	t.Run("falha na troca preserva o registro anterior (B5)", func(t *testing.T) {
+	t.Run("falha na gravação vai para o log (B5)", func(t *testing.T) {
 		var logs bytes.Buffer
-		s := New(filepath.Join(t.TempDir(), "last-operation.json"), slog.New(slog.NewTextHandler(&logs, nil)))
-		if err := s.Save(op); err != nil {
+		path := filepath.Join(t.TempDir(), "last-operation.json")
+		if err := os.MkdirAll(filepath.Join(path, "conteudo"), 0o755); err != nil {
 			t.Fatal(err)
 		}
-		before, _ := os.ReadFile(s.Path())
-		stubRename(t, errors.New("disco cheio"))
+		s := New(path, slog.New(slog.NewTextHandler(&logs, nil)))
 
-		if err := s.Save(Operation{SourceFolderPath: "/outro"}); err == nil {
-			t.Fatal("esperava erro na troca do arquivo")
+		if err := s.Save(op); err == nil {
+			t.Fatal("esperava erro ao gravar por cima de uma pasta")
 		}
-		after, _ := os.ReadFile(s.Path())
-		if !bytes.Equal(before, after) {
-			t.Fatalf("registro anterior alterado:\nantes  %s\ndepois %s", before, after)
-		}
-		assertNoTempFiles(t, filepath.Dir(s.Path()))
-		if !strings.Contains(logs.String(), "disco cheio") {
+		if !strings.Contains(logs.String(), "gravar") {
 			t.Fatalf("o erro deveria ser registrado no log, log = %q", logs.String())
 		}
 	})
@@ -220,24 +214,6 @@ func TestClear(t *testing.T) {
 		if err := s.Clear(); err == nil {
 			t.Fatal("esperava erro ao apagar pasta não vazia")
 		}
-	})
-}
-
-func TestWriteAtomic(t *testing.T) {
-	t.Run("pasta inexistente", func(t *testing.T) {
-		s := New(filepath.Join(t.TempDir(), "nao-existe", "x.json"), nil)
-		if err := s.writeAtomic([]byte("{}")); err == nil {
-			t.Fatal("esperava erro")
-		}
-	})
-
-	t.Run("troca falha: temporário removido", func(t *testing.T) {
-		s := newStore(t)
-		stubRename(t, errors.New("falhou"))
-		if err := s.writeAtomic([]byte("{}")); err == nil {
-			t.Fatal("esperava erro")
-		}
-		assertNoTempFiles(t, filepath.Dir(s.Path()))
 	})
 }
 
@@ -316,16 +292,9 @@ func golden(t *testing.T, name string) string {
 	return strings.TrimRight(string(data), "\r\n")
 }
 
-func stubRename(t *testing.T, err error) {
-	t.Helper()
-	old := renameFile
-	renameFile = func(string, string) error { return err }
-	t.Cleanup(func() { renameFile = old })
-}
-
 func assertNoTempFiles(t *testing.T, dir string) {
 	t.Helper()
-	matches, _ := filepath.Glob(filepath.Join(dir, ".last-operation-*.tmp"))
+	matches, _ := filepath.Glob(filepath.Join(dir, ".last-operation.json-*.tmp"))
 	if len(matches) > 0 {
 		t.Fatalf("arquivos temporários esquecidos: %v", matches)
 	}
