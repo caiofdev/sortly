@@ -14,14 +14,17 @@ A complexidade ciclomática conta os caminhos independentes de uma função: com
   - Go: `gocyclo` e `cyclop` (via `golangci-lint`).
   - JavaScript: regra `complexity` do ESLint.
 - **Casos de teste:** uma função com CC = N precisa de **pelo menos N casos**, cobrindo os caminhos básicos independentes.
-- **Rastreabilidade:** cada arquivo de teste começa com uma tabela:
+- **Rastreabilidade:** [`scripts/cccases`](../scripts/cccases) cruza a CC de cada função Go com os casos de teste que a chamam e aponta as funções com casos < CC. A CI publica o relatório no resumo do job "Go · lint" (informativo, não bloqueia). No frontend, a contagem é manual (cada `it` ou linha de `it.each`).
 
-  ```go
-  // função          | CC | casos
-  // Options         |  1 | TestOptionsMatchesElectronWindow, ...
+  ```bash
+  go run ./scripts/cccases            # funções com CC ≥ 2 em internal/
+  go run ./scripts/cccases -min 1 internal/undo
+  go run ./scripts/cccases -strict    # sai com código 1 se houver casos < CC
   ```
 
-  A mesma tabela vai na seção "Testes" do pull request.
+  A contagem é heurística (linhas de tabela percorridas com `range`, `t.Run` e ifs de asserção fora de laço). "Sem teste direto" indica função exercitada só por outras funções, o que nem sempre é problema. As tabelas `função | CC | casos` nos arquivos de teste estão sendo substituídas por este relatório (#43).
+
+  A tabela CC × casos das funções alteradas vai na seção "Testes" do pull request.
 
 ### 1.2 Análise de valor-limite
 
