@@ -11,7 +11,7 @@ import organizerCopy from '../i18n/organizerCopy';
 // o de abrir/fechar painéis.
 function OrganizerView({
   language,
-  organizationOptions,
+  criteria,
   sourceFolderPath,
   destinationFolderPath,
   hasUndo,
@@ -20,7 +20,7 @@ function OrganizerView({
   notifications,
   onClearNotifications,
   onLanguageChange,
-  onOptionChange,
+  onCriterionChange,
   onSelectSourceFolder,
   onSelectDestinationFolder,
   onOrganizeFiles,
@@ -53,8 +53,8 @@ function OrganizerView({
             labels={text}
             settingsOpen={isSettingsOpen}
             onToggleSettings={() => setIsSettingsOpen((open) => !open)}
-            options={organizationOptions}
-            onOptionChange={onOptionChange}
+            criteria={criteria}
+            onCriterionChange={onCriterionChange}
           />
 
           <div className="my-7 h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent" />

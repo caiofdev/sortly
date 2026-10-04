@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { DEFAULT_OPTIONS } from '../domain/organizationOptions';
 import { SortlyError } from '../services/sortlyGateway';
 import useFileOrganizerController from './useFileOrganizerController';
 
@@ -33,14 +32,41 @@ function fakeGateway(overrides = {}) {
   };
 }
 
-async function setup(gateway = fakeGateway(), language = 'pt-BR') {
+async function setup(gateway = fakeGateway(), language = 'pt-BR', settings = {}) {
   const notify = vi.fn();
+  const setLanguage = settings.setLanguage ?? vi.fn().mockResolvedValue();
+  const setCriterion = settings.setCriterion ?? vi.fn().mockResolvedValue();
   const hook = renderHook(() =>
-    useFileOrganizerController({ language, organizationOptions: DEFAULT_OPTIONS, notify, gateway })
+    useFileOrganizerController({ language, notify, setLanguage, setCriterion, gateway })
   );
   await waitFor(() => expect(gateway.getLastOrganizationState).toHaveBeenCalled());
-  return { ...hook, notify, gateway };
+  return { ...hook, notify, gateway, setLanguage, setCriterion };
 }
+
+describe('preferências', () => {
+  it('repassa idioma e critério', async () => {
+    const { result, notify, setLanguage, setCriterion } = await setup();
+    await act(() => result.current.handleLanguageChange('en'));
+    await act(() => result.current.handleCriterionChange('byDate', true));
+    expect(setLanguage).toHaveBeenCalledWith('en');
+    expect(setCriterion).toHaveBeenCalledWith('byDate', true);
+    expect(notify).not.toHaveBeenCalled();
+  });
+
+  it('erro com código vira aviso traduzido', async () => {
+    const setCriterion = vi.fn().mockRejectedValue(new SortlyError('LAST_CRITERION'));
+    const { result, notify } = await setup(fakeGateway(), 'pt-BR', { setCriterion });
+    await act(() => result.current.handleCriterionChange('byExtension', false));
+    expect(notify).toHaveBeenCalledWith('error', 'Mantenha pelo menos um critério marcado.');
+  });
+
+  it('erro sem código usa o texto padrão', async () => {
+    const setLanguage = vi.fn().mockRejectedValue(new SortlyError('UNEXPECTED'));
+    const { result, notify } = await setup(fakeGateway(), 'en', { setLanguage });
+    await act(() => result.current.handleLanguageChange('pt-BR'));
+    expect(notify).toHaveBeenCalledWith('error', 'Could not save the preference.');
+  });
+});
 
 describe('estado inicial', () => {
   it('recupera a última organização e avisa', async () => {
@@ -155,11 +181,7 @@ describe('organizar e desfazer', () => {
     const { result, notify, gateway } = await setup();
     await act(() => result.current.handleSelectSourceFolder());
     await act(() => result.current.handleOrganizeFiles());
-    expect(gateway.organizeFiles).toHaveBeenCalledWith({
-      sourceFolderPath: 'C:\\origem',
-      destinationFolderPath: 'C:\\origem',
-      organizationOptions: DEFAULT_OPTIONS
-    });
+    expect(gateway.organizeFiles).toHaveBeenCalledWith('C:\\origem', 'C:\\origem');
     expect(result.current.hasUndo).toBe(true);
     expect(result.current.loadingAction).toBeNull();
     expect(notify).toHaveBeenCalledWith(

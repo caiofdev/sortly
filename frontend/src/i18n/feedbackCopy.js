@@ -11,6 +11,7 @@ const feedbackCopy = {
     undoUnexpectedError: 'Erro inesperado ao desfazer a organização.',
     droppedPathUnexpectedError: 'Não foi possível usar o item arrastado.',
     droppedPathSuccess: 'Origem definida por arrastar e soltar.',
+    settingsSaveError: 'Não foi possível salvar a preferência.',
     recoveredLastOrganization: 'Última organização recuperada. Você pode desfazer essa alteração.',
     organizeSuccess: (result) =>
       `Organização concluida: ${result.movedFiles} arquivo(s) movido(s). Origem: ${result.sourceFolderPath}. Destino: ${result.destinationFolderPath}. Processados: ${result.processedFiles}. Ignorados sem extensão: ${result.ignoredWithoutExtension}. Pastas ignoradas: ${result.ignoredFolders}.` +
@@ -30,7 +31,11 @@ const feedbackCopy = {
       DROPPED_MISSING: 'O item arrastado não existe mais.',
       DROPPED_UNSUPPORTED: 'Somente arquivos e pastas podem ser arrastados.',
       RECORD_NOT_SAVED:
-        'Os arquivos foram organizados, mas não foi possível salvar o registro para desfazer.'
+        'Os arquivos foram organizados, mas não foi possível salvar o registro para desfazer.',
+      LAST_CRITERION: 'Mantenha pelo menos um critério marcado.',
+      UNKNOWN_CRITERION: 'Critério de organização desconhecido.',
+      INVALID_LANGUAGE: 'Idioma não suportado.',
+      SETTINGS_NOT_SAVED: 'Não foi possível salvar a preferência.'
     }
   },
   en: {
@@ -41,6 +46,7 @@ const feedbackCopy = {
     undoUnexpectedError: 'Unexpected error while undoing organization.',
     droppedPathUnexpectedError: 'Could not use the dropped item.',
     droppedPathSuccess: 'Source folder set from drag and drop.',
+    settingsSaveError: 'Could not save the preference.',
     recoveredLastOrganization: 'Last organization recovered. You can undo this change.',
     organizeSuccess: (result) =>
       `Organization complete: ${result.movedFiles} file(s) moved. Source: ${result.sourceFolderPath}. Destination: ${result.destinationFolderPath}. Processed: ${result.processedFiles}. Ignored without extension: ${result.ignoredWithoutExtension}. Ignored folders: ${result.ignoredFolders}.` +
@@ -57,7 +63,11 @@ const feedbackCopy = {
       DROPPED_INVALID: 'Invalid dropped item.',
       DROPPED_MISSING: 'Dropped item no longer exists.',
       DROPPED_UNSUPPORTED: 'Only files and folders are supported in drag and drop.',
-      RECORD_NOT_SAVED: 'Files were organized, but the undo record could not be saved.'
+      RECORD_NOT_SAVED: 'Files were organized, but the undo record could not be saved.',
+      LAST_CRITERION: 'Keep at least one criterion selected.',
+      UNKNOWN_CRITERION: 'Unknown organization criterion.',
+      INVALID_LANGUAGE: 'Unsupported language.',
+      SETTINGS_NOT_SAVED: 'Could not save the preference.'
     }
   }
 };

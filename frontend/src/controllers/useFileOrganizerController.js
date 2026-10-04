@@ -6,8 +6,9 @@ import defaultGateway from '../services/sortlyGateway';
 
 function useFileOrganizerController({
   language,
-  organizationOptions,
   notify,
+  setLanguage,
+  setCriterion,
   gateway = defaultGateway
 }) {
   const copy = getCopy(feedbackCopy, language);
@@ -100,14 +101,10 @@ function useFileOrganizerController({
       notify('error', copy.sourceRequired);
       return Promise.resolve();
     }
-    const payload = {
-      sourceFolderPath,
-      destinationFolderPath: destinationFolderPath || sourceFolderPath,
-      organizationOptions
-    };
+    const destination = destinationFolderPath || sourceFolderPath;
     return runAction(
       'organize',
-      () => gateway.organizeFiles(payload),
+      () => gateway.organizeFiles(sourceFolderPath, destination),
       copy.organizeSuccess,
       copy.organizeUnexpectedError
     );
@@ -115,6 +112,18 @@ function useFileOrganizerController({
 
   const handleUndoLastOrganization = () =>
     runAction('restore', gateway.undoLastOrganization, copy.undoSuccess, copy.undoUnexpectedError);
+
+  const changeSetting = async (change) => {
+    try {
+      await change();
+    } catch (error) {
+      notify('error', describeError(error, copy, copy.settingsSaveError));
+    }
+  };
+
+  const handleLanguageChange = (next) => changeSetting(() => setLanguage(next));
+
+  const handleCriterionChange = (key, enabled) => changeSetting(() => setCriterion(key, enabled));
 
   return {
     sourceFolderPath,
@@ -125,7 +134,9 @@ function useFileOrganizerController({
     handleSelectSourceFolder,
     handleSelectDestinationFolder,
     handleOrganizeFiles,
-    handleUndoLastOrganization
+    handleUndoLastOrganization,
+    handleLanguageChange,
+    handleCriterionChange
   };
 }
 

@@ -6,8 +6,12 @@ export function GetLastOrganizationState() {
   return window['go']['app']['App']['GetLastOrganizationState']();
 }
 
-export function OrganizeFiles(arg1) {
-  return window['go']['app']['App']['OrganizeFiles'](arg1);
+export function GetSettings() {
+  return window['go']['app']['App']['GetSettings']();
+}
+
+export function OrganizeFiles(arg1, arg2) {
+  return window['go']['app']['App']['OrganizeFiles'](arg1, arg2);
 }
 
 export function ResolveDroppedPath(arg1) {
@@ -20,6 +24,14 @@ export function SelectDestinationFolder() {
 
 export function SelectSourceFolder() {
   return window['go']['app']['App']['SelectSourceFolder']();
+}
+
+export function SetCriterion(arg1, arg2) {
+  return window['go']['app']['App']['SetCriterion'](arg1, arg2);
+}
+
+export function SetLanguage(arg1) {
+  return window['go']['app']['App']['SetLanguage'](arg1);
 }
 
 export function UndoLastOrganization() {

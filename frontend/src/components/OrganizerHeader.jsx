@@ -9,8 +9,8 @@ function OrganizerHeader({
   labels,
   settingsOpen,
   onToggleSettings,
-  options,
-  onOptionChange
+  criteria,
+  onCriterionChange
 }) {
   return (
     <header className="space-y-3 text-center">
@@ -20,8 +20,8 @@ function OrganizerHeader({
           isOpen={settingsOpen}
           onToggle={onToggleSettings}
           labels={labels}
-          options={options}
-          onOptionChange={onOptionChange}
+          criteria={criteria}
+          onCriterionChange={onCriterionChange}
         />
       </div>
 

@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { DEFAULT_OPTIONS } from '../domain/organizationOptions';
 import organizerCopy from '../i18n/organizerCopy';
 import FolderPathsPanel from './FolderPathsPanel';
 import { getItemTone } from './NotificationsCenter';
@@ -18,15 +17,23 @@ describe('getItemTone', () => {
 });
 
 describe('OrganizerSettingsPanel', () => {
-  it('mostra os 6 critérios na ordem e desabilita o último marcado', () => {
-    const onOptionChange = vi.fn();
+  it('mostra os critérios na ordem recebida e desabilita o travado', () => {
+    const onCriterionChange = vi.fn();
+    const criteria = [
+      'byDuration',
+      'byPages',
+      'byResolution',
+      'byDate',
+      'bySize',
+      'byExtension'
+    ].map((key) => ({ key, enabled: key === 'byExtension', locked: key === 'byExtension' }));
     render(
       <OrganizerSettingsPanel
         isOpen
         labels={labels}
-        options={DEFAULT_OPTIONS}
+        criteria={criteria}
         onToggle={vi.fn()}
-        onOptionChange={onOptionChange}
+        onCriterionChange={onCriterionChange}
       />
     );
     const boxes = screen.getAllByRole('checkbox');
@@ -39,9 +46,11 @@ describe('OrganizerSettingsPanel', () => {
       'Extensão do arquivo'
     ]);
     expect(boxes[5]).toBeDisabled();
+    expect(boxes[5]).toBeChecked();
+    expect(boxes[3]).not.toBeChecked();
     expect(boxes[0]).toBeEnabled();
     fireEvent.click(boxes[3]);
-    expect(onOptionChange).toHaveBeenCalledWith('byDate', true);
+    expect(onCriterionChange).toHaveBeenCalledWith('byDate', true);
   });
 });
 

@@ -1,11 +1,7 @@
-import { OPTION_KEYS, canToggle } from '../domain/organizationOptions';
-
 // Rótulo de cada critério: byDuration → labels.settingsByDuration.
 const labelKey = (key) => `settings${key[0].toUpperCase()}${key.slice(1)}`;
 
-function OrganizerSettingsPanel({ isOpen, onToggle, labels, options, onOptionChange }) {
-  const settingsOptions = OPTION_KEYS.map((key) => ({ key, label: labels[labelKey(key)] }));
-
+function OrganizerSettingsPanel({ isOpen, onToggle, labels, criteria, onCriterionChange }) {
   return (
     <div className="relative">
       <button
@@ -36,9 +32,8 @@ function OrganizerSettingsPanel({ isOpen, onToggle, labels, options, onOptionCha
         <p className="mt-1 text-xs text-[#94A3B8]">{labels.settingsSubtitle}</p>
 
         <div className="mt-3 space-y-2">
-          {settingsOptions.map((item) => {
-            const isChecked = Boolean(options[item.key]);
-            const shouldDisable = !canToggle(options, item.key, false);
+          {criteria.map((item) => {
+            const shouldDisable = item.locked;
 
             return (
               <label
@@ -47,12 +42,12 @@ function OrganizerSettingsPanel({ isOpen, onToggle, labels, options, onOptionCha
                   shouldDisable ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'
                 }`}
               >
-                <span className="text-[#F8FAFC]">{item.label}</span>
+                <span className="text-[#F8FAFC]">{labels[labelKey(item.key)]}</span>
                 <input
                   type="checkbox"
-                  checked={isChecked}
+                  checked={item.enabled}
                   disabled={shouldDisable}
-                  onChange={(event) => onOptionChange(item.key, event.target.checked)}
+                  onChange={(event) => onCriterionChange(item.key, event.target.checked)}
                   className="h-4 w-4 accent-[#3B82F6]"
                 />
               </label>
