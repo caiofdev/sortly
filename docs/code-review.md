@@ -1,8 +1,8 @@
 # Code review — versão Electron 1.0
 
-> Autores: Caio Reis, Claude · Data: 2026-10-02 · Base: commit `3da065f`
+> Autores: Caio Reis, Claude · Data: 2026-10-02 · Base: commit `3da065f` (o código da 1.0 está no histórico do git, pasta `electron/`)
 
-Revisão feita antes da reescrita em Wails. Cada achado tem a issue que o resolve. Os defeitos (B1–B7) recebem **teste de regressão** obrigatório na reescrita.
+Revisão feita antes da reescrita em Wails. Cada achado tem a issue que o resolve. Os defeitos (B1–B8) recebem **teste de regressão** obrigatório na reescrita.
 
 ## 1. Defeitos
 

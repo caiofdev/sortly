@@ -125,7 +125,6 @@ function useFileOrganizerController({
     hasUndo,
     isLoading: Boolean(loadingAction),
     loadingAction,
-    handleResolveDroppedPath,
     handleSelectSourceFolder,
     handleSelectDestinationFolder,
     handleOrganizeFiles,

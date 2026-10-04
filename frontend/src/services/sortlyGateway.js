@@ -1,6 +1,5 @@
-// Único ponto de acesso ao backend (ADR 0002). Na versão Wails, usa os
-// bindings gerados em wailsjs/go/app/App.js; enquanto a versão Electron
-// existir (até a remoção do Electron), usa window.electronAPI.
+// Único ponto de acesso ao backend (ADR 0002): usa os bindings do Wails
+// gerados em wailsjs/go/app/App.js.
 import * as WailsApp from '../../wailsjs/go/app/App';
 import { OnFileDrop, OnFileDropOff } from '../../wailsjs/runtime/runtime';
 
@@ -21,15 +20,13 @@ const wailsBackend = {
   }
 };
 
+// Fora da janela do Wails (ex.: vite dev no navegador), não há backend.
 export function resolveBackend(win = window) {
-  if (win.go?.app?.App) {
-    return wailsBackend;
-  }
-  return win.electronAPI ?? null;
+  return win.go?.app?.App ? wailsBackend : null;
 }
 
 // Erro do backend normalizado: code é o código estável (ex.: NOTHING_TO_UNDO)
-// quando existe; message guarda o texto original (versão Electron).
+// quando existe; message guarda o texto original, para logs.
 export class SortlyError extends Error {
   constructor(code, message) {
     super(message || code);
@@ -70,8 +67,7 @@ export function createGateway(getBackend = resolveBackend) {
     organizeFiles: (payload) => call('organizeFiles', payload),
     undoLastOrganization: () => call('undoLastOrganization'),
     // Assina os arquivos soltos na janela e devolve a função que cancela a
-    // assinatura. Na versão Electron não há assinatura: o caminho vem do
-    // próprio evento de drop (File.path).
+    // assinatura (sem backend, não assina nada).
     subscribeFileDrop: (handler) => getBackend()?.subscribeFileDrop?.(handler) ?? noop
   };
 }

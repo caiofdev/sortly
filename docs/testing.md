@@ -18,7 +18,7 @@ A complexidade ciclomática conta os caminhos independentes de uma função: com
 
   ```go
   // função          | CC | casos
-  // newAppOptions   |  1 | TestNewAppOptionsMatchesElectronWindow, ...
+  // Options         |  1 | TestOptionsMatchesElectronWindow, ...
   ```
 
   A mesma tabela vai na seção "Testes" do pull request.
@@ -44,7 +44,7 @@ As regras completas, com os valores esperados, estão em [organization-rules.md]
 
 - **Go:** testes em tabela (`t.Run`), `t.TempDir()` para tocar no disco e fakes para as interfaces (`FileSystem`, `OperationStore`, …).
 - **Integração:** organizar e depois desfazer deve devolver a árvore de arquivos idêntica à original (comparada por hash).
-- **Regressão:** cada defeito B1–B7 de [code-review.md](code-review.md) ganha um teste que falharia no código antigo.
+- **Regressão:** cada defeito B1–B8 de [code-review.md](code-review.md) ganha um teste que falharia no código antigo.
 - **Frontend:** Vitest + React Testing Library + jsdom. Os hooks são testados com `renderHook`; o backend é mockado.
 
 ### 1.4 Cobertura

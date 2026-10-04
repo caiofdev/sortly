@@ -18,7 +18,7 @@ Reescrever o app com **Wails v2** (versão estável):
 - **Frontend React** reaproveitado, renderizado pelo WebView nativo do sistema: WebView2 (Windows), WKWebView (macOS) e WebKitGTK (Linux).
 - **Interface visualmente idêntica** nesta migração; o redesign é uma tarefa separada.
 - Plataformas-alvo: Windows (instalador NSIS), macOS e Linux.
-- O desenvolvimento acontece na branch `wails-rewrite` e só entra em `main` com paridade comprovada ([#15](https://github.com/caiofdev/sortly/issues/15)).
+- O desenvolvimento aconteceu na branch `wails-rewrite`, que entrou em `main` depois da paridade comprovada ([#15](https://github.com/caiofdev/sortly/issues/15)) e da remoção do Electron ([#16](https://github.com/caiofdev/sortly/issues/16)).
 
 ## Alternativas consideradas
 

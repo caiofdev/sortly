@@ -20,7 +20,7 @@ const feedbackCopy = {
       `Desfazer concluido: ${result.restoredFiles} arquivo(s) restaurado(s). Renomeados na restauração: ${result.renamedOnRestore}. Não encontrados: ${result.skippedMissing}.` +
       optional(result.failedFiles, 'Falhas ao restaurar'),
     // Textos dos códigos de erro do backend (ADR 0004). Em português, são os
-    // mesmos textos que a versão Electron exibia.
+    // mesmos textos que a versão 1.0 (Electron) exibia.
     errors: {
       INVALID_SOURCE: 'Pasta inválida.',
       INVALID_DESTINATION: 'Pasta de destino inválida.',

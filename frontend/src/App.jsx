@@ -15,7 +15,6 @@ function App() {
     hasUndo,
     isLoading,
     loadingAction,
-    handleResolveDroppedPath,
     handleSelectSourceFolder,
     handleSelectDestinationFolder,
     handleOrganizeFiles,
@@ -35,7 +34,6 @@ function App() {
       onClearNotifications={clearNotifications}
       onLanguageChange={setLanguage}
       onOptionChange={updateOrganizationOption}
-      onResolveDroppedPath={handleResolveDroppedPath}
       onSelectSourceFolder={handleSelectSourceFolder}
       onSelectDestinationFolder={handleSelectDestinationFolder}
       onOrganizeFiles={handleOrganizeFiles}

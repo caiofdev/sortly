@@ -35,7 +35,7 @@ Closes #<!-- número -->
 
 ## 🐞 Defeitos corrigidos
 
-<!-- Se aplicável, cite os achados do docs/code-review.md (B1–B7) e o teste de regressão de cada um. Apague a seção se não houver. -->
+<!-- Se aplicável, cite os achados do docs/code-review.md (B1–B8) e o teste de regressão de cada um. Apague a seção se não houver. -->
 
 | ID | Correção | Teste de regressão |
 |---|---|---|

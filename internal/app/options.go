@@ -9,7 +9,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options/windows"
 )
 
-// Valores da janela iguais aos da versão Electron (electron/bootstrap/appBootstrap.js).
+// Valores da janela iguais aos da versão 1.0 (Electron).
 const (
 	appTitle        = "Sortly"
 	windowWidth     = 980

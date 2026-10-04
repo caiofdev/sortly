@@ -8,20 +8,27 @@ Mantido por Caio Reis & Claude.
 
 ## [Não lançado]
 
+## [2.0.0] - 2026-10-04
+
+Nova versão do Sortly, reconstruída por dentro com a mesma interface. Por Caio Reis & Claude.
+
+### Destaques
+- **Mais leve:** instalador de cerca de 9 MB no Windows (antes 82 MB), 15× menos espaço em disco e cerca de 1/3 menos memória (metade no pico ao organizar).
+- **Mais rápido:** organizar 1000 arquivos leva cerca de metade do tempo.
+- **Mais sistemas:** além do Windows, agora há versões para macOS (.dmg) e Linux (.deb).
+
 ### Adicionado
-- Documentação do projeto na pasta `docs/`: como o app está organizado, as regras usadas para separar os arquivos e as decisões tomadas para a nova versão.
-- README renovado em português e inglês, com espaço para imagens da interface.
-- Este changelog.
 - Arquivos podem ser organizados entre discos diferentes (por exemplo, do computador para um pendrive). Antes isso falhava.
 - Vídeos sem faixa de áudio, como gravações de tela, agora entram na pasta da duração certa em vez de `duration-unknown`.
 - A mensagem ao organizar informa quantos arquivos não puderam ser movidos e quantos já estavam no lugar certo, quando houver.
 - O app guarda um registro de atividades (log) para ajudar a investigar problemas.
 - A fonte da interface vem dentro do app e não depende mais de internet. Antes, sem conexão, a tela usava outra fonte.
+- README em português e inglês, com imagens da interface, e documentação do projeto na pasta `docs/`.
 
 ### Alterado
-- Instaladores bem menores (cerca de 9 MB no Windows, antes 82 MB). Também há versões para macOS (.dmg) e Linux (.deb).
-- Ao instalar a nova versão, a versão anterior é removida automaticamente; um desfazer pendente continua disponível.
+- Ao instalar a nova versão no Windows, a versão anterior é removida automaticamente; um desfazer pendente continua disponível.
 - Se um arquivo não puder ser movido ou restaurado, os demais continuam. Os que falharam ao desfazer ficam guardados, e você pode tentar desfazer de novo.
+- O idioma e os critérios escolhidos voltam ao padrão (português, só "Extensão") na primeira abertura da versão 2.0.
 
 ### Corrigido
 - Se um arquivo falhava no meio da organização, não era mais possível desfazer o que já tinha sido movido.
@@ -29,9 +36,6 @@ Mantido por Caio Reis & Claude.
 - Organizando na própria pasta, arquivos que nenhum critério separava eram renomeados para `nome (1)` sem motivo.
 - Com o app em inglês, algumas mensagens de erro apareciam em português (e vice-versa).
 - Arquivos com nome terminado em ponto não podiam ser organizados no Windows.
-
-### Em andamento
-- Nova versão do Sortly construída com Wails, com a mesma interface. Organizar 1000 arquivos ficou cerca de 2× mais rápido no teste, e o app usa cerca de 1/3 menos memória no Windows (metade no pico ao organizar). Acompanhe na [milestone](https://github.com/caiofdev/sortly/milestone/1).
 
 ## [1.0.0] - 2026-03-27
 
@@ -47,5 +51,6 @@ Primeira versão pública do Sortly. Por Caio Reis.
 - Interface em português e inglês.
 - Instalador para Windows.
 
-[Não lançado]: https://github.com/caiofdev/sortly/compare/main...wails-rewrite
+[Não lançado]: https://github.com/caiofdev/sortly/compare/v2.0.0...HEAD
+[2.0.0]: https://github.com/caiofdev/sortly/releases/tag/v2.0.0
 [1.0.0]: https://github.com/caiofdev/sortly/releases

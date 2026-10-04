@@ -1,8 +1,7 @@
 // Package store guarda o registro da última organização, usado pelo desfazer.
 //
-// O formato do arquivo é o mesmo da versão Electron
-// (electron/repositories/lastOperationRepository.js), para que um desfazer
-// pendente continue funcionando depois da atualização.
+// O formato do arquivo é o mesmo da versão 1.0 (Electron), para que um
+// desfazer pendente continue funcionando depois da atualização.
 package store
 
 import (

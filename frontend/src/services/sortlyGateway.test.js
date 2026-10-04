@@ -1,8 +1,8 @@
 // função          | CC | casos
-// resolveBackend  |  2 | Wails; Electron; nenhum
+// resolveBackend  |  2 | Wails; fora do Wails
 // toSortlyError   |  3 | string com código; Error com código; texto livre; vazio
 // createGateway   |  3 | sem backend; sucesso; erro normalizado
-// subscribeFileDrop |  2 | Wails (OnFileDrop com alvo + OnFileDropOff); Electron e sem backend (noop)
+// subscribeFileDrop |  2 | Wails (OnFileDrop com alvo + OnFileDropOff); sem backend (noop)
 //
 // Os bindings do Wails são lidos de window.go.app.App no momento da chamada.
 
@@ -22,12 +22,7 @@ describe('resolveBackend', () => {
     await expect(backend.getLastOrganizationState()).resolves.toEqual({ hasUndo: true });
   });
 
-  it('usa window.electronAPI na versão Electron', () => {
-    const electronAPI = { organizeFiles: vi.fn() };
-    expect(resolveBackend({ electronAPI })).toBe(electronAPI);
-  });
-
-  it('sem backend devolve null', () => {
+  it('fora do Wails devolve null', () => {
     expect(resolveBackend({})).toBeNull();
   });
 });
@@ -36,11 +31,7 @@ describe('toSortlyError', () => {
   it.each([
     ['string com código (janela nativa)', 'NOTHING_TO_UNDO', 'NOTHING_TO_UNDO'],
     ['Error com código (navegador)', new Error('DROPPED_MISSING'), 'DROPPED_MISSING'],
-    [
-      'texto livre da versão Electron',
-      new Error("Error invoking remote method 'files:organize': Error: Pasta inválida."),
-      'UNEXPECTED'
-    ],
+    ['texto livre (erro do runtime)', new Error('TypeError: falha inesperada'), 'UNEXPECTED'],
     ['erro vazio', undefined, 'UNEXPECTED']
   ])('%s', (_, input, code) => {
     const error = toSortlyError(input);
@@ -106,8 +97,7 @@ describe('subscribeFileDrop', () => {
     expect(window.runtime.OnFileDropOff).toHaveBeenCalled();
   });
 
-  it('no Electron e sem backend, não assina nada', () => {
-    expect(createGateway(() => ({})).subscribeFileDrop(vi.fn())).toBeTypeOf('function');
+  it('sem backend, não assina nada', () => {
     expect(createGateway(() => null).subscribeFileDrop(vi.fn())).toBeTypeOf('function');
   });
 });
