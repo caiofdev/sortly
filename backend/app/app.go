@@ -11,6 +11,7 @@ import (
 
 	"github.com/caiofdev/sortly/backend/apperr"
 	"github.com/caiofdev/sortly/backend/organizer"
+	"github.com/caiofdev/sortly/backend/settings"
 	"github.com/caiofdev/sortly/backend/store"
 	"github.com/caiofdev/sortly/backend/undo"
 )
@@ -36,6 +37,13 @@ type RecordReader interface {
 	Load() (*store.Operation, error)
 }
 
+// SettingsStore lê e altera as preferências. É satisfeito por *settings.Service.
+type SettingsStore interface {
+	Get() settings.Settings
+	SetLanguage(lang string) (settings.Settings, error)
+	SetCriterion(key string, enabled bool) (settings.Settings, error)
+}
+
 // DirectoryPicker abre o seletor de pasta e devolve o caminho escolhido ("" se cancelado).
 type DirectoryPicker func(ctx context.Context, title string) (string, error)
 
@@ -44,6 +52,7 @@ type Deps struct {
 	Organizer Organizer
 	Undoer    Undoer
 	Records   RecordReader
+	Settings  SettingsStore
 	PickDir   DirectoryPicker
 	Logger    *slog.Logger
 }
@@ -123,11 +132,16 @@ func (a *App) GetLastOrganizationState() OrganizationState {
 	}
 }
 
-// OrganizeFiles organiza a pasta de origem segundo os critérios escolhidos.
-func (a *App) OrganizeFiles(req organizer.Request) (organizer.Result, error) {
+// OrganizeFiles organiza a pasta de origem com os critérios salvos nas preferências.
+func (a *App) OrganizeFiles(sourceFolderPath, destinationFolderPath string) (organizer.Result, error) {
 	a.busy.Lock()
 	defer a.busy.Unlock()
 
+	req := organizer.Request{
+		SourceFolderPath:      sourceFolderPath,
+		DestinationFolderPath: destinationFolderPath,
+		Options:               a.deps.Settings.Get().Options,
+	}
 	result, err := a.deps.Organizer.Organize(a.ctx, req)
 	if err == nil {
 		a.log.Info("organização concluída", "origem", result.SourceFolderPath, "destino", result.DestinationFolderPath,
@@ -146,6 +160,23 @@ func (a *App) UndoLastOrganization() (undo.Result, error) {
 		a.log.Info("desfazer concluído", "restaurados", result.RestoredFiles, "falhas", result.FailedFiles)
 	}
 	return result, a.toFrontend("desfazer", err)
+}
+
+// GetSettings devolve as preferências prontas para a interface.
+func (a *App) GetSettings() settings.View {
+	return a.deps.Settings.Get().View()
+}
+
+// SetLanguage troca o idioma e devolve as preferências atualizadas.
+func (a *App) SetLanguage(lang string) (settings.View, error) {
+	st, err := a.deps.Settings.SetLanguage(lang)
+	return st.View(), a.toFrontend("trocar idioma", err)
+}
+
+// SetCriterion liga ou desliga um critério e devolve as preferências atualizadas.
+func (a *App) SetCriterion(key string, enabled bool) (settings.View, error) {
+	st, err := a.deps.Settings.SetCriterion(key, enabled)
+	return st.View(), a.toFrontend("alterar critério", err)
 }
 
 // toFrontend registra o erro completo no log e devolve ao frontend só o

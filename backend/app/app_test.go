@@ -6,12 +6,15 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/caiofdev/sortly/backend/apperr"
 	"github.com/caiofdev/sortly/backend/organizer"
+	"github.com/caiofdev/sortly/backend/organizer/criteria"
+	"github.com/caiofdev/sortly/backend/settings"
 	"github.com/caiofdev/sortly/backend/store"
 	"github.com/caiofdev/sortly/backend/undo"
 )
@@ -40,6 +43,29 @@ type fakeRecords struct {
 }
 
 func (f fakeRecords) Load() (*store.Operation, error) { return f.op, f.err }
+
+type fakeSettings struct {
+	current settings.Settings
+	err     error
+}
+
+func (f *fakeSettings) Get() settings.Settings { return f.current }
+
+func (f *fakeSettings) SetLanguage(lang string) (settings.Settings, error) {
+	if f.err != nil {
+		return f.current, f.err
+	}
+	f.current.Language = lang
+	return f.current, nil
+}
+
+func (f *fakeSettings) SetCriterion(key string, enabled bool) (settings.Settings, error) {
+	if f.err != nil {
+		return f.current, f.err
+	}
+	f.current.Options, _ = f.current.Options.With(key, enabled)
+	return f.current, nil
+}
 
 func newTestApp(d Deps) (*App, *bytes.Buffer) {
 	var logs bytes.Buffer
@@ -126,12 +152,13 @@ func TestGetLastOrganizationState(t *testing.T) {
 func TestOrganizeFiles(t *testing.T) {
 	t.Run("sucesso", func(t *testing.T) {
 		org := &fakeOrganizer{result: organizer.Result{MovedFiles: 3, CanUndo: true}}
-		a, logs := newTestApp(Deps{Organizer: org})
-		req := organizer.Request{SourceFolderPath: `C:\origem`}
+		prefs := &fakeSettings{current: settings.Settings{Options: criteria.Options{ByDate: true}}}
+		a, logs := newTestApp(Deps{Organizer: org, Settings: prefs})
 
-		got, err := a.OrganizeFiles(req)
+		got, err := a.OrganizeFiles(`C:\origem`, `C:\destino`)
 
-		if err != nil || got.MovedFiles != 3 || org.got != req {
+		want := organizer.Request{SourceFolderPath: `C:\origem`, DestinationFolderPath: `C:\destino`, Options: criteria.Options{ByDate: true}}
+		if err != nil || got.MovedFiles != 3 || org.got != want {
 			t.Fatalf("OrganizeFiles = (%+v, %v)", got, err)
 		}
 		if !strings.Contains(logs.String(), "movidos=3") {
@@ -141,9 +168,9 @@ func TestOrganizeFiles(t *testing.T) {
 
 	t.Run("erro com código chega ao frontend só como código", func(t *testing.T) {
 		org := &fakeOrganizer{err: fmt.Errorf("%w: %q", organizer.ErrInvalidSource, `C:\nada`)}
-		a, logs := newTestApp(Deps{Organizer: org})
+		a, logs := newTestApp(Deps{Organizer: org, Settings: &fakeSettings{}})
 
-		_, err := a.OrganizeFiles(organizer.Request{})
+		_, err := a.OrganizeFiles("", "")
 
 		if err == nil || err.Error() != "INVALID_SOURCE" {
 			t.Fatalf("err = %v, want INVALID_SOURCE (sem prefixos)", err)
@@ -154,11 +181,44 @@ func TestOrganizeFiles(t *testing.T) {
 	})
 
 	t.Run("erro sem código vira UNEXPECTED", func(t *testing.T) {
-		a, _ := newTestApp(Deps{Organizer: &fakeOrganizer{err: errors.New("pânico controlado")}})
-		if _, err := a.OrganizeFiles(organizer.Request{}); err == nil || err.Error() != apperr.CodeUnexpected {
+		a, _ := newTestApp(Deps{Organizer: &fakeOrganizer{err: errors.New("pânico controlado")}, Settings: &fakeSettings{}})
+		if _, err := a.OrganizeFiles("", ""); err == nil || err.Error() != apperr.CodeUnexpected {
 			t.Fatalf("err = %v, want UNEXPECTED", err)
 		}
 	})
+}
+
+func TestGetSettings(t *testing.T) {
+	a, _ := newTestApp(Deps{Settings: &fakeSettings{current: settings.Default()}})
+	got := a.GetSettings()
+	if got.Language != settings.DefaultLanguage || len(got.Criteria) != len(criteria.Keys) {
+		t.Fatalf("GetSettings = %+v", got)
+	}
+}
+
+func TestSetLanguage(t *testing.T) {
+	a, _ := newTestApp(Deps{Settings: &fakeSettings{current: settings.Default()}})
+	if got, err := a.SetLanguage("en"); err != nil || got.Language != "en" {
+		t.Fatalf("SetLanguage = (%+v, %v)", got, err)
+	}
+
+	failing, _ := newTestApp(Deps{Settings: &fakeSettings{err: settings.ErrInvalidLanguage}})
+	if _, err := failing.SetLanguage("fr"); err == nil || err.Error() != "INVALID_LANGUAGE" {
+		t.Fatalf("err = %v, want INVALID_LANGUAGE", err)
+	}
+}
+
+func TestSetCriterion(t *testing.T) {
+	a, _ := newTestApp(Deps{Settings: &fakeSettings{current: settings.Default()}})
+	got, err := a.SetCriterion("byDate", true)
+	if err != nil || got.Criteria[3].Key != "byDate" || !got.Criteria[3].Enabled {
+		t.Fatalf("SetCriterion = (%+v, %v)", got, err)
+	}
+
+	failing, _ := newTestApp(Deps{Settings: &fakeSettings{err: settings.ErrLastCriterion}})
+	if _, err := failing.SetCriterion("byExtension", false); err == nil || err.Error() != "LAST_CRITERION" {
+		t.Fatalf("err = %v, want LAST_CRITERION", err)
+	}
 }
 
 func TestUndoLastOrganization(t *testing.T) {
@@ -178,7 +238,7 @@ func TestNewDefault(t *testing.T) {
 	t.Setenv("HOME", home)
 	t.Setenv("USERPROFILE", home)
 	a, err := NewDefault(nil)
-	if err != nil || a.deps.Organizer == nil || a.deps.Undoer == nil || a.deps.Records == nil || a.deps.PickDir == nil {
+	if err != nil || a.deps.Organizer == nil || a.deps.Undoer == nil || a.deps.Records == nil || a.deps.Settings == nil || a.deps.PickDir == nil {
 		t.Fatalf("NewDefault = (%+v, %v)", a, err)
 	}
 	if got := a.GetLastOrganizationState(); got.HasUndo {
@@ -187,7 +247,25 @@ func TestNewDefault(t *testing.T) {
 	if want := filepath.Join(home, ".sortly", "last-operation.json"); a.deps.Records.(*store.FileStore).Path() != want {
 		t.Fatalf("registro em %s, want %s", a.deps.Records.(*store.FileStore).Path(), want)
 	}
+}
 
+func TestNewDefaultSavesSettingsNextToRecord(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
+	a, err := NewDefault(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := a.SetLanguage("en"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join(home, ".sortly", "settings.json")); err != nil {
+		t.Fatalf("preferências deveriam ir para ~/.sortly/settings.json: %v", err)
+	}
+}
+
+func TestNewDefaultWithoutHome(t *testing.T) {
 	t.Setenv("HOME", "")
 	t.Setenv("USERPROFILE", "")
 	t.Setenv("home", "")

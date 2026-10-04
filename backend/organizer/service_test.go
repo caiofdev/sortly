@@ -21,7 +21,6 @@ func TestValidate(t *testing.T) {
 	dir := t.TempDir()
 	file := filepath.Join(dir, "arquivo.txt")
 	writeAt(t, file, "x", testTime)
-	no := false
 
 	cases := []struct {
 		name     string
@@ -33,11 +32,10 @@ func TestValidate(t *testing.T) {
 		{"origem inexistente", Request{SourceFolderPath: filepath.Join(dir, "nada")}, ErrInvalidSource, ""},
 		{"origem é arquivo", Request{SourceFolderPath: file}, ErrInvalidSource, ""},
 		{"destino é arquivo", Request{SourceFolderPath: dir, DestinationFolderPath: file}, ErrInvalidDestination, ""},
-		{"nenhum critério", Request{SourceFolderPath: dir, OrganizationOptions: criteria.RawOptions{ByExtension: &no}}, ErrNoCriteria, ""},
-		{"destino vazio usa a origem", Request{SourceFolderPath: dir}, nil, dir},
-		{"destino inexistente é aceito", Request{SourceFolderPath: dir, DestinationFolderPath: filepath.Join(dir, "novo")}, nil, filepath.Join(dir, "novo")},
-		{"byExtension ausente basta", Request{SourceFolderPath: dir, DestinationFolderPath: dir}, nil, dir},
-		{"um critério além da extensão desligada", Request{SourceFolderPath: dir, OrganizationOptions: criteria.RawOptions{ByDate: true, ByExtension: &no}}, nil, dir},
+		{"nenhum critério", Request{SourceFolderPath: dir}, ErrNoCriteria, ""},
+		{"destino vazio usa a origem", Request{SourceFolderPath: dir, Options: criteria.Default}, nil, dir},
+		{"destino inexistente é aceito", Request{SourceFolderPath: dir, DestinationFolderPath: filepath.Join(dir, "novo"), Options: criteria.Default}, nil, filepath.Join(dir, "novo")},
+		{"um critério que não é a extensão", Request{SourceFolderPath: dir, Options: criteria.Options{ByDate: true}}, nil, dir},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -57,7 +55,7 @@ func TestOrganizeEndToEnd(t *testing.T) {
 	mkdir(t, filepath.Join(src, "subpasta"))
 	svc, st := newTestService(t)
 
-	got, err := svc.Organize(context.Background(), Request{SourceFolderPath: src})
+	got, err := svc.Organize(context.Background(), Request{SourceFolderPath: src, Options: criteria.Default})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -81,13 +79,13 @@ func TestOrganizeNothingMovedKeepsPreviousUndo(t *testing.T) {
 	src := t.TempDir()
 	writeAt(t, filepath.Join(src, "a.txt"), "a", testTime)
 	svc, st := newTestService(t)
-	if _, err := svc.Organize(context.Background(), Request{SourceFolderPath: src}); err != nil {
+	if _, err := svc.Organize(context.Background(), Request{SourceFolderPath: src, Options: criteria.Default}); err != nil {
 		t.Fatal(err)
 	}
 	before, _ := os.ReadFile(st.Path())
 
 	// Segunda vez: só pastas na origem, nada a mover.
-	got, err := svc.Organize(context.Background(), Request{SourceFolderPath: src})
+	got, err := svc.Organize(context.Background(), Request{SourceFolderPath: src, Options: criteria.Default})
 
 	after, _ := os.ReadFile(st.Path())
 	if err != nil || got.MovedFiles != 0 || !got.CanUndo || string(before) != string(after) {
@@ -97,7 +95,7 @@ func TestOrganizeNothingMovedKeepsPreviousUndo(t *testing.T) {
 
 func TestOrganizeNothingMovedWithoutPreviousRecord(t *testing.T) {
 	svc, st := newTestService(t)
-	got, err := svc.Organize(context.Background(), Request{SourceFolderPath: t.TempDir()})
+	got, err := svc.Organize(context.Background(), Request{SourceFolderPath: t.TempDir(), Options: criteria.Default})
 	if err != nil || got.CanUndo {
 		t.Fatalf("Organize = (%+v, %v), want CanUndo false", got, err)
 	}
@@ -119,7 +117,7 @@ func TestOrganizePartialFailureIsRecorded(t *testing.T) {
 		return realMove(from, to)
 	}
 
-	got, err := svc.Organize(context.Background(), Request{SourceFolderPath: src})
+	got, err := svc.Organize(context.Background(), Request{SourceFolderPath: src, Options: criteria.Default})
 
 	op, _ := st.Load()
 	if err != nil || got.MovedFiles != 1 || got.FailedFiles != 1 || !got.CanUndo || len(op.MovedItems) != 1 {
@@ -134,7 +132,7 @@ func TestOrganizeRecordNotSaved(t *testing.T) {
 	writeAt(t, blocker, "", testTime)
 	svc := NewService(Deps{Metadata: metadata.Reader{}, Store: store.New(filepath.Join(blocker, "x.json"), nil), Location: testLoc})
 
-	got, err := svc.Organize(context.Background(), Request{SourceFolderPath: src})
+	got, err := svc.Organize(context.Background(), Request{SourceFolderPath: src, Options: criteria.Default})
 
 	if !errors.Is(err, ErrRecordNotSaved) || apperr.CodeOf(err) != "RECORD_NOT_SAVED" {
 		t.Fatalf("err = %v, want RECORD_NOT_SAVED", err)
@@ -156,7 +154,7 @@ func TestOrganizeUnreadableSource(t *testing.T) {
 	svc, _ := newTestService(t)
 	src := t.TempDir()
 	svc.planner.readDir = func(string) ([]os.DirEntry, error) { return nil, os.ErrPermission }
-	if _, err := svc.Organize(context.Background(), Request{SourceFolderPath: src}); !errors.Is(err, ErrInvalidSource) {
+	if _, err := svc.Organize(context.Background(), Request{SourceFolderPath: src, Options: criteria.Default}); !errors.Is(err, ErrInvalidSource) {
 		t.Fatalf("err = %v, want ErrInvalidSource", err)
 	}
 }
