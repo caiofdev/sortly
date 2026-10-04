@@ -15,13 +15,14 @@ backend/            backend Go (pacotes por responsabilidade; teste sempre ao la
     criteria/       critérios (Strategy + registry): um arquivo por critério, opções, File
   undo/             desfazer pelo inverso do journal
   metadata/         resolução de imagem, duração de mp4, páginas (pdf/docx/odt)
-  store/            registro da última organização (~/.sortly/last-operation.json), gravação atômica
+  store/            registro da última organização (~/.sortly/last-operation.json)
+  settings/         preferências (idioma e critérios) em ~/.sortly/settings.json
   fs/paths/         caminhos: Ext, Equal, IsInside, Native (prefixo \\?\ do Windows)
-  fs/files/         disco: Move (fallback entre volumes), MoveUnique, Reserve, pastas
+  fs/files/         disco: WriteAtomic, Move (fallback entre volumes), MoveUnique, Reserve, pastas
   apperr/           erros com código estável
   logging/          slog em arquivo
   tests/            testes de integração (só API pública, disco de verdade)
-frontend/src/       React: components/, views/, controllers/, hooks/, services/, domain/, i18n/
+frontend/src/       React: components/, views/, controllers/, hooks/, services/, i18n/
 frontend/wailsjs/   bindings gerados pelo Wails (versionados; regenerados por wails dev/build)
 build/              ícones, manifesto Windows, Info.plist, NSIS (windows/installer), nfpm (linux)
 scripts/            check-coverage.sh, cccases/ (CC × casos), benchmark/ e parity/ (PowerShell)

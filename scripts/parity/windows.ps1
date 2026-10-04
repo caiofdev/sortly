@@ -210,6 +210,20 @@ try {
   Click 'Organization settings'
   Check 'WIN_LANG' $en 'botões em inglês após trocar o idioma'
   Check 'WIN_PREFS' ($en -and $resOn) 'idioma e critério "Resolution" mantidos após reabrir'
+  # As preferências ficam em ~/.sortly/settings.json, fora do WebView (#44):
+  # apagar AppData (dados do WebView2 e localStorage) não pode perdê-las.
+  Stop-App
+  for ($try = 0; $try -lt 10 -and (Test-Path -LiteralPath "$home_\AppData"); $try++) {
+    Remove-Item -LiteralPath "$home_\AppData" -Recurse -Force -ErrorAction SilentlyContinue
+    if (Test-Path -LiteralPath "$home_\AppData") { Start-Sleep -Seconds 1 }
+  }
+  New-Item -ItemType Directory -Force "$home_\AppData\Roaming", "$home_\AppData\Local\Temp" | Out-Null
+  Start-App
+  $enAgain = $null -ne (Find-Element 'Organize files' 10)
+  Click 'Settings', 'Organization settings'
+  $resAgain = (Find-Element 'Resolution' -type ([Windows.Automation.ControlType]::CheckBox)).GetCurrentPattern([Windows.Automation.TogglePattern]::Pattern).Current.ToggleState -eq 'On'
+  Click 'Organization settings'
+  Check 'WIN_PREFS_WEBVIEW' ($enAgain -and $resAgain) 'idioma e critério mantidos após apagar os dados do WebView'
   Rename-Item $b8 "$work\b8-renomeada"
   Click 'Organize files'; Start-Sleep -Seconds 2
   $notice = Last-Notice

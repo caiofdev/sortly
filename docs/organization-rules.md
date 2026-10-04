@@ -16,7 +16,7 @@ Implementação: `backend/organizer` (planejamento e execução), `backend/organ
 
 O backend devolve só o código; o texto, em português ou inglês, vem da interface.
 
-Os seis critérios são booleanos. Valores ausentes contam como desligados, **exceto `byExtension`, que é ligado por padrão** (só desliga se vier explicitamente `false`). No primeiro uso, a interface marca apenas **Extensão**.
+Os critérios usados são os salvos nas preferências (§10); no primeiro uso, só **Extensão**.
 
 ## 2. Varredura
 
@@ -171,4 +171,21 @@ O item precisa ser solto **sobre o painel** de arrastar e soltar; fora dele, nad
 
 ## 10. Preferências
 
-Idioma (`pt-BR` padrão, `en`) e critérios selecionados ficam salvos localmente na interface. A interface impede desmarcar o último critério ativo.
+Idioma e critérios ficam em `~/.sortly/settings.json`, gravado de forma atômica:
+
+```json
+{"language":"pt-BR","organizationOptions":{"byDate":false,"byDuration":false,"byExtension":true,"byPages":false,"byResolution":false,"bySize":false}}
+```
+
+| Situação | Resultado |
+|---|---|
+| Arquivo ausente, vazio, corrompido ou `null` | Padrão: `pt-BR` e só Extensão |
+| Idioma diferente de `pt-BR` e `en` | Idioma padrão; os critérios do arquivo valem |
+| Nenhum critério ligado no arquivo | Critérios padrão; o idioma do arquivo vale |
+| Chave de critério desconhecida | Ignorada |
+| Trocar para um idioma não suportado | `INVALID_LANGUAGE` |
+| Desligar o último critério ligado | `LAST_CRITERION` — a interface já mostra esse checkbox desabilitado |
+| Chave de critério desconhecida ao alterar | `UNKNOWN_CRITERION` |
+| Falha ao gravar | `SETTINGS_NOT_SAVED`; as preferências continuam as anteriores |
+
+A interface mostra os critérios na ordem Duração, Páginas, Resolução, Data, Tamanho, Extensão (diferente da ordem de aninhamento das pastas, §4).
