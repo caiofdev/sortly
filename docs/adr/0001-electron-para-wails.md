@@ -36,7 +36,7 @@ Reescrever o app com **Wails v2** (versão estável):
 - Remove dependências Node (`music-metadata`, `pdf-lib`, `jszip`, `image-size`).
 
 **Negativas / riscos**
-- **Memória no Windows:** o WebView2 também é Chromium, com a mesma arquitetura de processos. Com a GPU ligada, a memória fica próxima da do Electron (99 MB × 95 MB no Gerenciador de Tarefas). O processo de GPU responde por ~80% da memória comprometida; desligar a GPU do WebView2 a reduz pela metade ([#34](https://github.com/caiofdev/sortly/issues/34)).
+- **Memória no Windows:** o WebView2 também é Chromium, com a mesma arquitetura de processos. Com a GPU ligada, a memória ficava próxima da do Electron, porque o processo de GPU respondia por ~80% da memória comprometida. Com a GPU do WebView2 desligada ([#34](https://github.com/caiofdev/sortly/issues/34)), a memória privada cai para 177 MB em repouso (Electron: 260 MB) e 200 MB no pico (Electron: 388 MB), sem diferença visual. A renderização passa a ser por software, suficiente para uma interface estática.
 - Diferenças de renderização entre WebViews. Mitigação: conferência visual nas três plataformas ([#13](https://github.com/caiofdev/sortly/issues/13)).
 - O drag and drop precisa ser reimplementado com a API do Wails ([#12](https://github.com/caiofdev/sortly/issues/12)).
 - As preferências salvas no `localStorage` não são migradas, porque a origem do WebView muda.

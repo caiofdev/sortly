@@ -1,12 +1,12 @@
 # Benchmark: Electron 1.0 × Wails 2.0
 
-> Autores: Caio Reis, Claude · Medido em 2026-10-03 (issue [#15](https://github.com/caiofdev/sortly/issues/15))
+> Autores: Caio Reis, Claude · Medido em 2026-10-03 e 2026-10-04 (issues [#15](https://github.com/caiofdev/sortly/issues/15) e [#34](https://github.com/caiofdev/sortly/issues/34))
 
 ## Resumo
 
-No Windows, a versão Wails **não reduz muito a memória que o usuário vê** enquanto a aceleração por GPU do WebView2 está ligada: o WebView2 também é Chromium, com a mesma arquitetura de processos. Os ganhos claros estão em **tamanho** (instalador 9× menor, disco 15× menor) e em **velocidade** (organizar 1000 arquivos ~2× mais rápido).
+Com a configuração atual (aceleração por GPU do WebView2 **desligada**, [#34](https://github.com/caiofdev/sortly/issues/34)), a versão Wails usa no Windows **32% menos memória privada em repouso** e **49% menos no pico** que o Electron 1.0, com instalador 9× menor, disco 15× menor e organização ~2× mais rápida. A interface é visualmente idêntica (conferido pixel a pixel na janela nativa).
 
-O processo de GPU responde por ~80% da memória comprometida nas duas versões. Com a GPU do WebView2 desligada, a memória privada cai pela metade e fica bem abaixo da do Electron. Essa mudança é a issue [#34](https://github.com/caiofdev/sortly/issues/34).
+Com a GPU ligada, como na primeira medição (#15), a memória ficava próxima da do Electron: o WebView2 também é Chromium e o processo de GPU respondia por ~80% da memória comprometida nas duas versões.
 
 ## Ambiente
 
@@ -17,17 +17,17 @@ O processo de GPU responde por ~80% da memória comprometida nas duas versões. 
 
 ## Resultados (média de 3 rodadas)
 
-| Medida | Electron 1.0 | Wails (GPU ligada) | Wails (GPU desligada) |
+| Medida | Electron 1.0 | **Wails 2.0 (atual, sem GPU)** | Wails com GPU (#15) |
 |---|---|---|---|
-| Memória privada em repouso | 260 MB | 277 MB | **174 MB** |
-| Memória privada no pico ao organizar | 388 MB | 346 MB | **199 MB** |
-| Memória privada no pico ao desfazer | 393 MB | 351 MB | **199 MB** |
-| Working set privado em repouso (≈ Gerenciador de Tarefas) | 99 MB | 95 MB | **88 MB** |
-| Working set total em repouso | 331 MB | 367 MB | 387 MB |
+| Memória privada em repouso | 260 MB | **177 MB** | 277 MB |
+| Memória privada no pico ao organizar | 388 MB | **200 MB** | 346 MB |
+| Memória privada no pico ao desfazer | 393 MB | **200 MB** | 351 MB |
+| Working set privado em repouso (≈ Gerenciador de Tarefas) | 99 MB | **92 MB** | 95 MB |
+| Working set total em repouso | 331 MB | 391 MB | 367 MB |
 | Processos | 4 | 7 | 7 |
-| Organizar 1000 arquivos | 7,8 s | **4,1 s** | 5,6 s |
-| Desfazer 1000 arquivos | 2,6 s | **2,1 s** | 2,2 s |
-| Tempo até a janela | 1,3 s | 1,4 s | 1,3 s |
+| Organizar 1000 arquivos | 7,8 s | **4,0 s** | 4,1 s |
+| Desfazer 1000 arquivos | 2,6 s | **2,1 s** | 2,1 s |
+| Tempo até a janela | 1,3 s | **0,8 s** | 1,4 s |
 | Instalador | 82 MB | **8,8 MB** | 8,8 MB |
 | Espaço em disco | 259 MB | **17 MB** | 17 MB |
 
@@ -37,7 +37,13 @@ O processo de GPU responde por ~80% da memória comprometida nas duas versões. 
 - **Working set privado:** memória exclusiva que está de fato na RAM, a coluna "Memória" do Gerenciador de Tarefas.
 - **Working set total:** inclui páginas compartilhadas com outros programas (as DLLs do WebView2 são compartilhadas com o Edge e o Windows). Por isso ele é maior no Wails, sem significar mais consumo exclusivo.
 
-### Memória por processo, em repouso (GPU ligada)
+A coluna "atual" é o build da [#34](https://github.com/caiofdev/sortly/issues/34) (`WebviewGpuIsDisabled: true` no Windows, `WebviewGpuPolicyNever` no Linux). Na #15, um experimento temporário com a mesma configuração mediu 174 MB em repouso, 199 MB no pico e 88 MB de working set privado, dentro da variação esperada entre rodadas. O macOS não tem opção equivalente no Wails.
+
+### Visual sem GPU
+
+A renderização passa a ser por software. Capturas da janela nativa com e sem GPU, nos estados inicial, configurações abertas e notificações abertas, diferem em no máximo **0,006% dos pixels** (cerca de 120 pixels de arredondamento de gradiente).
+
+### Memória por processo, em repouso (GPU ligada, #15)
 
 | Processo | Electron (privada) | Wails (privada) |
 |---|---|---|
