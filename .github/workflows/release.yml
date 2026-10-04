@@ -1,0 +1,136 @@
+name: Release
+
+# Ao criar uma tag de versão (ex.: v2.0.0), gera os pacotes das três plataformas
+# e anexa a um rascunho de release. Passo a passo em docs/release.md.
+# Em pull requests que mexem no empacotamento, só gera os pacotes (artefatos do
+# workflow), para validar instalador, .dmg e .deb antes de uma versão.
+on:
+  push:
+    tags: ['v*']
+  pull_request:
+    paths:
+      - 'build/**'
+      - 'wails.json'
+      - '.github/workflows/release.yml'
+
+permissions:
+  contents: write
+
+env:
+  WAILS_VERSION: v2.16.0
+  NFPM_VERSION: v2.47.0
+
+jobs:
+  build:
+    name: Build (${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: windows
+            os: windows-latest
+            platform: windows/amd64
+            flags: -nsis
+          - name: macos
+            os: macos-latest
+            platform: darwin/universal
+            flags: ''
+          - name: linux
+            os: ubuntu-latest
+            platform: linux/amd64
+            flags: -tags webkit2_41
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Versão (productVersion do wails.json; numa tag, precisa ser igual)
+        run: |
+          app="$(node -p "require('./wails.json').info.productVersion")"
+          tag="${GITHUB_REF_NAME#v}"
+          if [ "$GITHUB_REF_TYPE" = "tag" ] && [ "$tag" != "$app" ]; then
+            echo "::error::A tag v$tag não bate com info.productVersion ($app) do wails.json"
+            exit 1
+          fi
+          echo "VERSION=$app" >> "$GITHUB_ENV"
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Dependências do Wails (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev
+
+      - name: NSIS (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          nsis="/c/Program Files (x86)/NSIS"
+          [ -x "$nsis/makensis.exe" ] || choco install nsis -y --no-progress
+          # O Chocolatey não atualiza o PATH dos passos seguintes: o Wails precisa achar o makensis.
+          echo "C:\Program Files (x86)\NSIS" >> "$GITHUB_PATH"
+
+      - name: Wails CLI
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@${WAILS_VERSION}
+
+      - name: Build
+        run: wails build -clean -platform ${{ matrix.platform }} ${{ matrix.flags }}
+
+      - name: Conferir instalador (Windows)
+        if: runner.os == 'Windows'
+        # O Wails só avisa quando não consegue gerar o instalador; aqui a falha fica explícita.
+        run: test -f build/bin/Sortly-amd64-installer.exe || { echo "::error::Instalador NSIS não foi gerado"; exit 1; }
+
+      - name: Empacotar (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          mkdir -p dist-release
+          cp build/bin/Sortly-amd64-installer.exe "dist-release/Sortly-${VERSION}-windows-amd64-setup.exe"
+          cp build/bin/Sortly.exe "dist-release/Sortly-${VERSION}-windows-amd64-portable.exe"
+
+      - name: Empacotar (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          mkdir -p dist-release dmg
+          cp -R build/bin/Sortly.app dmg/
+          ln -s /Applications dmg/Applications
+          hdiutil create -volname Sortly -srcfolder dmg -ov -format UDZO "dist-release/Sortly-${VERSION}-macos-universal.dmg"
+          ditto -c -k --keepParent build/bin/Sortly.app "dist-release/Sortly-${VERSION}-macos-universal.zip"
+
+      - name: Empacotar (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          mkdir -p dist-release
+          # O nfpm exige um Go mais novo que o do go.mod; GOTOOLCHAIN=auto deixa o Go baixar a versão necessária.
+          GOTOOLCHAIN=auto go install github.com/goreleaser/nfpm/v2/cmd/nfpm@${NFPM_VERSION}
+          nfpm package --config build/linux/nfpm.yaml --packager deb --target "dist-release/Sortly-${VERSION}-linux-amd64.deb"
+          tar -czf "dist-release/Sortly-${VERSION}-linux-amd64.tar.gz" -C build/bin Sortly
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sortly-${{ matrix.name }}
+          path: dist-release/*
+
+  release:
+    name: Rascunho de release
+    needs: build
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v5
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          files: artifacts/*

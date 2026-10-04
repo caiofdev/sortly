@@ -1,0 +1,6 @@
+*.sh text eol=lf
+*.go text eol=lf
+go.mod text eol=lf
+go.sum text eol=lf
+**/testdata/** -text
+frontend/wailsjs/** text eol=lf

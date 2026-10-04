@@ -1,0 +1,347 @@
+package store
+
+// função                 | CC | casos
+// Operation.CanUndo      |  2 | TestCanUndo: nil; sem itens; com itens
+// DefaultPath            |  2 | TestDefaultPath: com pasta do usuário; sem pasta do usuário
+// New                    |  2 | TestNewWithoutLogger; demais testes (com logger)
+// FileStore.Load         |  4 | TestLoadMissingOrUnreadable, TestLoadCorrupted, TestLoadValid: inexistente; erro de leitura; vazio/corrompido; null; válido
+// FileStore.Save         |  4 | TestSave: sucesso; pasta não criável; troca atômica falha (preserva anterior)
+// FileStore.Clear        |  3 | TestClear: existe; não existe; não removível
+// FileStore.writeAtomic  |  4 | TestWriteAtomic: pasta inexistente; troca falha; sucesso (via TestSave)
+// FileStore.fail         |  1 | TestFailLogs
+// encode                 |  3 | TestEncode: listas nil viram []; & e acentos sem escape; golden Electron
+//
+// Valor-limite: arquivo inexistente / vazio (0 bytes) / "null" / corrompido; lista de
+// movidos com 0 e 1 item; registro legado sem createdFolders.
+// Regressão B5: falha na gravação não pode corromper o registro anterior, e o erro é registrado no log.
+
+import (
+	"bytes"
+	"errors"
+	"log/slog"
+	"os"
+	"path/filepath"
+	"reflect"
+	"strings"
+	"testing"
+)
+
+func TestCanUndo(t *testing.T) {
+	var nilOp *Operation
+	cases := []struct {
+		name string
+		op   *Operation
+		want bool
+	}{
+		{"nil", nilOp, false},
+		{"0 itens", &Operation{}, false},
+		{"1 item", &Operation{MovedItems: []MovedItem{{From: "a", To: "b"}}}, true},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := tc.op.CanUndo(); got != tc.want {
+				t.Errorf("CanUndo = %v, want %v", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestDefaultPath(t *testing.T) {
+	t.Run("na pasta do usuário", func(t *testing.T) {
+		home := t.TempDir()
+		t.Setenv("HOME", home)
+		t.Setenv("USERPROFILE", home)
+
+		got, err := DefaultPath()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if want := filepath.Join(home, ".sortly", "last-operation.json"); got != want {
+			t.Errorf("DefaultPath = %q, want %q", got, want)
+		}
+	})
+
+	t.Run("sem pasta do usuário", func(t *testing.T) {
+		t.Setenv("HOME", "")
+		t.Setenv("USERPROFILE", "")
+		t.Setenv("home", "")
+
+		if _, err := DefaultPath(); err == nil {
+			t.Fatal("esperava erro sem pasta do usuário")
+		}
+	})
+}
+
+func TestNewWithoutLogger(t *testing.T) {
+	s := New(filepath.Join(t.TempDir(), "x.json"), nil)
+	if s.log == nil {
+		t.Fatal("logger nil deveria virar um logger que descarta")
+	}
+	// Não deve entrar em pânico ao registrar.
+	_ = s.fail("teste", errors.New("x"))
+}
+
+func TestLoadMissingOrUnreadable(t *testing.T) {
+	t.Run("arquivo inexistente: nada para desfazer", func(t *testing.T) {
+		op, err := newStore(t).Load()
+		if op != nil || err != nil {
+			t.Fatalf("Load = (%v, %v), want (nil, nil)", op, err)
+		}
+	})
+
+	t.Run("erro de leitura (caminho é uma pasta)", func(t *testing.T) {
+		s := newStore(t)
+		if err := os.Mkdir(s.Path(), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := s.Load(); err == nil || errors.Is(err, ErrCorrupted) {
+			t.Fatalf("err = %v, want erro de leitura", err)
+		}
+	})
+
+}
+
+func TestLoadCorrupted(t *testing.T) {
+	for _, content := range []string{"", "   ", "{quebrado", `{"movedItems":"texto"}`} {
+		t.Run("corrompido "+strings.TrimSpace(content), func(t *testing.T) {
+			s := storeWith(t, content)
+			op, err := s.Load()
+			if op != nil || !errors.Is(err, ErrCorrupted) {
+				t.Fatalf("Load = (%v, %v), want (nil, ErrCorrupted)", op, err)
+			}
+		})
+	}
+
+}
+
+func TestLoadValid(t *testing.T) {
+	t.Run("JSON null", func(t *testing.T) {
+		op, err := storeWith(t, "null").Load()
+		if op != nil || err != nil {
+			t.Fatalf("Load = (%v, %v), want (nil, nil)", op, err)
+		}
+	})
+
+	t.Run("registro gerado pela versão Electron", func(t *testing.T) {
+		op, err := storeWith(t, golden(t, "electron-last-operation.json")).Load()
+		if err != nil {
+			t.Fatal(err)
+		}
+		dest := `C:\Users\ana\Organizados & Cia`
+		want := &Operation{
+			SourceFolderPath:      `C:\Users\ana\Downloads`,
+			DestinationFolderPath: dest,
+			MovedItems: []MovedItem{
+				{From: `C:\Users\ana\Downloads\relatório.pdf`, To: dest + `\pdf\pages-12\relatório.pdf`},
+				{From: `C:\Users\ana\Downloads\foto.jpg`, To: dest + `\jpg\1920x1080\foto (1).jpg`},
+			},
+			CreatedFolders: []string{dest + `\pdf\pages-12`, dest + `\jpg\1920x1080`},
+		}
+		if !reflect.DeepEqual(op, want) {
+			t.Fatalf("Load =\n%+v\nwant\n%+v", op, want)
+		}
+	})
+
+	t.Run("registro legado sem createdFolders", func(t *testing.T) {
+		op, err := storeWith(t, golden(t, "legacy-without-created-folders.json")).Load()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if op.CreatedFolders != nil || len(op.MovedItems) != 1 || !op.CanUndo() {
+			t.Fatalf("Load = %+v, want 1 item e createdFolders nil", op)
+		}
+	})
+}
+
+func TestSave(t *testing.T) {
+	op := Operation{
+		SourceFolderPath:      "/origem",
+		DestinationFolderPath: "/destino",
+		MovedItems:            []MovedItem{{From: "/origem/a.pdf", To: "/destino/pdf/a.pdf"}},
+		CreatedFolders:        []string{"/destino/pdf"},
+	}
+
+	t.Run("cria a pasta e grava; Load devolve o mesmo registro", func(t *testing.T) {
+		s := New(filepath.Join(t.TempDir(), ".sortly", "last-operation.json"), nil)
+
+		if err := s.Save(op); err != nil {
+			t.Fatal(err)
+		}
+		got, err := s.Load()
+		if err != nil || !reflect.DeepEqual(*got, op) {
+			t.Fatalf("Load após Save = (%+v, %v), want %+v", got, err, op)
+		}
+		assertNoTempFiles(t, filepath.Dir(s.Path()))
+	})
+
+	t.Run("pasta não pode ser criada", func(t *testing.T) {
+		dir := t.TempDir()
+		blocker := filepath.Join(dir, "arquivo")
+		if err := os.WriteFile(blocker, nil, 0o644); err != nil {
+			t.Fatal(err)
+		}
+		s := New(filepath.Join(blocker, "last-operation.json"), nil)
+
+		if err := s.Save(op); err == nil {
+			t.Fatal("esperava erro ao criar pasta dentro de um arquivo")
+		}
+	})
+
+	t.Run("falha na troca preserva o registro anterior (B5)", func(t *testing.T) {
+		var logs bytes.Buffer
+		s := New(filepath.Join(t.TempDir(), "last-operation.json"), slog.New(slog.NewTextHandler(&logs, nil)))
+		if err := s.Save(op); err != nil {
+			t.Fatal(err)
+		}
+		before, _ := os.ReadFile(s.Path())
+		stubRename(t, errors.New("disco cheio"))
+
+		if err := s.Save(Operation{SourceFolderPath: "/outro"}); err == nil {
+			t.Fatal("esperava erro na troca do arquivo")
+		}
+		after, _ := os.ReadFile(s.Path())
+		if !bytes.Equal(before, after) {
+			t.Fatalf("registro anterior alterado:\nantes  %s\ndepois %s", before, after)
+		}
+		assertNoTempFiles(t, filepath.Dir(s.Path()))
+		if !strings.Contains(logs.String(), "disco cheio") {
+			t.Fatalf("o erro deveria ser registrado no log, log = %q", logs.String())
+		}
+	})
+}
+
+func TestClear(t *testing.T) {
+	t.Run("apaga o registro", func(t *testing.T) {
+		s := storeWith(t, "{}")
+		if err := s.Clear(); err != nil {
+			t.Fatal(err)
+		}
+		if op, err := s.Load(); op != nil || err != nil {
+			t.Fatalf("após Clear, Load = (%v, %v)", op, err)
+		}
+	})
+
+	t.Run("sem registro não é erro", func(t *testing.T) {
+		if err := newStore(t).Clear(); err != nil {
+			t.Fatal(err)
+		}
+	})
+
+	t.Run("não removível devolve erro", func(t *testing.T) {
+		s := newStore(t)
+		if err := os.MkdirAll(filepath.Join(s.Path(), "conteudo"), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := s.Clear(); err == nil {
+			t.Fatal("esperava erro ao apagar pasta não vazia")
+		}
+	})
+}
+
+func TestWriteAtomic(t *testing.T) {
+	t.Run("pasta inexistente", func(t *testing.T) {
+		s := New(filepath.Join(t.TempDir(), "nao-existe", "x.json"), nil)
+		if err := s.writeAtomic([]byte("{}")); err == nil {
+			t.Fatal("esperava erro")
+		}
+	})
+
+	t.Run("troca falha: temporário removido", func(t *testing.T) {
+		s := newStore(t)
+		stubRename(t, errors.New("falhou"))
+		if err := s.writeAtomic([]byte("{}")); err == nil {
+			t.Fatal("esperava erro")
+		}
+		assertNoTempFiles(t, filepath.Dir(s.Path()))
+	})
+}
+
+func TestFailLogs(t *testing.T) {
+	var logs bytes.Buffer
+	s := New("/x/last-operation.json", slog.New(slog.NewTextHandler(&logs, nil)))
+	cause := errors.New("sem permissão")
+
+	err := s.fail("gravar", cause)
+
+	if !errors.Is(err, cause) {
+		t.Fatalf("err = %v deveria envolver a causa", err)
+	}
+	for _, want := range []string{"level=ERROR", "acao=gravar", "sem permissão"} {
+		if !strings.Contains(logs.String(), want) {
+			t.Errorf("log %q não contém %q", logs.String(), want)
+		}
+	}
+}
+
+func TestEncode(t *testing.T) {
+	t.Run("listas nil viram []", func(t *testing.T) {
+		got, err := encode(Operation{SourceFolderPath: "a"})
+		if err != nil {
+			t.Fatal(err)
+		}
+		want := `{"sourceFolderPath":"a","destinationFolderPath":"","movedItems":[],"createdFolders":[]}`
+		if string(got) != want {
+			t.Fatalf("encode = %s, want %s", got, want)
+		}
+	})
+
+	t.Run("& e acentos sem escape", func(t *testing.T) {
+		got, _ := encode(Operation{SourceFolderPath: "Fotos & Vídeos <2026>"})
+		if !strings.Contains(string(got), `"Fotos & Vídeos <2026>"`) {
+			t.Fatalf("encode = %s", got)
+		}
+	})
+
+	t.Run("grava byte a byte igual à versão Electron", func(t *testing.T) {
+		want := golden(t, "electron-last-operation.json")
+		op, err := storeWith(t, want).Load()
+		if err != nil {
+			t.Fatal(err)
+		}
+		got, err := encode(*op)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if string(got) != want {
+			t.Fatalf("encode =\n%s\nwant\n%s", got, want)
+		}
+	})
+}
+
+func newStore(t *testing.T) *FileStore {
+	t.Helper()
+	return New(filepath.Join(t.TempDir(), "last-operation.json"), nil)
+}
+
+func storeWith(t *testing.T, content string) *FileStore {
+	t.Helper()
+	s := newStore(t)
+	if err := os.WriteFile(s.Path(), []byte(content), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	return s
+}
+
+func golden(t *testing.T, name string) string {
+	t.Helper()
+	data, err := os.ReadFile(filepath.Join("testdata", name))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return strings.TrimRight(string(data), "\r\n")
+}
+
+func stubRename(t *testing.T, err error) {
+	t.Helper()
+	old := renameFile
+	renameFile = func(string, string) error { return err }
+	t.Cleanup(func() { renameFile = old })
+}
+
+func assertNoTempFiles(t *testing.T, dir string) {
+	t.Helper()
+	matches, _ := filepath.Glob(filepath.Join(dir, ".last-operation-*.tmp"))
+	if len(matches) > 0 {
+		t.Fatalf("arquivos temporários esquecidos: %v", matches)
+	}
+}

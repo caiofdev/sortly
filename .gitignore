@@ -1,5 +1,13 @@
 node_modules/
-dist/
+/dist/
 release/
 .DS_Store
 *.log
+
+# Wails
+build/bin/
+frontend/dist/*
+!frontend/dist/.gitkeep
+frontend/package.json.md5
+coverage-internal.out
+build/windows/installer/tmp/

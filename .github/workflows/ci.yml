@@ -1,0 +1,108 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # Ubuntu 24.04 só tem WebKitGTK 4.1; o Wails precisa da tag para usá-lo.
+  LINUX_BUILD_TAGS: webkit2_41
+
+jobs:
+  go-lint:
+    name: Go · lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+
+      - name: Dependências do Wails (Linux)
+        run: sudo apt-get update && sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev
+
+      - name: golangci-lint (gofmt, goimports, vet, gocyclo/cyclop ≤ 10)
+        uses: golangci/golangci-lint-action@v8
+        with:
+          version: v2.14.0
+          args: --build-tags=${{ env.LINUX_BUILD_TAGS }}
+
+  go-test:
+    name: Go · testes (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+
+      - name: Dependências do Wails (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev
+
+      - name: Flags por sistema
+        run: |
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            echo "GO_FLAGS=-tags=$LINUX_BUILD_TAGS -race" >> "$GITHUB_ENV"
+          elif [ "$RUNNER_OS" = "macOS" ]; then
+            echo "GO_FLAGS=-race" >> "$GITHUB_ENV"
+          else
+            # -race no Windows exige cgo + gcc; os testes rodam sem ele.
+            echo "GO_FLAGS=" >> "$GITHUB_ENV"
+          fi
+
+      - name: go vet
+        run: go vet ${GO_FLAGS/-race/} ./...
+
+      - name: go test
+        run: go test $GO_FLAGS ./...
+
+      - name: Cobertura de internal/ (mínimo 85%)
+        if: runner.os == 'Linux'
+        run: bash scripts/check-coverage.sh 85
+
+  frontend:
+    name: Frontend · lint, testes e build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - run: npm ci
+
+      - name: ESLint (react-hooks, complexidade ≤ 10)
+        run: npm run lint
+
+      - name: Prettier
+        run: npm run format:check
+
+      - name: Vitest
+        run: npm test
+
+      - name: Build
+        run: npm run build

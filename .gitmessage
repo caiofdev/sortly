@@ -1,0 +1,12 @@
+
+# tipo(sortly-N): descrição curta no imperativo (máx. ~72 caracteres)
+#
+# Tipos: feat, fix, refactor, test, docs, chore, ci, build, perf, style
+# N = número da issue no GitHub. Ex.: feat(sortly-12): adiciona drag and drop nativo
+#
+# Corpo (opcional): o que mudou e por quê.
+#
+# Linhas começando com # são ignoradas.
+# Ative com: git config commit.template .gitmessage
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
