@@ -1,0 +1,39 @@
+# Pacote .deb do Sortly (gerado com nfpm no workflow de release).
+# Uso: VERSION=2.0.0 nfpm package --config build/linux/nfpm.yaml --packager deb --target dist-release/
+name: sortly
+arch: amd64
+platform: linux
+version: ${VERSION}
+section: utils
+priority: optional
+maintainer: Caio Fernandes dos Reis <caiofdev@users.noreply.github.com>
+vendor: Caio Fernandes dos Reis
+homepage: https://github.com/caiofdev/sortly
+license: MIT
+description: |-
+  Organizador de arquivos.
+  Separa os arquivos de uma pasta em subpastas por extensão, data, tamanho,
+  resolução, duração ou número de páginas, com opção de desfazer.
+
+# O Wails usa o WebView do sistema (WebKitGTK 4.1).
+depends:
+  - libgtk-3-0
+  - libwebkit2gtk-4.1-0
+
+contents:
+  - src: build/bin/Sortly
+    dst: /usr/bin/sortly
+    file_info:
+      mode: 0755
+  - src: build/linux/sortly.desktop
+    dst: /usr/share/applications/sortly.desktop
+    file_info:
+      mode: 0644
+  - src: build/appicon.png
+    dst: /usr/share/icons/hicolor/1024x1024/apps/sortly.png
+    file_info:
+      mode: 0644
+  - src: build/appicon.png
+    dst: /usr/share/pixmaps/sortly.png
+    file_info:
+      mode: 0644

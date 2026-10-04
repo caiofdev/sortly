@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Sortly
+Comment=Organize seus arquivos em segundos
+Comment[en]=Organize your files in seconds
+Exec=sortly
+Icon=sortly
+Terminal=false
+Categories=Utility;FileTools;
+Keywords=organizar;arquivos;pastas;organize;files;folders;
+StartupWMClass=sortly
