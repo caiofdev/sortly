@@ -72,13 +72,22 @@ jobs:
 
       - name: NSIS (Windows)
         if: runner.os == 'Windows'
-        run: command -v makensis || choco install nsis -y --no-progress
+        run: |
+          nsis="/c/Program Files (x86)/NSIS"
+          [ -x "$nsis/makensis.exe" ] || choco install nsis -y --no-progress
+          # O Chocolatey não atualiza o PATH dos passos seguintes: o Wails precisa achar o makensis.
+          echo "C:\Program Files (x86)\NSIS" >> "$GITHUB_PATH"
 
       - name: Wails CLI
         run: go install github.com/wailsapp/wails/v2/cmd/wails@${WAILS_VERSION}
 
       - name: Build
         run: wails build -clean -platform ${{ matrix.platform }} ${{ matrix.flags }}
+
+      - name: Conferir instalador (Windows)
+        if: runner.os == 'Windows'
+        # O Wails só avisa quando não consegue gerar o instalador; aqui a falha fica explícita.
+        run: test -f build/bin/Sortly-amd64-installer.exe || { echo "::error::Instalador NSIS não foi gerado"; exit 1; }
 
       - name: Empacotar (Windows)
         if: runner.os == 'Windows'
@@ -100,7 +109,8 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           mkdir -p dist-release
-          go install github.com/goreleaser/nfpm/v2/cmd/nfpm@${NFPM_VERSION}
+          # O nfpm exige um Go mais novo que o do go.mod; GOTOOLCHAIN=auto deixa o Go baixar a versão necessária.
+          GOTOOLCHAIN=auto go install github.com/goreleaser/nfpm/v2/cmd/nfpm@${NFPM_VERSION}
           nfpm package --config build/linux/nfpm.yaml --packager deb --target "dist-release/Sortly-${VERSION}-linux-amd64.deb"
           tar -czf "dist-release/Sortly-${VERSION}-linux-amd64.tar.gz" -C build/bin Sortly
 
