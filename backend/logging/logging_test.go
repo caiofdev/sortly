@@ -1,14 +1,5 @@
 package logging
 
-// função       | CC | casos
-// DefaultDir   |  2 | TestDefaultDir: ok; sem pasta de configuração
-// Open         |  3 | TestOpen: cria e grava; pasta não criável; arquivo não abre
-// OpenDefault  |  3 | TestOpenDefault: pasta padrão; sem pasta de configuração; pasta padrão não abre
-// newLogger    |  1 | via Open
-// rotate       |  2 | TestRotate: inexistente; tamanho = limite - 1; tamanho = limite
-//
-// Valor-limite: log com MaxSize - 1 bytes (mantém) e MaxSize bytes (rotaciona).
-
 import (
 	"bytes"
 	"errors"

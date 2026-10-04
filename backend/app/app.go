@@ -15,7 +15,7 @@ import (
 	"github.com/caiofdev/sortly/backend/undo"
 )
 
-// Títulos dos seletores de pasta (os mesmos da versão Electron).
+// Títulos dos seletores de pasta.
 const (
 	SourceDialogTitle      = "Selecione a pasta com os arquivos para organizar"
 	DestinationDialogTitle = "Selecione a pasta de destino para receber os arquivos organizados"

@@ -1,20 +1,5 @@
 package store
 
-// função                 | CC | casos
-// Operation.CanUndo      |  2 | TestCanUndo: nil; sem itens; com itens
-// DefaultPath            |  2 | TestDefaultPath: com pasta do usuário; sem pasta do usuário
-// New                    |  2 | TestNewWithoutLogger; demais testes (com logger)
-// FileStore.Load         |  4 | TestLoadMissingOrUnreadable, TestLoadCorrupted, TestLoadValid: inexistente; erro de leitura; vazio/corrompido; null; válido
-// FileStore.Save         |  4 | TestSave: sucesso; pasta não criável; troca atômica falha (preserva anterior)
-// FileStore.Clear        |  3 | TestClear: existe; não existe; não removível
-// FileStore.writeAtomic  |  4 | TestWriteAtomic: pasta inexistente; troca falha; sucesso (via TestSave)
-// FileStore.fail         |  1 | TestFailLogs
-// encode                 |  3 | TestEncode: listas nil viram []; & e acentos sem escape; golden Electron
-//
-// Valor-limite: arquivo inexistente / vazio (0 bytes) / "null" / corrompido; lista de
-// movidos com 0 e 1 item; registro legado sem createdFolders.
-// Regressão B5: falha na gravação não pode corromper o registro anterior, e o erro é registrado no log.
-
 import (
 	"bytes"
 	"errors"
@@ -122,7 +107,7 @@ func TestLoadValid(t *testing.T) {
 		}
 	})
 
-	t.Run("registro gerado pela versão Electron", func(t *testing.T) {
+	t.Run("registro gerado pela versão 1.0", func(t *testing.T) {
 		op, err := storeWith(t, golden(t, "electron-last-operation.json")).Load()
 		if err != nil {
 			t.Fatal(err)
@@ -292,7 +277,7 @@ func TestEncode(t *testing.T) {
 		}
 	})
 
-	t.Run("grava byte a byte igual à versão Electron", func(t *testing.T) {
+	t.Run("grava byte a byte igual à versão 1.0", func(t *testing.T) {
 		want := golden(t, "electron-last-operation.json")
 		op, err := storeWith(t, want).Load()
 		if err != nil {

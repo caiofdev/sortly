@@ -1,14 +1,5 @@
 package metadata
 
-// função                       | CC | casos
-// Pages                        |  4 | TestPagesFixtures (17 arquivos): sem contador; erro; zero; positivo
-// pdfCounter.CountPages        |  4 | via fixtures + TestPagesMissingFile/CanceledContext: inexistente; válido; inválido; cancelado
-// zipRegexCounter.CountPages   |  4 | via fixtures + TestZipRegexOverflow: zip inválido; sem match; número inválido; ok
-// readZipEntry                 |  3 | via fixtures: não é zip; entrada ausente; entrada presente
-//
-// Valor-limite: 0 páginas (unknown), 1 página (menor válida), número que não cabe em int.
-// Paridade: os valores esperados são os mesmos do pdf-lib / JSZip da versão Electron.
-
 import (
 	"archive/zip"
 	"context"
@@ -18,10 +9,11 @@ import (
 	"testing"
 )
 
+// Os valores esperados são os do pdf-lib e do JSZip usados na versão 1.0.
 func TestPagesFixtures(t *testing.T) {
 	cases := []struct {
 		file    string
-		want    int // 0 = "pages-unknown" na versão Electron
+		want    int // 0 = "pages-unknown" na versão 1.0
 		wantErr error
 	}{
 		{"1-page.pdf", 1, nil},

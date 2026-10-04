@@ -1,16 +1,5 @@
 package organizer
 
-// função            | CC | casos
-// NewPlanner        |  1 | todos
-// Planner.Plan      |  5 | TestPlanReadDirError; TestPlanCanceled; TestPlanScenarios; TestPlanRuleError
-// Planner.active    |  3 | TestPlanScenarios (critérios ligados e desligados)
-// Plan.add          |  6 | TestPlanScenarios + TestPlanSpecialEntries: pasta; não regular; Info falha; sem extensão; erro de regra; ok
-// Plan.addMove      |  2 | TestPlanScenarios: move; destino = origem (B8)
-// newFile           |  1 | via cenários
-// segmentsFor       |  4 | TestPlanScenarios: regra não se aplica; aplica; erro
-//
-// Valor-limite: pasta vazia; só subpastas; 1 arquivo; destino = origem sem subpasta gerada.
-
 import (
 	"context"
 	"errors"
@@ -212,7 +201,6 @@ func writeAt(t *testing.T, path, content string, mtime time.Time) {
 
 var errRead = errors.New("falha de leitura")
 
-// fakeMeta devolve valores fixos para os critérios de metadados.
 type fakeMeta struct {
 	size    metadata.Size
 	seconds float64

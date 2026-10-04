@@ -1,20 +1,5 @@
 package metadata
 
-// função                   | CC | casos
-// Duration                 |  5 | TestDurationFixtures (19 arquivos): inexistente; sem moov; áudio; fallback mvhd; sem duração
-// findTopLevelBox          |  5 | via fixtures: moov no início; moov no fim; box largesize antes; arquivo sem moov
-// readPayload              |  3 | TestReadPayload: tamanho conhecido; até o fim (-1); acima do limite
-// readBoxHeader            |  6 | TestReadBoxHeader: normal; tamanho 0; largesize; largesize truncado; tamanho < cabeçalho; fim do arquivo
-// boxes                    |  4 | TestBoxes: vazio; dois filhos; tamanho < 8; tamanho > restante
-// childBox                 |  3 | TestChildBox: caminho existe; caminho não existe; caminho vazio
-// firstAudioTrackDuration  |  3 | via fixtures: sem faixas; faixa de vídeo antes da de áudio; só áudio
-// isAudioTrack             |  4 | TestIsAudioTrack: sem hdlr; vide; soun com canais; audi com canais; soun sem canais
-// audioChannels            |  2 | TestIsAudioTrack (stsd curto e completo)
-// headerSeconds            |  6 | TestHeaderSeconds: curto; v0; v1; v1 curto; escala 0; duração 0
-//
-// Valor-limite (duração bruta; o arredondamento para a pasta é do organizador):
-// 0,4 s; 0,5 s; 59 s; 60 s; 3599 s; 3600 s; duração 0; escala de tempo 0.
-
 import (
 	"bytes"
 	"encoding/binary"
@@ -24,7 +9,7 @@ import (
 	"testing"
 )
 
-// electronUnknown marca fixtures em que a versão Electron (music-metadata)
+// electronUnknown marca fixtures em que a versão 1.0 (music-metadata)
 // devolvia "duration-unknown" e a versão Go encontra a duração (melhoria).
 const electronUnknown = true
 
@@ -32,7 +17,7 @@ func TestDurationFixtures(t *testing.T) {
 	cases := []struct {
 		file        string
 		want        float64 // 0 = sem duração (ErrNoMetadata)
-		improvement bool    // Electron: duration-unknown
+		improvement bool    // versão 1.0: duration-unknown
 		why         string
 	}{
 		{"audio-0.4s.mp4", 0.4, false, ""},

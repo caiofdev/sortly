@@ -16,7 +16,7 @@ var errBadBox = errors.New("box mp4 inválido")
 
 // Duration devolve a duração do mp4 em segundos.
 //
-// Usa a duração da primeira faixa de áudio, como a versão Electron
+// Usa a duração da primeira faixa de áudio, como a versão 1.0
 // (music-metadata). Se o vídeo não tem áudio, usa a duração do filme
 // (box "mvhd"), que é a que o player mostra.
 func Duration(path string) (float64, error) {

@@ -1,8 +1,5 @@
 package app
 
-// função              | CC | casos
-// resolveDroppedPath  |  5 | TestResolveDroppedPath: vazio; inexistente; pasta; arquivo; nem arquivo nem pasta
-
 import (
 	"errors"
 	"net"

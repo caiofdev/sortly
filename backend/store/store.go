@@ -1,6 +1,6 @@
 // Package store guarda o registro da última organização, usado pelo desfazer.
 //
-// O formato do arquivo é o mesmo da versão 1.0 (Electron), para que um
+// O formato do arquivo é o mesmo da versão 1.0, para que um
 // desfazer pendente continue funcionando depois da atualização.
 package store
 
@@ -26,7 +26,7 @@ type MovedItem struct {
 }
 
 // Operation é o registro da última organização. A ordem dos campos é a mesma
-// do JSON gravado pela versão Electron.
+// do JSON gravado pela versão 1.0.
 type Operation struct {
 	SourceFolderPath      string      `json:"sourceFolderPath"`
 	DestinationFolderPath string      `json:"destinationFolderPath"`
@@ -50,7 +50,7 @@ type FileStore struct {
 // Substituível nos testes para simular falha na troca atômica do arquivo.
 var renameFile = os.Rename
 
-// DefaultPath devolve ~/.sortly/last-operation.json, o mesmo caminho da versão Electron.
+// DefaultPath devolve ~/.sortly/last-operation.json, o mesmo caminho da versão 1.0.
 func DefaultPath() (string, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
@@ -138,7 +138,7 @@ func (s *FileStore) fail(action string, err error) error {
 	return fmt.Errorf("store: %s %s: %w", action, s.path, err)
 }
 
-// encode gera o mesmo JSON do JSON.stringify da versão Electron: compacto,
+// encode gera o mesmo JSON do JSON.stringify da versão 1.0: compacto,
 // sem escapar &, < e > (o encoding/json escapa por padrão) e com listas
 // vazias como [] em vez de null.
 func encode(op Operation) ([]byte, error) {

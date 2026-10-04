@@ -1,13 +1,5 @@
 package organizer
 
-// função            | CC | casos
-// NewExecutor       |  2 | com e sem logger
-// Executor.Apply    |  5 | TestApply: sucesso; pasta repetida (uma vez no journal); falha no meio (B1); contexto cancelado
-// Executor.moveOne  |  2 | TestApply: mkdir falha; move
-//
-// Regressão B1: uma falha no meio do lote não descarta o journal dos arquivos já movidos.
-// Valor-limite: nome de destino ocupado → "nome (1).ext" (nada é sobrescrito).
-
 import (
 	"bytes"
 	"context"

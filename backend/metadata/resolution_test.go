@@ -1,13 +1,5 @@
 package metadata
 
-// função        | CC | casos
-// Resolution    |  5 | TestResolutionFixtures (12 arquivos), TestResolutionEdgeCases: inexistente; largura 0; altura 0
-// decodeSize    |  3 | via fixtures: BMP; outros formatos; conteúdo inválido
-// bmpSize       |  3 | TestBMPSize: normal; altura negativa; cabeçalho truncado
-//
-// Valor-limite: 1x1 (menor imagem válida); dimensão 0 (inválida); arquivo vazio e truncado.
-// Paridade: os valores esperados são os mesmos do image-size da versão Electron.
-
 import (
 	"bytes"
 	"encoding/binary"
@@ -17,10 +9,11 @@ import (
 	"testing"
 )
 
+// Os valores esperados são os do image-size usado na versão 1.0.
 func TestResolutionFixtures(t *testing.T) {
 	cases := []struct {
 		file string
-		want Size // zero = "unknown" na versão Electron
+		want Size // zero = "unknown" na versão 1.0
 	}{
 		{"1x1.png", Size{1, 1}},
 		{"1x1-lossless.webp", Size{1, 1}},

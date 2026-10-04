@@ -94,7 +94,7 @@ func (s *Service) Undo(ctx context.Context) (Result, error) {
 }
 
 // load devolve o registro ou ErrNothingToUndo. Um registro corrompido conta
-// como "nada para desfazer", como na versão Electron.
+// como "nada para desfazer", como na versão 1.0.
 func (s *Service) load() (*store.Operation, error) {
 	op, err := s.store.Load()
 	if err != nil && !errors.Is(err, store.ErrCorrupted) {

@@ -1,16 +1,5 @@
 package files
 
-// função          | CC | casos
-// Move            |  3 | TestMove: mesmo volume; erro que não é de volume; outro volume (fallback)
-// MoveUnique      |  3 | TestMoveUnique: livre; ocupado (não sobrescreve); reserva falha; movimento falha
-// isCrossDevice   |  1 | TestIsCrossDevice
-// copyThenRemove  |  4 | TestCopyThenRemove: sucesso; origem inexistente; cópia falha; origem não removível
-// copyFile        |  5 | TestCopyFile: sucesso com mtime; sobrescreve destino; origem não abre; destino não abre; leitura falha
-//
-// Regressão B3: mover entre volumes (rename com EXDEV / ERROR_NOT_SAME_DEVICE) não pode falhar.
-// Limite: mesmo volume vs outro volume; falha na última etapa (remover a origem) não duplica o arquivo.
-// O caminho "falha ao fechar o destino" de copyFile não é reproduzível de forma portável.
-
 import (
 	"bytes"
 	"errors"
@@ -167,6 +156,7 @@ func TestCopyThenRemove(t *testing.T) {
 	})
 }
 
+// O caminho "falha ao fechar o destino" não é reproduzível de forma portável.
 func TestCopyFile(t *testing.T) {
 	t.Run("copia conteúdo e data de modificação", func(t *testing.T) {
 		dir := t.TempDir()
@@ -233,7 +223,6 @@ func stubRename(t *testing.T, fn func(string, string) error) {
 	t.Cleanup(func() { rename = old })
 }
 
-// stubCrossDevice simula o erro do sistema ao renomear entre volumes.
 func stubCrossDevice(t *testing.T) {
 	stubRename(t, func(oldPath, newPath string) error {
 		return &os.LinkError{Op: "rename", Old: oldPath, New: newPath, Err: errCrossDevice}

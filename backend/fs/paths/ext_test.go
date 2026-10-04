@@ -1,12 +1,5 @@
 package paths
 
-// função    | CC | casos
-// Ext       |  6 | TestExt: sem ponto; ponto inicial (oculto); ".."; "..."; extensão simples; dupla; ponto final; caminho com pasta
-// scanDots  |  6 | TestScanDots: vazio; sem ponto; um ponto; dois pontos; só pontos; ponto inicial
-//
-// Valor-limite: posição do ponto — primeiro caractere (".gitignore"), último ("arquivo."),
-// único caractere antes do ponto ("a.b"), nomes só com pontos ("..", "...").
-
 import (
 	"path/filepath"
 	"testing"
