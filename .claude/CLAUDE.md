@@ -22,7 +22,7 @@ frontend/src/       React: components/, views/, controllers/, hooks/, services/,
 frontend/wailsjs/   bindings gerados pelo Wails (versionados; regenerados por wails dev/build)
 build/              ícones, manifesto Windows, Info.plist, NSIS (windows/installer), nfpm (linux)
 scripts/            check-coverage.sh, cccases/ (CC × casos), benchmark/ e parity/ (PowerShell)
-docs/               architecture.md, organization-rules.md, development.md, testing.md, release.md, benchmark.md, adr/
+docs/               architecture.md, organization-rules.md, development.md (inclui testes e fluxo), release.md, benchmark.md, adr/, images/
 ```
 
 A milestone "Refinamento do backend" (#39–#45) muda parte disso: `internal/` vira `backend/` (#42) e o estado da tela vai para o Go (#45). Atualize este arquivo quando essas issues entrarem.

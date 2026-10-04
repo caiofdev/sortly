@@ -6,7 +6,7 @@
 
 ## Contexto
 
-Na versão Electron, o backend lança erros com texto fixo, em português em alguns casos ("Pasta inválida.") e em inglês em outros ("Invalid dropped item."). A interface exibe `error.message` diretamente. Com o idioma em inglês, o usuário vê mensagens em português; com o idioma em português, às vezes vê mensagens em inglês. O backend também devolve um campo `message` nos resultados que a interface ignora (achados B6 e B7 em [code-review.md](../code-review.md)).
+Na versão Electron, o backend lança erros com texto fixo, em português em alguns casos ("Pasta inválida.") e em inglês em outros ("Invalid dropped item."). A interface exibe `error.message` diretamente. Com o idioma em inglês, o usuário vê mensagens em português; com o idioma em português, às vezes vê mensagens em inglês. O backend também devolve um campo `message` nos resultados que a interface ignora (defeitos B6 e B7 da versão 1.0, corrigidos na 2.0; veja o CHANGELOG).
 
 ## Decisão
 
