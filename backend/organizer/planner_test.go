@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/caiofdev/sortly/backend/metadata"
+	"github.com/caiofdev/sortly/backend/organizer/criteria"
 )
 
 func TestPlanScenarios(t *testing.T) {
@@ -29,16 +30,16 @@ func TestPlanScenarios(t *testing.T) {
 		name  string
 		files []string
 		dirs  []string
-		opts  Options
+		opts  criteria.Options
 		dst   string // "" = destino igual à origem
 		want  Plan   // Source/Destination preenchidos no teste; Moves relativos
 	}{
-		{name: "pasta vazia", opts: Options{ByExtension: true}, want: Plan{}},
-		{name: "só subpastas", dirs: []string{"a", "b"}, opts: Options{ByExtension: true}, want: Plan{IgnoredFolders: 2}},
+		{name: "pasta vazia", opts: criteria.Options{ByExtension: true}, want: Plan{}},
+		{name: "só subpastas", dirs: []string{"a", "b"}, opts: criteria.Options{ByExtension: true}, want: Plan{IgnoredFolders: 2}},
 		{
 			name:  "extensão: sem extensão é ignorado",
 			files: []string{"foto.JPG", "LEIAME", ".gitignore", "backup.tar.gz"},
-			opts:  Options{ByExtension: true},
+			opts:  criteria.Options{ByExtension: true},
 			want: Plan{ProcessedFiles: 4, IgnoredWithoutExtension: 2, Moves: []Move{
 				{"backup.tar.gz", filepath.Join("gz", "backup.tar.gz")},
 				{"foto.JPG", filepath.Join("jpg", "foto.JPG")},
@@ -47,13 +48,13 @@ func TestPlanScenarios(t *testing.T) {
 		{
 			name:  "sem extensão ligado, o arquivo sem extensão é movido pelos outros critérios",
 			files: []string{"LEIAME"},
-			opts:  Options{BySize: true},
+			opts:  criteria.Options{BySize: true},
 			want:  Plan{ProcessedFiles: 1, Moves: []Move{{"LEIAME", filepath.Join("size-1mb", "LEIAME")}}},
 		},
 		{
 			name:  "todos os critérios: aninhamento na ordem do registry",
 			files: []string{"a.pdf", "b.mp4", "c.png", "d.txt"},
-			opts:  Options{ByExtension: true, ByDate: true, BySize: true, ByResolution: true, ByDuration: true, ByPages: true},
+			opts:  criteria.Options{ByExtension: true, ByDate: true, BySize: true, ByResolution: true, ByDuration: true, ByPages: true},
 			want: Plan{ProcessedFiles: 4, Moves: []Move{
 				{"a.pdf", filepath.Join("pdf", "date-2026-03-05", "size-1mb", "pages-12", "a.pdf")},
 				{"b.mp4", filepath.Join("mp4", "date-2026-03-05", "size-1mb", "duration-00h01m00s", "b.mp4")},
@@ -64,7 +65,7 @@ func TestPlanScenarios(t *testing.T) {
 		{
 			name:  "destino = origem e nenhuma subpasta gerada: arquivo fica onde está (B8)",
 			files: []string{"nota.txt", "foto.png"},
-			opts:  Options{ByResolution: true},
+			opts:  criteria.Options{ByResolution: true},
 			want: Plan{ProcessedFiles: 2, UnchangedFiles: 1, Moves: []Move{
 				{"foto.png", filepath.Join("3x2", "foto.png")},
 			}},
@@ -72,7 +73,7 @@ func TestPlanScenarios(t *testing.T) {
 		{
 			name:  "destino diferente e nenhuma subpasta gerada: vai para a raiz do destino",
 			files: []string{"nota.txt"},
-			opts:  Options{ByResolution: true},
+			opts:  criteria.Options{ByResolution: true},
 			dst:   "outro",
 			want:  Plan{ProcessedFiles: 1, Moves: []Move{{"nota.txt", "nota.txt"}}},
 		},
@@ -114,7 +115,7 @@ func TestPlanSpecialEntries(t *testing.T) {
 		}, nil
 	}
 
-	got, err := p.Plan(context.Background(), src, src, Options{ByExtension: true})
+	got, err := p.Plan(context.Background(), src, src, criteria.Options{ByExtension: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -125,7 +126,7 @@ func TestPlanSpecialEntries(t *testing.T) {
 }
 
 func TestPlanReadDirError(t *testing.T) {
-	_, err := newTestPlanner().Plan(context.Background(), filepath.Join(t.TempDir(), "nada"), "x", Options{ByExtension: true})
+	_, err := newTestPlanner().Plan(context.Background(), filepath.Join(t.TempDir(), "nada"), "x", criteria.Options{ByExtension: true})
 	if !errors.Is(err, ErrInvalidSource) {
 		t.Fatalf("err = %v, want ErrInvalidSource", err)
 	}
@@ -137,7 +138,7 @@ func TestPlanCanceled(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	if _, err := newTestPlanner().Plan(ctx, src, src, Options{ByExtension: true}); !errors.Is(err, context.Canceled) {
+	if _, err := newTestPlanner().Plan(ctx, src, src, criteria.Options{ByExtension: true}); !errors.Is(err, context.Canceled) {
 		t.Fatalf("err = %v, want context.Canceled", err)
 	}
 }
@@ -145,9 +146,9 @@ func TestPlanCanceled(t *testing.T) {
 func TestPlanRuleError(t *testing.T) {
 	src := t.TempDir()
 	writeAt(t, filepath.Join(src, "a.txt"), "x", testTime)
-	p := NewPlanner([]SegmentRule{failingRule{}})
+	p := NewPlanner([]criteria.Rule{failingRule{}})
 
-	if _, err := p.Plan(context.Background(), src, src, Options{ByExtension: true}); !errors.Is(err, errRead) {
+	if _, err := p.Plan(context.Background(), src, src, criteria.Options{ByExtension: true}); !errors.Is(err, errRead) {
 		t.Fatalf("err = %v, want errRead", err)
 	}
 }
@@ -161,7 +162,7 @@ var (
 
 func newTestPlanner() *Planner {
 	meta := fakeMeta{size: metadata.Size{Width: 3, Height: 2}, seconds: 60, pages: 12}
-	return NewPlanner(NewRules(meta, testLoc))
+	return NewPlanner(criteria.New(meta, testLoc))
 }
 
 func absolutePlan(p Plan, src, dst string) Plan {
@@ -174,9 +175,9 @@ func absolutePlan(p Plan, src, dst string) Plan {
 
 type failingRule struct{}
 
-func (failingRule) Enabled(Options) bool { return true }
-func (failingRule) Applies(File) bool    { return true }
-func (failingRule) Segment(context.Context, File) (string, error) {
+func (failingRule) Enabled(criteria.Options) bool { return true }
+func (failingRule) Applies(criteria.File) bool    { return true }
+func (failingRule) Segment(context.Context, criteria.File) (string, error) {
 	return "", errRead
 }
 
@@ -208,3 +209,16 @@ func writeAt(t *testing.T, path, content string, mtime time.Time) {
 		t.Fatal(err)
 	}
 }
+
+var errRead = errors.New("falha de leitura")
+
+// fakeMeta devolve valores fixos para os critérios de metadados.
+type fakeMeta struct {
+	size    metadata.Size
+	seconds float64
+	pages   int
+}
+
+func (f fakeMeta) Resolution(string) (metadata.Size, error)           { return f.size, nil }
+func (f fakeMeta) Duration(string) (float64, error)                   { return f.seconds, nil }
+func (f fakeMeta) Pages(context.Context, string, string) (int, error) { return f.pages, nil }

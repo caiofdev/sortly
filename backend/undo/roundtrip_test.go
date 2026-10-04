@@ -18,6 +18,7 @@ import (
 
 	"github.com/caiofdev/sortly/backend/metadata"
 	"github.com/caiofdev/sortly/backend/organizer"
+	"github.com/caiofdev/sortly/backend/organizer/criteria"
 )
 
 func TestOrganizeThenUndoRestoresIdenticalTree(t *testing.T) {
@@ -46,7 +47,7 @@ func roundTrip(t *testing.T, inPlace bool) {
 	req := organizer.Request{
 		SourceFolderPath:      src,
 		DestinationFolderPath: dst,
-		OrganizationOptions: organizer.RawOptions{
+		OrganizationOptions: criteria.RawOptions{
 			ByExtension: &yes, ByDate: true, BySize: true, ByResolution: true, ByDuration: true, ByPages: true,
 		},
 	}

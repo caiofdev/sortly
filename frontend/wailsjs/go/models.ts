@@ -31,7 +31,7 @@ export namespace app {
 
 }
 
-export namespace organizer {
+export namespace criteria {
 	
 	export class RawOptions {
 	    byDuration: boolean;
@@ -55,10 +55,15 @@ export namespace organizer {
 	        this.byExtension = source["byExtension"];
 	    }
 	}
+
+}
+
+export namespace organizer {
+	
 	export class Request {
 	    sourceFolderPath: string;
 	    destinationFolderPath: string;
-	    organizationOptions: RawOptions;
+	    organizationOptions: criteria.RawOptions;
 	
 	    static createFrom(source: any = {}) {
 	        return new Request(source);
@@ -68,7 +73,7 @@ export namespace organizer {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.sourceFolderPath = source["sourceFolderPath"];
 	        this.destinationFolderPath = source["destinationFolderPath"];
-	        this.organizationOptions = this.convertValues(source["organizationOptions"], RawOptions);
+	        this.organizationOptions = this.convertValues(source["organizationOptions"], criteria.RawOptions);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

@@ -1,4 +1,4 @@
-package organizer
+package criteria
 
 // RawOptions são os critérios como chegam do frontend. ByExtension é ponteiro
 // porque, como na versão Electron, ele vale true quando não é informado.

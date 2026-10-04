@@ -12,14 +12,15 @@ import (
 	"os"
 	"time"
 
+	"github.com/caiofdev/sortly/backend/organizer/criteria"
 	"github.com/caiofdev/sortly/backend/store"
 )
 
 // Request é o pedido de organização, no formato enviado pelo frontend.
 type Request struct {
-	SourceFolderPath      string     `json:"sourceFolderPath"`
-	DestinationFolderPath string     `json:"destinationFolderPath"`
-	OrganizationOptions   RawOptions `json:"organizationOptions"`
+	SourceFolderPath      string              `json:"sourceFolderPath"`
+	DestinationFolderPath string              `json:"destinationFolderPath"`
+	OrganizationOptions   criteria.RawOptions `json:"organizationOptions"`
 }
 
 // Result resume a organização. Não traz mensagem pronta: o frontend monta o
@@ -44,7 +45,7 @@ type RecordStore interface {
 
 // Deps são as dependências do serviço.
 type Deps struct {
-	Metadata MetadataReader
+	Metadata criteria.MetadataReader
 	Store    RecordStore
 	Location *time.Location // fuso das pastas por data; nil = fuso local
 	Logger   *slog.Logger
@@ -64,7 +65,7 @@ func NewService(d Deps) *Service {
 		loc = time.Local
 	}
 	return &Service{
-		planner:  NewPlanner(NewRules(d.Metadata, loc)),
+		planner:  NewPlanner(criteria.New(d.Metadata, loc)),
 		executor: NewExecutor(d.Logger),
 		store:    d.Store,
 	}
@@ -129,21 +130,21 @@ func (s *Service) canUndo(out Outcome, saveErr error) bool {
 
 // validate segue a ordem da versão Electron: origem, destino, critérios.
 // Destino vazio usa a própria origem; destino inexistente será criado.
-func validate(req Request) (src, dst string, opts Options, err error) {
+func validate(req Request) (src, dst string, opts criteria.Options, err error) {
 	src = req.SourceFolderPath
 	if src == "" || !isDir(src) {
-		return "", "", Options{}, fmt.Errorf("%w: %q", ErrInvalidSource, src)
+		return "", "", criteria.Options{}, fmt.Errorf("%w: %q", ErrInvalidSource, src)
 	}
 	dst = req.DestinationFolderPath
 	if dst == "" {
 		dst = src
 	}
 	if info, statErr := os.Stat(dst); statErr == nil && !info.IsDir() {
-		return "", "", Options{}, fmt.Errorf("%w: %q", ErrInvalidDestination, dst)
+		return "", "", criteria.Options{}, fmt.Errorf("%w: %q", ErrInvalidDestination, dst)
 	}
 	opts = req.OrganizationOptions.Normalize()
 	if !opts.Any() {
-		return "", "", Options{}, ErrNoCriteria
+		return "", "", criteria.Options{}, ErrNoCriteria
 	}
 	return src, dst, opts, nil
 }

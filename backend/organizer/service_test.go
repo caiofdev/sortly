@@ -25,6 +25,7 @@ import (
 
 	"github.com/caiofdev/sortly/backend/apperr"
 	"github.com/caiofdev/sortly/backend/metadata"
+	"github.com/caiofdev/sortly/backend/organizer/criteria"
 	"github.com/caiofdev/sortly/backend/store"
 )
 
@@ -44,11 +45,11 @@ func TestValidate(t *testing.T) {
 		{"origem inexistente", Request{SourceFolderPath: filepath.Join(dir, "nada")}, ErrInvalidSource, ""},
 		{"origem é arquivo", Request{SourceFolderPath: file}, ErrInvalidSource, ""},
 		{"destino é arquivo", Request{SourceFolderPath: dir, DestinationFolderPath: file}, ErrInvalidDestination, ""},
-		{"nenhum critério", Request{SourceFolderPath: dir, OrganizationOptions: RawOptions{ByExtension: &no}}, ErrNoCriteria, ""},
+		{"nenhum critério", Request{SourceFolderPath: dir, OrganizationOptions: criteria.RawOptions{ByExtension: &no}}, ErrNoCriteria, ""},
 		{"destino vazio usa a origem", Request{SourceFolderPath: dir}, nil, dir},
 		{"destino inexistente é aceito", Request{SourceFolderPath: dir, DestinationFolderPath: filepath.Join(dir, "novo")}, nil, filepath.Join(dir, "novo")},
 		{"byExtension ausente basta", Request{SourceFolderPath: dir, DestinationFolderPath: dir}, nil, dir},
-		{"um critério além da extensão desligada", Request{SourceFolderPath: dir, OrganizationOptions: RawOptions{ByDate: true, ByExtension: &no}}, nil, dir},
+		{"um critério além da extensão desligada", Request{SourceFolderPath: dir, OrganizationOptions: criteria.RawOptions{ByDate: true, ByExtension: &no}}, nil, dir},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

@@ -1,10 +1,6 @@
 package organizer
 
-import (
-	"errors"
-
-	"github.com/caiofdev/sortly/backend/apperr"
-)
+import "github.com/caiofdev/sortly/backend/apperr"
 
 // Erros com código devolvidos ao frontend (ADR 0004).
 var (
@@ -15,7 +11,3 @@ var (
 	// desfazer não pôde ser gravado.
 	ErrRecordNotSaved = apperr.New("RECORD_NOT_SAVED", "organizer: registro da organização não foi salvo")
 )
-
-// ErrSkipNoExtension sinaliza que o arquivo não tem extensão e o critério de
-// extensão está ligado: ele não é movido (conta em IgnoredWithoutExtension).
-var ErrSkipNoExtension = errors.New("organizer: arquivo sem extensão")

@@ -1,4 +1,4 @@
-package organizer
+package criteria
 
 // função              | CC | casos
 // RawOptions.Normalize |  2 | TestNormalize: byExtension ausente; true; false
