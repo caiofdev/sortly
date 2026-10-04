@@ -59,5 +59,5 @@ Status: ✅ corrigido na reescrita · ⏳ pendente.
 |---|---|---|
 | ✅ Fonte Inter carregada do Google Fonts em tempo de execução (`src/index.css:1`); não funciona offline | Embutir com `@fontsource/inter` | [#13](https://github.com/caiofdev/sortly/issues/13) |
 | ✅ Drag and drop usa `File.path`, que só existe no Electron | Evento de drop nativo do Wails | [#12](https://github.com/caiofdev/sortly/issues/12) |
-| Copyright do instalador diz "Jorge"; o autor é Caio Fernandes dos Reis | Corrigir os metadados | [#14](https://github.com/caiofdev/sortly/issues/14) |
+| ✅ Copyright do instalador diz "Jorge"; o autor é Caio Fernandes dos Reis | Corrigir os metadados | [#14](https://github.com/caiofdev/sortly/issues/14) |
 | Sem testes, sem lint, sem CI | golangci-lint, ESLint, Vitest e GitHub Actions | [#4](https://github.com/caiofdev/sortly/issues/4) |

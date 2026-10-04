@@ -19,6 +19,8 @@ Mantido por Caio Reis & Claude.
 - A fonte da interface vem dentro do app e não depende mais de internet. Antes, sem conexão, a tela usava outra fonte.
 
 ### Alterado
+- Instaladores bem menores (cerca de 9 MB no Windows, antes 82 MB). Também há versões para macOS (.dmg) e Linux (.deb).
+- Ao instalar a nova versão, a versão anterior é removida automaticamente; um desfazer pendente continua disponível.
 - Se um arquivo não puder ser movido ou restaurado, os demais continuam. Os que falharam ao desfazer ficam guardados, e você pode tentar desfazer de novo.
 
 ### Corrigido

@@ -32,7 +32,14 @@ Unicode true
 ####
 ## Include the wails tools
 ####
+## Sortly: instalação por usuário, sem pedir administrador, como a versão 1.0
+## (electron-builder), em %LOCALAPPDATA%\Programs\Sortly.
+!define WAILS_INSTALL_SCOPE "user"
+!define REQUEST_EXECUTION_LEVEL "user"
+
 !include "wails_tools.nsh"
+!include "StrFunc.nsh"
+${StrStr}
 
 # The version information for this two must consist of 4 parts
 VIProductVersion "${INFO_PRODUCTVERSION}.0"
@@ -55,6 +62,7 @@ ManifestDPIAware true
 # !define MUI_WELCOMEFINISHPAGE_BITMAP "resources\leftimage.bmp" #Include this to add a bitmap on the left side of the Welcome Page. Must be a size of 164x314
 !define MUI_FINISHPAGE_NOAUTOCLOSE # Wait on the INSTFILES page so the user can take a look into the details of the installation steps
 !define MUI_ABORTWARNING # This will warn the user if they exit from the installer.
+!define MUI_FINISHPAGE_RUN "$INSTDIR\${PRODUCT_EXECUTABLE}" # Sortly: opção de abrir o app ao concluir, como na 1.0
 
 !insertmacro MUI_PAGE_WELCOME # Welcome to the installer page.
 # !insertmacro MUI_PAGE_LICENSE "resources\eula.txt" # Adds a EULA page to the installer
@@ -64,7 +72,8 @@ ManifestDPIAware true
 
 !insertmacro MUI_UNPAGE_INSTFILES # Uinstalling page
 
-!insertmacro MUI_LANGUAGE "English" # Set the Language of the installer
+!insertmacro MUI_LANGUAGE "PortugueseBR" # Sortly: o NSIS usa o idioma do sistema quando disponível
+!insertmacro MUI_LANGUAGE "English"
 
 ## The following two statements can be used to sign the installer and the uninstaller. The path to the binaries are provided in %1
 #!uninstfinalize 'signtool --file "%1"'
@@ -87,8 +96,45 @@ Function .onInit
    !insertmacro wails.checkArchitecture
 FunctionEnd
 
+## Sortly: remove a versão 1.0 (Electron), que usa a mesma pasta e o mesmo
+## Sortly.exe. O registro da última organização (~/.sortly) é preservado, então
+## um desfazer pendente continua disponível depois da atualização.
+!define UNINSTALL_ROOT "Software\Microsoft\Windows\CurrentVersion\Uninstall"
+
+Function RemoveSortlyElectron
+    StrCpy $0 0
+    loop:
+        EnumRegKey $1 HKCU "${UNINSTALL_ROOT}" $0
+        StrCmp $1 "" done
+        IntOp $0 $0 + 1
+        ## A 1.0 registra UninstallString = "<pasta>\Uninstall Sortly.exe" /currentuser
+        ## e deixa InstallLocation vazio: a pasta é extraída do UninstallString.
+        ReadRegStr $2 HKCU "${UNINSTALL_ROOT}\$1" "UninstallString"
+        ${StrStr} $3 $2 "\Uninstall Sortly.exe"
+        StrCmp $3 "" loop
+        StrLen $5 $2
+        StrLen $6 $3
+        IntOp $5 $5 - $6 ## comprimento até antes de "\Uninstall Sortly.exe"
+        StrCpy $7 $2 1
+        StrCmp $7 '"' 0 +4
+            IntOp $5 $5 - 1
+            StrCpy $4 $2 $5 1 ## pula a aspa inicial
+            Goto +2
+        StrCpy $4 $2 $5
+        DetailPrint "Removendo a versão anterior do Sortly: $4"
+        ## _?= executa o desinstalador no lugar, sem se copiar para a pasta temporária,
+        ## para que o ExecWait realmente espere o fim da remoção.
+        ExecWait '"$4\Uninstall Sortly.exe" /S /currentuser _?=$4'
+        RMDir /r "$4"
+        DeleteRegKey HKCU "${UNINSTALL_ROOT}\$1"
+        StrCpy $0 0 ## a lista de chaves mudou: recomeça a busca
+        Goto loop
+    done:
+FunctionEnd
+
 Section
     !insertmacro wails.setShellContext
+    Call RemoveSortlyElectron
 
     !insertmacro wails.webview2runtime
 
@@ -109,6 +155,8 @@ Section "uninstall"
     !insertmacro wails.setShellContext
 
     RMDir /r "$AppData\${PRODUCT_EXECUTABLE}" # Remove the WebView2 DataPath
+    RMDir /r "$AppData\${INFO_PRODUCTNAME}\logs" # Sortly: logs do app
+    RMDir "$AppData\${INFO_PRODUCTNAME}" # Sortly: só remove se ficar vazia
 
     RMDir /r $INSTDIR
 
