@@ -35,7 +35,7 @@
 ## Decisões do projeto (ADRs)
 
 - [ ] O diff respeita as ADRs em `docs/adr/`. Contrariar uma ADR exige uma ADR nova que a substitua — sem isso, é achado 🟠.
-- [ ] Invariantes do `CLAUDE.md` (nomes de pastas, formato do registro, backend sem texto para o usuário, interface congelada).
+- [ ] Invariantes do `.claude/CLAUDE.md` (nomes de pastas, formato do registro, backend sem texto para o usuário, interface congelada).
 
 ## Legibilidade
 

@@ -16,7 +16,7 @@ Objetivo: encontrar o que uma revisão humana costuma deixar passar — casos de
 
 ## Processo
 
-1. **Contexto.** Leia o `CLAUDE.md`, a issue ligada à branch (`gh issue view N`), o diff inteiro e, para cada arquivo alterado, o arquivo completo e o teste dele. Se o diff tocar regras de organização ou o registro do desfazer, leia `docs/organization-rules.md`; se tocar uma decisão de arquitetura, a ADR correspondente.
+1. **Contexto.** Leia o `.claude/CLAUDE.md`, a issue ligada à branch (`gh issue view N`), o diff inteiro e, para cada arquivo alterado, o arquivo completo e o teste dele. Se o diff tocar regras de organização ou o registro do desfazer, leia `docs/organization-rules.md`; se tocar uma decisão de arquitetura, a ADR correspondente.
 
 2. **Verificações objetivas.** Rode o que se aplica ao diff e transforme cada falha em achado:
    - Go: `golangci-lint run ./...`, `go test ./...`, `bash scripts/check-coverage.sh`
