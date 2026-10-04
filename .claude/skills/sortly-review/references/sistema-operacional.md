@@ -1,12 +1,12 @@
 # Sistema operacional e sistema de arquivos
 
-O Sortly move arquivos do usuário: um erro aqui é perda de dados. Leia com atenção redobrada qualquer diff em `fsutil`, `organizer/executor`, `undo` e `store`.
+O Sortly move arquivos do usuário: um erro aqui é perda de dados. Leia com atenção redobrada qualquer diff em `fs/files`, `fs/paths`, `organizer/executor`, `undo` e `store`.
 
 ## Mover e renomear
 
 - [ ] `os.Rename` é atômico **só no mesmo volume**. Entre volumes falha (`EXDEV` no Unix, `ERROR_NOT_SAME_DEVICE` no Windows) → copiar + preservar mtime + `fsync` + apagar a origem só depois da cópia completa.
 - [ ] Cópia interrompida (disco cheio, pendrive removido) não deixa o arquivo nos dois lugares nem em nenhum: destino parcial removido, origem intacta.
-- [ ] No Windows, `Rename` **falha** se o destino existe; no Unix **sobrescreve** em silêncio. Nunca dependa disso: reserve o destino com `O_CREATE|O_EXCL` (veja `fsutil.Reserve`).
+- [ ] No Windows, `Rename` **falha** se o destino existe; no Unix **sobrescreve** em silêncio. Nunca dependa disso: reserve o destino com `O_CREATE|O_EXCL` (veja `files.Reserve`).
 - [ ] TOCTOU: "verificar se existe → depois criar/mover" tem corrida. A verificação e a ação precisam ser uma operação atômica, ou a falha da ação precisa ser tratada.
 - [ ] Mover um arquivo para ele mesmo (destino = origem) é no-op, não renomeia para `(1)` (B8).
 
@@ -18,13 +18,13 @@ O Sortly move arquivos do usuário: um erro aqui é perda de dados. Leia com ate
 
 ## Caminhos
 
-- [ ] Windows e macOS (APFS padrão) **não diferenciam maiúsculas** de minúsculas: compare com `fsutil.PathsEqual`/`IsInside`, nunca `==` ou `strings.HasPrefix`.
+- [ ] Windows e macOS (APFS padrão) **não diferenciam maiúsculas** de minúsculas: compare com `paths.Equal`/`paths.IsInside`, nunca `==` ou `strings.HasPrefix`.
 - [ ] `strings.HasPrefix(path, root)` é bug: `C:\dados2` começa com `C:\dados`. Use `filepath.Rel` ou o helper.
 - [ ] Use `filepath` (separador do SO), nunca `path` nem `"/"` concatenado, para caminhos de disco.
-- [ ] Caminhos longos (> 260 caracteres) no Windows exigem o prefixo `\\?\` (veja `nativePath`); nomes terminados em ponto ou espaço só funcionam com ele.
+- [ ] Caminhos longos (> 260 caracteres) no Windows exigem o prefixo `\\?\` (veja `paths.Native`); nomes terminados em ponto ou espaço só funcionam com ele.
 - [ ] Nomes reservados no Windows (`CON`, `NUL`, `COM1`…) e caracteres proibidos (`<>:"|?*`) ao **criar** pastas a partir de dados (extensão do arquivo vira nome de pasta!).
 - [ ] Unicode: o macOS pode devolver nomes em NFD (`é` = `e` + acento combinante); comparar com uma string NFC falha. Extensões/nomes de pasta derivados do nome do arquivo podem divergir.
-- [ ] `filepath.Ext` difere do `path.extname` do Node em `.gitignore` e `arquivo.` — o projeto usa `fsutil.Ext`.
+- [ ] `filepath.Ext` difere do `path.extname` do Node em `.gitignore` e `arquivo.` — o projeto usa `paths.Ext`.
 
 ## Links, permissões e tipos de arquivo
 

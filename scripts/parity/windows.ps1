@@ -40,7 +40,7 @@ function New-Dataset([string]$dir) {
   New-Item -ItemType Directory -Force $dir, "$dir\subpasta" | Out-Null
   $mtime = Get-Date -Year 2026 -Month 3 -Day 5 -Hour 12 -Minute 0 -Second 0
   foreach ($group in 'image', 'mp4', 'pages') {
-    Get-ChildItem "$root\internal\metadata\testdata\$group" -File | ForEach-Object { Copy-Item $_.FullName $dir }
+    Get-ChildItem "$root\backend\metadata\testdata\$group" -File | ForEach-Object { Copy-Item $_.FullName $dir }
   }
   Set-Content "$dir\LEIAME" 'sem extensão'; Set-Content "$dir\.gitignore" 'oculto'; Set-Content "$dir\nota.txt" 'texto'
   Set-Content "$dir\subpasta\dentro.txt" 'não deve ser tocado'

@@ -79,7 +79,7 @@ jobs:
       - name: go test
         run: go test $GO_FLAGS ./...
 
-      - name: Cobertura de internal/ (mínimo 85%)
+      - name: Cobertura de backend/ (mínimo 85%)
         if: runner.os == 'Linux'
         run: bash scripts/check-coverage.sh 85
 

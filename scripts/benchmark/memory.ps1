@@ -49,7 +49,7 @@ $destination = Join-Path $work 'destino'
 # Estrutura completa de perfil: o Chromium do Electron falha se AppData\Local não existir.
 New-Item -ItemType Directory -Force "$home_\AppData\Roaming", "$home_\AppData\Local\Temp", "$home_\.sortly", $source | Out-Null
 
-$fixtures = Get-ChildItem "$root\internal\metadata\testdata\image", "$root\internal\metadata\testdata\mp4", "$root\internal\metadata\testdata\pages" -File
+$fixtures = Get-ChildItem "$root\backend\metadata\testdata\image", "$root\backend\metadata\testdata\mp4", "$root\backend\metadata\testdata\pages" -File
 $mtime = Get-Date -Year 2026 -Month 3 -Day 5 -Hour 12 -Minute 0 -Second 0
 for ($i = 0; $i -lt $Files; $i++) {
   $f = $fixtures[$i % $fixtures.Count]

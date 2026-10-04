@@ -6,8 +6,8 @@ import (
 
 	"github.com/wailsapp/wails/v2"
 
-	"github.com/caiofdev/sortly/internal/app"
-	"github.com/caiofdev/sortly/internal/logging"
+	"github.com/caiofdev/sortly/backend/app"
+	"github.com/caiofdev/sortly/backend/logging"
 )
 
 // O embed precisa ficar na raiz: o go:embed não aceita caminhos com "..".

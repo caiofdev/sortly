@@ -9,15 +9,18 @@ Responda e escreva (código, comentários, docs, commits, PRs) em **português d
 ```
 main.go             ponto de entrada: embute frontend/dist e chama wails.Run (precisa ficar na raiz por causa do go:embed)
 wails.json          configuração do Wails e versão do app (info.productVersion)
-internal/           backend Go
+backend/            backend Go (pacotes por responsabilidade; teste sempre ao lado do código)
   app/              fachada exposta ao frontend (bindings), drop nativo, opções da janela, composição (wire.go)
-  organizer/        regras (Strategy + registry), Planner puro, Executor com journal, serviço
+  organizer/        Planner puro, Executor com journal, serviço
+    criteria/       critérios (Strategy + registry): um arquivo por critério, opções, File
   undo/             desfazer pelo inverso do journal
   metadata/         resolução de imagem, duração de mp4, páginas (pdf/docx/odt)
   store/            registro da última organização (~/.sortly/last-operation.json), gravação atômica
-  fsutil/           mover (com fallback entre volumes), nome único, caminhos
+  fs/paths/         caminhos: Ext, Equal, IsInside, Native (prefixo \\?\ do Windows)
+  fs/files/         disco: Move (fallback entre volumes), MoveUnique, Reserve, pastas
   apperr/           erros com código estável
   logging/          slog em arquivo
+  tests/            testes de integração (só API pública, disco de verdade)
 frontend/src/       React: components/, views/, controllers/, hooks/, services/, domain/, i18n/
 frontend/wailsjs/   bindings gerados pelo Wails (versionados; regenerados por wails dev/build)
 build/              ícones, manifesto Windows, Info.plist, NSIS (windows/installer), nfpm (linux)
@@ -25,7 +28,7 @@ scripts/            check-coverage.sh, cccases/ (CC × casos), benchmark/ e pari
 docs/               architecture.md, organization-rules.md, development.md (inclui testes e fluxo), release.md, benchmark.md, adr/, images/
 ```
 
-A milestone "Refinamento do backend" (#39–#45) muda parte disso: `internal/` vira `backend/` (#42) e o estado da tela vai para o Go (#45). Atualize este arquivo quando essas issues entrarem.
+A #45 leva o estado da tela para o Go; atualize este arquivo quando ela entrar.
 
 ## Comandos
 
@@ -35,7 +38,7 @@ wails build                       # build/bin/Sortly(.exe)
 
 go test ./...                     # testes do backend
 golangci-lint run ./...           # lint, gofmt/goimports, gocyclo/cyclop ≤ 10
-bash scripts/check-coverage.sh    # cobertura de internal/ ≥ 85%
+bash scripts/check-coverage.sh    # cobertura de backend/ ≥ 85%
 go run ./scripts/cccases          # CC × casos de teste por função
 
 cd frontend && npm run lint && npm run format:check && npm test   # ESLint (complexity 10), Prettier, Vitest
