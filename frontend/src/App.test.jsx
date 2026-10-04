@@ -6,13 +6,18 @@ import App from './App';
 
 describe('App', () => {
   beforeEach(() => {
-    window.electronAPI = {
-      getLastOrganizationState: vi.fn().mockResolvedValue({
-        hasUndo: false,
-        sourceFolderPath: '',
-        destinationFolderPath: ''
-      })
+    window.go = {
+      app: {
+        App: {
+          GetLastOrganizationState: vi.fn().mockResolvedValue({
+            hasUndo: false,
+            sourceFolderPath: '',
+            destinationFolderPath: ''
+          })
+        }
+      }
     };
+    window.runtime = { OnFileDrop: vi.fn(), OnFileDropOff: vi.fn() };
   });
 
   it('renderiza a tela principal em português por padrão', async () => {
@@ -20,7 +25,7 @@ describe('App', () => {
 
     expect(screen.getByRole('heading', { name: 'Sortly' })).toBeInTheDocument();
     expect(screen.getByText('Arraste e solte uma pasta ou arquivo aqui')).toBeInTheDocument();
-    await vi.waitFor(() => expect(window.electronAPI.getLastOrganizationState).toHaveBeenCalled());
+    await vi.waitFor(() => expect(window.go.app.App.GetLastOrganizationState).toHaveBeenCalled());
   });
 
   it('usa o idioma salvo', () => {

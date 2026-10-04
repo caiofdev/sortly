@@ -21,7 +21,6 @@ function OrganizerView({
   onClearNotifications,
   onLanguageChange,
   onOptionChange,
-  onResolveDroppedPath,
   onSelectSourceFolder,
   onSelectDestinationFolder,
   onOrganizeFiles,
@@ -65,7 +64,6 @@ function OrganizerView({
             <DragDropPanel
               isLoading={isLoading}
               labels={text}
-              onResolveDroppedPath={onResolveDroppedPath}
               onSelectSourceFolder={onSelectSourceFolder}
             />
 

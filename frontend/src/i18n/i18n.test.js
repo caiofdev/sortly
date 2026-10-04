@@ -1,7 +1,7 @@
 // função                | CC | casos
 // getCopy               |  2 | idioma existente; idioma desconhecido
 // toLocale              |  2 | pt-BR; en
-// describeError         |  4 | código traduzido; UNEXPECTED; texto livre (Electron); código sem tradução; nulo
+// describeError         |  2 | código traduzido; UNEXPECTED, texto livre, código sem tradução e nulo
 // organizeSuccess       |  3 | sem falhas/inalterados; com 1 de cada (PT e EN)
 // undoSuccess           |  2 | sem falhas; com falhas
 //
@@ -44,7 +44,7 @@ describe('códigos de erro do backend (ADR 0004)', () => {
     expect(en.errors[code]).toBeTruthy();
   });
 
-  it('textos em PT iguais aos da versão Electron', () => {
+  it('textos em PT iguais aos da versão 1.0', () => {
     expect(pt.errors.INVALID_SOURCE).toBe('Pasta inválida.');
     expect(pt.errors.INVALID_DESTINATION).toBe('Pasta de destino inválida.');
     expect(pt.errors.NO_CRITERIA).toBe('Selecione ao menos um criterio de organizacao.');
@@ -63,12 +63,10 @@ describe('describeError', () => {
     expect(describeError(new SortlyError('UNEXPECTED', 'UNEXPECTED'), pt, 'padrão')).toBe('padrão');
   });
 
-  it('texto livre da versão Electron é mostrado como antes', () => {
-    const error = new SortlyError('UNEXPECTED', 'Pasta inválida.');
-    expect(describeError(error, pt, 'padrão')).toBe('Pasta inválida.');
-  });
-
-  it('backend indisponível e código sem tradução usam o texto padrão', () => {
+  it('texto livre, backend indisponível e código sem tradução usam o texto padrão', () => {
+    expect(describeError(new SortlyError('UNEXPECTED', 'TypeError: x'), pt, 'padrão')).toBe(
+      'padrão'
+    );
     expect(describeError(new SortlyError('UNEXPECTED', 'Backend indisponível'), pt, 'padrão')).toBe(
       'padrão'
     );

@@ -3,7 +3,7 @@ import { useState } from 'react';
 // Marca o painel como área de drop do Wails (a propriedade é herdada pelos filhos).
 const DROP_TARGET_STYLE = { '--wails-drop-target': 'drop' };
 
-function DragDropPanel({ isLoading, labels, onResolveDroppedPath, onSelectSourceFolder }) {
+function DragDropPanel({ isLoading, labels, onSelectSourceFolder }) {
   const [isDragging, setIsDragging] = useState(false);
 
   const handleDragOver = (event) => {
@@ -18,18 +18,9 @@ function DragDropPanel({ isLoading, labels, onResolveDroppedPath, onSelectSource
 
   const handleDrop = (event) => {
     event.preventDefault();
+    // O caminho não vem no evento do navegador: o Wails o entrega por
+    // gateway.subscribeFileDrop. Aqui só desliga o destaque.
     setIsDragging(false);
-
-    // Versão Electron: o caminho vem no próprio arquivo. No Wails, File.path não
-    // existe e o caminho chega por gateway.subscribeFileDrop.
-    const droppedItem = event.dataTransfer?.files?.[0];
-    const droppedPath = droppedItem?.path;
-
-    if (!droppedPath) {
-      return;
-    }
-
-    onResolveDroppedPath(droppedPath);
   };
 
   return (

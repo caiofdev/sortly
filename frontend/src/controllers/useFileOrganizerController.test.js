@@ -2,14 +2,14 @@
 // efeito inicial                 |  5 | com desfazer (recupera caminhos + aviso); sem desfazer; erro do backend
 // selectFolder                   |  3 | escolhida; cancelada; erro
 // runAction                      |  2 | sucesso; erro
-// handleResolveDroppedPath       |  3 | sucesso; sem pasta; erro com código
+// drop (handleResolveDroppedPath) |  3 | sucesso; sem pasta; erro com código
 // handleOrganizeFiles            |  2 | sem origem; com origem (destino vazio usa a origem)
 // handleUndoLastOrganization     |  1 | sucesso; NOTHING_TO_UNDO traduzido
 // assinatura de arquivos soltos   |  2 | vários itens (usa o primeiro); lista vazia; cancela ao desmontar
 //
 // Valor-limite: drop com 0 itens (ignorado), 1 e 2 itens (usa o primeiro).
 //
-// O gateway é falso: o controller nunca acessa window.go ou window.electronAPI.
+// O gateway é falso: o controller nunca acessa window.go.
 
 import { describe, expect, it, vi } from 'vitest';
 import { act, renderHook, waitFor } from '@testing-library/react';
@@ -103,19 +103,27 @@ describe('seleção de pastas', () => {
   });
 });
 
+// Solta um arquivo no painel: chama o handler assinado em gateway.subscribeFileDrop.
+async function drop(gateway, paths) {
+  const onDrop = gateway.subscribeFileDrop.mock.calls.at(-1)[0];
+  await act(async () => onDrop(paths));
+}
+
 describe('arrastar e soltar', () => {
   it('define a origem e avisa', async () => {
-    const { result, notify } = await setup();
-    await act(() => result.current.handleResolveDroppedPath('C:\\solta\\a.txt'));
-    expect(result.current.sourceFolderPath).toBe('C:\\solta');
+    const { result, notify, gateway } = await setup();
+    await drop(gateway, ['C:\\solta\\a.txt']);
+    await waitFor(() => expect(result.current.sourceFolderPath).toBe('C:\\solta'));
+    expect(gateway.resolveDroppedPath).toHaveBeenCalledWith('C:\\solta\\a.txt');
     expect(notify).toHaveBeenCalledWith('info', 'Origem definida por arrastar e soltar. C:\\solta');
   });
 
   it('sem pasta no resultado não muda nada', async () => {
-    const { result, notify } = await setup(
+    const { result, notify, gateway } = await setup(
       fakeGateway({ resolveDroppedPath: vi.fn().mockResolvedValue({}) })
     );
-    await act(() => result.current.handleResolveDroppedPath('x'));
+    await drop(gateway, ['x']);
+    await waitFor(() => expect(gateway.resolveDroppedPath).toHaveBeenCalled());
     expect(result.current.sourceFolderPath).toBe('');
     expect(notify).not.toHaveBeenCalled();
   });
@@ -124,9 +132,28 @@ describe('arrastar e soltar', () => {
     const gateway = fakeGateway({
       resolveDroppedPath: vi.fn().mockRejectedValue(new SortlyError('DROPPED_MISSING'))
     });
-    const { result, notify } = await setup(gateway, 'en');
-    await act(() => result.current.handleResolveDroppedPath('x'));
-    expect(notify).toHaveBeenCalledWith('error', 'Dropped item no longer exists.');
+    const { notify } = await setup(gateway, 'en');
+    await drop(gateway, ['x']);
+    await waitFor(() =>
+      expect(notify).toHaveBeenCalledWith('error', 'Dropped item no longer exists.')
+    );
+  });
+
+  it('usa o primeiro item, ignora lista vazia e cancela ao desmontar', async () => {
+    const unsubscribe = vi.fn();
+    const gateway = fakeGateway({ subscribeFileDrop: vi.fn(() => unsubscribe) });
+    const { result, unmount } = await setup(gateway);
+
+    await drop(gateway, ['C:/fotos/a.jpg', 'C:/docs/b.pdf']);
+    expect(gateway.resolveDroppedPath).toHaveBeenCalledWith('C:/fotos/a.jpg');
+    await waitFor(() => expect(result.current.sourceFolderPath).toBe('C:\\solta'));
+
+    await drop(gateway, []);
+    await drop(gateway, null);
+    expect(gateway.resolveDroppedPath).toHaveBeenCalledTimes(1);
+
+    unmount();
+    expect(unsubscribe).toHaveBeenCalled();
   });
 });
 
@@ -177,32 +204,5 @@ describe('organizar e desfazer', () => {
     gateway.undoLastOrganization.mockRejectedValue(new SortlyError('NOTHING_TO_UNDO'));
     await act(() => result.current.handleUndoLastOrganization());
     expect(notify).toHaveBeenLastCalledWith('error', 'Nenhuma separação recente para desfazer.');
-  });
-});
-
-describe('arquivos soltos no painel (Wails)', () => {
-  it('usa o primeiro item, ignora lista vazia e cancela ao desmontar', async () => {
-    const unsubscribe = vi.fn();
-    let onDrop;
-    const gateway = fakeGateway({
-      subscribeFileDrop: vi.fn((handler) => {
-        onDrop = handler;
-        return unsubscribe;
-      })
-    });
-    const { result, unmount, notify } = await setup(gateway);
-
-    await act(async () => onDrop(['C:/fotos/a.jpg', 'C:/docs/b.pdf']));
-    expect(gateway.resolveDroppedPath).toHaveBeenCalledWith('C:/fotos/a.jpg');
-    expect(gateway.resolveDroppedPath).toHaveBeenCalledTimes(1);
-    await waitFor(() => expect(result.current.sourceFolderPath).toBe('C:\\solta'));
-    expect(notify).toHaveBeenCalledWith('info', expect.stringContaining('arrastar e soltar'));
-
-    await act(async () => onDrop([]));
-    await act(async () => onDrop(null));
-    expect(gateway.resolveDroppedPath).toHaveBeenCalledTimes(1);
-
-    unmount();
-    expect(unsubscribe).toHaveBeenCalled();
   });
 });
