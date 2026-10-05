@@ -142,7 +142,7 @@ Ao final, a operação é salva em `~/.sortly/last-operation.json`, no mesmo for
 
 - Cada movimento concluído entra no registro, mesmo que outro falhe depois.
 - Se nada for movido, o registro anterior é preservado e o desfazer dele continua disponível.
-- A gravação é atômica (arquivo temporário na mesma pasta, depois rename): um crash no meio deixa o registro anterior intacto. Falhas de gravação vão para o log e viram o erro `RECORD_NOT_SAVED`.
+- A gravação é atômica (arquivo temporário na mesma pasta, depois rename): um crash no meio deixa o registro anterior intacto. Falhas de gravação vão para o log e viram o erro `RECORD_NOT_SAVED`; nesse caso o registro anterior é apagado, porque descreve outra organização e o desfazer não pode apontar para ela.
 - Um arquivo vazio ou corrompido é tratado como "nada para desfazer".
 
 ## 8. Desfazer
