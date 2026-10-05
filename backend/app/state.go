@@ -65,7 +65,12 @@ type Notification struct {
 }
 
 // ViewState é tudo o que a tela mostra.
+//
+// Version cresce a cada estado entregue. O estado sai do lock antes de ser emitido e
+// devolvido, então duas ações quase simultâneas podem entregá-lo fora de
+// ordem; a interface descarta o que tiver versão menor que a que já mostra.
 type ViewState struct {
+	Version               uint64         `json:"version"`
 	SourceFolderPath      string         `json:"sourceFolderPath"`
 	DestinationFolderPath string         `json:"destinationFolderPath"`
 	HasUndo               bool           `json:"hasUndo"`
