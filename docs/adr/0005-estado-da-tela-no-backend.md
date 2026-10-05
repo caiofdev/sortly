@@ -16,6 +16,7 @@ Depois da migração, o frontend ainda guardava regra e estado: um controller co
 - **Erros viram notificações** com código e ação, sem rejeitar a promessa. O frontend não tem tratamento de erro.
 - **Notificações são estruturadas** (`{kind, code, action, path, organize, undo, at}`). O texto continua no frontend, no idioma atual (ADR 0004 mantida: o backend não produz texto para o usuário).
 - **Evento `sortly:state`**: emitido a cada mudança. É o que mostra "Organizando…" enquanto a chamada de `Organize` não termina.
+- **`version`** cresce a cada estado entregue, sob o lock. Evento e retorno podem chegar fora de ordem, e o frontend descarta o estado com versão menor ou igual à que já mostra (#55).
 - Organizar e desfazer não rodam ao mesmo tempo: uma segunda chamada durante a primeira devolve o estado sem fazer nada.
 - O gateway continua sendo o único módulo que importa os bindings, mas não normaliza erros nem tem regra. A assinatura dos arquivos soltos fica no JS porque o filtro `--wails-drop-target` é feito pelo runtime JS do Wails; ela só chama `DropPaths`.
 

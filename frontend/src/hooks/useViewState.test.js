@@ -1,8 +1,22 @@
 import { describe, expect, it, vi } from 'vitest';
 import { act, renderHook, waitFor } from '@testing-library/react';
-import useViewState, { INITIAL_STATE } from './useViewState';
+import useViewState, { INITIAL_STATE, newest } from './useViewState';
 
-const state = (overrides = {}) => ({ ...INITIAL_STATE, ...overrides });
+// Cada estado criado é mais novo que o anterior, como no backend.
+let lastVersion = 0;
+const state = (overrides = {}) => ({ ...INITIAL_STATE, version: ++lastVersion, ...overrides });
+
+describe('newest', () => {
+  const current = { version: 5 };
+  it.each([
+    ['versão maior substitui', { version: 6 }, true],
+    ['mesma versão é ignorada', { version: 5 }, false],
+    ['versão menor é ignorada', { version: 4 }, false],
+    ['sem estado é ignorado', undefined, false]
+  ])('%s', (_name, next, replaces) => {
+    expect(newest(current, next)).toBe(replaces ? next : current);
+  });
+});
 
 function fakeGateway(overrides = {}) {
   return {
@@ -91,6 +105,26 @@ describe('useViewState', () => {
 
     unmount();
     expect(unsubscribe).toHaveBeenCalled();
+  });
+
+  // Regressão (#55): o "organizando" atrasado não pode travar a tela.
+  it('estado antigo que chega depois não sobrescreve o mais novo', async () => {
+    let onState;
+    const busy = state({ version: 1000, busy: 'organize' });
+    const done = state({ version: 1001, busy: '', hasUndo: true });
+    const gateway = fakeGateway({
+      organize: vi.fn().mockResolvedValue(done),
+      subscribeState: vi.fn((handler) => {
+        onState = handler;
+        return vi.fn();
+      })
+    });
+    const { result } = await setup(gateway);
+
+    await act(() => result.current.actions.organize());
+    act(() => onState(busy));
+
+    expect(result.current.state).toBe(done);
   });
 
   it('arquivos soltos viram DropPaths', async () => {
