@@ -136,7 +136,7 @@ func TestUndoDestinationEmptyUsesSourceAsRoot(t *testing.T) {
 	assertTree(t, src, "a.txt")
 }
 
-func TestUndoWithoutRoot(t *testing.T) {
+func TestUndoWithoutRootTouchesNothing(t *testing.T) {
 	src, dst := t.TempDir(), t.TempDir()
 	a := move(t, src, dst, "a.txt", "txt/sub")
 	st := newStore(t)
@@ -145,12 +145,117 @@ func TestUndoWithoutRoot(t *testing.T) {
 	var removed []string
 	svc.removeDir = func(dir string) bool { removed = append(removed, dir); return true }
 
-	if _, err := svc.Undo(context.Background()); err != nil {
-		t.Fatal(err)
+	got, err := svc.Undo(context.Background())
+
+	if err != nil || got != (Result{SkippedMissing: 1}) || len(removed) != 0 {
+		t.Fatalf("Undo = (%+v, %v), removidas = %v", got, err, removed)
 	}
-	// Sem raiz conhecida, só a pasta do arquivo é tentada, sem subir.
-	if want := []string{filepath.Join(dst, "txt", "sub")}; !reflect.DeepEqual(removed, want) {
-		t.Fatalf("removidas = %v, want %v", removed, want)
+	assertTree(t, dst, "txt/sub/a.txt")
+}
+
+// Regressão (#54): um registro editado ou corrompido não pode mover arquivos
+// para fora das pastas registradas.
+func TestUndoIgnoresItemsOutsideRecordedFolders(t *testing.T) {
+	tests := []struct {
+		name      string
+		from, to  func(src, dst, outside string) string
+		wantMoved int
+	}{
+		{"dentro das pastas volta",
+			func(src, _, _ string) string { return filepath.Join(src, "a.txt") },
+			func(_, dst, _ string) string { return filepath.Join(dst, "txt", "a.txt") }, 1},
+		{"from fora da origem",
+			func(_, _, out string) string { return filepath.Join(out, "a.txt") },
+			func(_, dst, _ string) string { return filepath.Join(dst, "txt", "a.txt") }, 0},
+		{"to fora do destino",
+			func(src, _, _ string) string { return filepath.Join(src, "a.txt") },
+			func(_, _, out string) string { return filepath.Join(out, "a.txt") }, 0},
+		{"from em pasta irmã com o mesmo prefixo",
+			func(src, _, _ string) string { return filepath.Join(src+"2", "a.txt") },
+			func(_, dst, _ string) string { return filepath.Join(dst, "txt", "a.txt") }, 0},
+		{"from é a própria origem",
+			func(src, _, _ string) string { return src },
+			func(_, dst, _ string) string { return filepath.Join(dst, "txt", "a.txt") }, 0},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			base := t.TempDir()
+			src, dst, outside := filepath.Join(base, "dados"), filepath.Join(base, "destino"), filepath.Join(base, "fora")
+			item := store.MovedItem{From: tt.from(src, dst, outside), To: tt.to(src, dst, outside)}
+			// Todas as pastas existem: sem a validação, o movimento daria certo.
+			for _, dir := range []string{src, src + "2", outside, filepath.Dir(item.To)} {
+				mkdir(t, dir)
+			}
+			writeFile(t, item.To, "conteúdo")
+			st := newStore(t)
+			saveRecord(t, st, store.Operation{SourceFolderPath: src, DestinationFolderPath: dst, MovedItems: []store.MovedItem{item}})
+			var logs bytes.Buffer
+
+			got, err := NewService(st, slog.New(slog.NewTextHandler(&logs, nil))).Undo(context.Background())
+
+			if err != nil || got.RestoredFiles != tt.wantMoved || got.SkippedMissing != 1-tt.wantMoved {
+				t.Fatalf("Undo = (%+v, %v)", got, err)
+			}
+			if tt.wantMoved == 0 {
+				assertContent(t, item.To, "conteúdo")
+				if !strings.Contains(logs.String(), "fora das pastas registradas") {
+					t.Errorf("o item ignorado deveria ir para o log: %s", logs.String())
+				}
+			}
+		})
+	}
+}
+
+func TestStrictlyInside(t *testing.T) {
+	root := filepath.Join(t.TempDir(), "dados")
+	cases := map[string]bool{
+		filepath.Join(root, "a.txt"): true,
+		root:                         false,
+		root + "2":                   false,
+		filepath.Dir(root):           false,
+	}
+	for path, want := range cases {
+		if got := strictlyInside(path, root); got != want {
+			t.Errorf("strictlyInside(%q) = %v, want %v", path, got, want)
+		}
+	}
+}
+
+func TestRootOf(t *testing.T) {
+	if got := rootOf(&store.Operation{SourceFolderPath: "o", DestinationFolderPath: "d"}); got != "d" {
+		t.Errorf("com destino = %q, want d", got)
+	}
+	if got := rootOf(&store.Operation{SourceFolderPath: "o"}); got != "o" {
+		t.Errorf("sem destino = %q, want o", got)
+	}
+}
+
+func TestWithinRecordedFolders(t *testing.T) {
+	src, dst := filepath.Join(t.TempDir(), "dados"), filepath.Join(t.TempDir(), "destino")
+	in := store.MovedItem{From: filepath.Join(src, "a.txt"), To: filepath.Join(dst, "txt", "a.txt")}
+	tests := []struct {
+		name string
+		op   store.Operation
+		item store.MovedItem
+		want bool
+	}{
+		{"dentro", store.Operation{SourceFolderPath: src, DestinationFolderPath: dst}, in, true},
+		{"sem origem no registro", store.Operation{DestinationFolderPath: dst}, in, false},
+		{"from fora", store.Operation{SourceFolderPath: src, DestinationFolderPath: dst},
+			store.MovedItem{From: filepath.Join(dst, "a.txt"), To: in.To}, false},
+		{"to fora", store.Operation{SourceFolderPath: src, DestinationFolderPath: dst},
+			store.MovedItem{From: in.From, To: filepath.Join(src, "a.txt")}, false},
+		{"to é o próprio destino", store.Operation{SourceFolderPath: src, DestinationFolderPath: dst},
+			store.MovedItem{From: in.From, To: dst}, false},
+		{"destino vazio usa a origem", store.Operation{SourceFolderPath: src},
+			store.MovedItem{From: in.From, To: filepath.Join(src, "txt", "a.txt")}, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := withinRecordedFolders(&tt.op, tt.item); got != tt.want {
+				t.Fatalf("withinRecordedFolders = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }
 

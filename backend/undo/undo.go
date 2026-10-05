@@ -107,19 +107,52 @@ func (s *Service) load() (*store.Operation, error) {
 }
 
 // inversePlan monta os movimentos inversos, do último para o primeiro, e
-// conta os arquivos que não estão mais onde a organização os deixou.
+// conta os arquivos que não estão mais onde a organização os deixou ou que
+// estão fora das pastas do registro.
 func (s *Service) inversePlan(op *store.Operation) (organizer.Plan, int) {
 	var plan organizer.Plan
 	skipped := 0
 	for i := len(op.MovedItems) - 1; i >= 0; i-- {
 		item := op.MovedItems[i]
-		if !s.exists(item.To) {
+		if !s.restorable(op, item) {
 			skipped++
 			continue
 		}
 		plan.Moves = append(plan.Moves, organizer.Move{From: item.To, To: item.From})
 	}
 	return plan, skipped
+}
+
+// restorable informa se o item pode voltar. Um registro editado ou corrompido
+// com caminhos fora das pastas registradas faria o desfazer mover arquivos para
+// qualquer lugar; esses itens são pulados e vão para o log.
+func (s *Service) restorable(op *store.Operation, item store.MovedItem) bool {
+	if !withinRecordedFolders(op, item) {
+		s.log.Warn("item do registro fora das pastas registradas; ignorado",
+			"origem", op.SourceFolderPath, "destino", rootOf(op), "from", item.From, "to", item.To)
+		return false
+	}
+	return s.exists(item.To)
+}
+
+// withinRecordedFolders exige from dentro da origem e to dentro do destino
+// (destino vazio é a própria origem), sem ser a própria pasta.
+func withinRecordedFolders(op *store.Operation, item store.MovedItem) bool {
+	return op.SourceFolderPath != "" &&
+		strictlyInside(item.From, op.SourceFolderPath) &&
+		strictlyInside(item.To, rootOf(op))
+}
+
+func strictlyInside(path, root string) bool {
+	return paths.IsInside(path, root) && !paths.Equal(path, root)
+}
+
+// rootOf devolve a pasta onde a organização criou as subpastas.
+func rootOf(op *store.Operation) string {
+	if op.DestinationFolderPath == "" {
+		return op.SourceFolderPath
+	}
+	return op.DestinationFolderPath
 }
 
 // countRenamed conta os arquivos que voltaram com outro nome porque o lugar
@@ -179,17 +212,13 @@ func (s *Service) updateRecord(op *store.Operation, left []store.MovedItem) bool
 
 // cleanup remove as pastas que ficaram vazias, subindo de cada pasta usada
 // pela organização até a raiz do destino (sem removê-la). Pastas com outros
-// arquivos são preservadas.
+// arquivos são preservadas, e nada fora da raiz é tocado.
 func (s *Service) cleanup(op *store.Operation) {
-	root := op.DestinationFolderPath
+	root := rootOf(op)
 	if root == "" {
-		root = op.SourceFolderPath
+		return
 	}
 	for _, dir := range cleanupCandidates(op) {
-		if root == "" {
-			s.removeDir(dir)
-			continue
-		}
 		s.removeEmptyAncestors(dir, root)
 	}
 }

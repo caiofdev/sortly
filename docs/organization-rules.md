@@ -150,9 +150,10 @@ Ao final, a operação é salva em `~/.sortly/last-operation.json`, no mesmo for
 - Apenas a **última** organização pode ser desfeita. Sem registro: `NOTHING_TO_UNDO` — "Nenhuma separação recente para desfazer."
 - Os movimentos são revertidos em **ordem inversa**.
 - Arquivo que não está mais no destino é pulado e conta em `skippedMissing`.
+- Só voltam itens com `from` dentro da pasta de origem e `to` dentro da pasta de destino do registro (destino vazio = origem), sem ser a própria pasta. Um registro editado ou corrompido com caminhos de fora não move nada: o item é pulado, conta em `skippedMissing` e vai para o log. Registro sem pasta de origem não restaura nada.
 - Se o local original estiver ocupado, aplica a regra de conflito (§5) e conta em `renamedOnRestore`.
 - Uma falha num arquivo não interrompe os demais. O registro é regravado só com os itens que falharam, e o desfazer continua disponível para tentar de novo (`failedFiles`). Sem falhas, o registro é apagado.
-- Depois, remove as pastas que ficaram **vazias**, subindo da pasta do arquivo até a raiz do destino (exclusive). Pastas com outros arquivos são preservadas, e a raiz nunca é removida, mesmo com diferença de maiúsculas/minúsculas no caminho (Windows).
+- Depois, remove as pastas que ficaram **vazias**, subindo da pasta do arquivo até a raiz do destino (exclusive). Nada fora dessa raiz é tocado. Pastas com outros arquivos são preservadas, e a raiz nunca é removida, mesmo com diferença de maiúsculas/minúsculas no caminho (Windows).
 
 O estado de desfazer sobrevive ao fechamento do app: ao abrir, a interface recupera origem e destino e avisa que é possível desfazer.
 
