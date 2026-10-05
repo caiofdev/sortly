@@ -121,7 +121,7 @@ O Sortly **nunca sobrescreve** arquivos. Se o destino já existe, tenta `nome (1
 ## 6. Movimento
 
 - Os arquivos são movidos (não copiados), um de cada vez. As pastas de destino são criadas conforme necessário.
-- Entre volumes diferentes (outro disco, pendrive), o arquivo é copiado com a data de modificação preservada e só então a origem é removida. Se qualquer etapa falhar, a cópia é apagada e a origem fica intacta: o arquivo nunca fica duplicado nem perdido.
+- Entre volumes diferentes (outro disco, pendrive), o arquivo é copiado com a data de modificação preservada, a cópia é gravada em disco (`fsync` do arquivo e, no Linux e no macOS, da pasta de destino) e só então a origem é removida. Se qualquer etapa falhar, a cópia é apagada e a origem fica intacta: o arquivo nunca fica duplicado nem perdido.
 - Uma falha num arquivo (bloqueado, sem permissão) não interrompe os demais; ela conta em `failedFiles`.
 - No Windows, nomes que terminam em ponto ou espaço e caminhos longos funcionam (acesso com o prefixo `\\?\`).
 

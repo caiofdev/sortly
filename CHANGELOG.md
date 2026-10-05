@@ -8,6 +8,9 @@ Mantido por Caio Reis & Claude.
 
 ## [Não lançado]
 
+### Corrigido
+- Ao mover para outro disco ou pendrive, o arquivo original só é apagado depois que a cópia está gravada de fato. Uma queda de energia ou um pendrive removido logo depois não perde mais o arquivo.
+
 ### Alterado
 - O idioma e os critérios escolhidos ficam salvos na pasta `.sortly` do usuário, junto do registro para desfazer. Eles não se perdem mais quando os dados internos da janela do app são limpos.
 - O app abre direto no idioma escolhido, sem mostrar o português por um instante.

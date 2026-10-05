@@ -6,15 +6,19 @@ import (
 	"io"
 	"io/fs"
 	"os"
+	"path/filepath"
 
 	"github.com/caiofdev/sortly/backend/fs/paths"
 )
 
 // Substituíveis nos testes para simular falhas que não dá para provocar de
-// forma portável (outro volume, origem que não pode ser removida).
+// forma portável (outro volume, origem que não pode ser removida, disco que
+// não confirma a gravação).
 var (
 	rename     = os.Rename
 	removeFile = os.Remove
+	syncFile   = (*os.File).Sync
+	syncDir    = syncParentDir
 )
 
 // Move move src para dst, substituindo dst se ele existir (por exemplo, um
@@ -61,7 +65,7 @@ func copyThenRemove(src, dst string) error {
 	if err != nil {
 		return err
 	}
-	if err := copyFile(src, dst, info); err != nil {
+	if err := copyDurably(src, dst, info); err != nil {
 		_ = os.Remove(paths.Native(dst))
 		return err
 	}
@@ -70,6 +74,13 @@ func copyThenRemove(src, dst string) error {
 		return fmt.Errorf("files: cópia feita, mas a origem não pôde ser removida: %w", err)
 	}
 	return nil
+}
+
+func copyDurably(src, dst string, info fs.FileInfo) error {
+	if err := copyFile(src, dst, info); err != nil {
+		return err
+	}
+	return syncDir(paths.Native(filepath.Dir(dst)))
 }
 
 func copyFile(src, dst string, info fs.FileInfo) error {
@@ -87,7 +98,9 @@ func copyFile(src, dst string, info fs.FileInfo) error {
 		_ = out.Close()
 		return err
 	}
-	if err := out.Close(); err != nil {
+	// Sem o Sync, a cópia pode estar só no cache do sistema quando a origem for
+	// apagada: uma queda de energia ou um pendrive removido perderia o arquivo.
+	if err := errors.Join(syncFile(out), out.Close()); err != nil {
 		return err
 	}
 	return os.Chtimes(paths.Native(dst), info.ModTime(), info.ModTime())
