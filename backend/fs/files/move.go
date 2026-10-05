@@ -11,10 +11,12 @@ import (
 )
 
 // Substituíveis nos testes para simular falhas que não dá para provocar de
-// forma portável (outro volume, origem que não pode ser removida).
+// forma portável (outro volume, origem que não pode ser removida, disco que
+// não confirma a gravação).
 var (
 	rename     = os.Rename
 	removeFile = os.Remove
+	syncFile   = (*os.File).Sync
 )
 
 // Move move src para dst, substituindo dst se ele existir (por exemplo, um
@@ -87,7 +89,9 @@ func copyFile(src, dst string, info fs.FileInfo) error {
 		_ = out.Close()
 		return err
 	}
-	if err := out.Close(); err != nil {
+	// Sem o Sync, a cópia pode estar só no cache do sistema quando a origem for
+	// apagada: uma queda de energia ou um pendrive removido perderia o arquivo.
+	if err := errors.Join(syncFile(out), out.Close()); err != nil {
 		return err
 	}
 	return os.Chtimes(paths.Native(dst), info.ModTime(), info.ModTime())

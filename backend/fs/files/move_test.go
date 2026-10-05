@@ -141,6 +141,18 @@ func TestCopyThenRemove(t *testing.T) {
 		assertNotExists(t, dst)
 	})
 
+	t.Run("disco não confirma a gravação: cópia apagada, origem intacta", func(t *testing.T) {
+		dir := t.TempDir()
+		src, dst := writeFile(t, dir, "a.txt", "x"), filepath.Join(dir, "b.txt")
+		stubSync(t, func(*os.File) error { return errors.New("E/S") })
+
+		if err := copyThenRemove(src, dst); err == nil {
+			t.Fatal("esperava erro")
+		}
+		assertContent(t, src, "x")
+		assertNotExists(t, dst)
+	})
+
 	t.Run("origem não removível: cópia apagada, sem duplicar", func(t *testing.T) {
 		dir := t.TempDir()
 		src, dst := writeFile(t, dir, "a.txt", "x"), filepath.Join(dir, "b.txt")
@@ -157,6 +169,32 @@ func TestCopyThenRemove(t *testing.T) {
 }
 
 // O caminho "falha ao fechar o destino" não é reproduzível de forma portável.
+// Regressão (#52): a origem só pode ser apagada depois de a cópia estar
+// gravada em disco.
+func TestCopyThenRemoveSyncsBeforeRemovingSource(t *testing.T) {
+	dir := t.TempDir()
+	src, dst := writeFile(t, dir, "a.txt", "x"), filepath.Join(dir, "b.txt")
+	var events []string
+	stubSync(t, func(f *os.File) error {
+		events = append(events, "sync")
+		return f.Sync()
+	})
+	old := removeFile
+	removeFile = func(name string) error {
+		events = append(events, "remove")
+		return old(name)
+	}
+	t.Cleanup(func() { removeFile = old })
+
+	if err := copyThenRemove(src, dst); err != nil {
+		t.Fatal(err)
+	}
+	if len(events) != 2 || events[0] != "sync" || events[1] != "remove" {
+		t.Fatalf("eventos = %v, want [sync remove]", events)
+	}
+	assertMoved(t, src, dst, "x")
+}
+
 func TestCopyFile(t *testing.T) {
 	t.Run("copia conteúdo e data de modificação", func(t *testing.T) {
 		dir := t.TempDir()
@@ -203,6 +241,16 @@ func TestCopyFile(t *testing.T) {
 		}
 	})
 
+	t.Run("disco não confirma a gravação", func(t *testing.T) {
+		dir := t.TempDir()
+		src := writeFile(t, dir, "a.txt", "x")
+		stubSync(t, func(*os.File) error { return errors.New("E/S") })
+
+		if err := copyFile(src, filepath.Join(dir, "b.txt"), stat(t, src)); err == nil {
+			t.Fatal("esperava erro quando o Sync falha")
+		}
+	})
+
 	t.Run("leitura da origem falha", func(t *testing.T) {
 		dir := t.TempDir()
 		src := filepath.Join(dir, "pasta")
@@ -221,6 +269,13 @@ func stubRename(t *testing.T, fn func(string, string) error) {
 	old := rename
 	rename = fn
 	t.Cleanup(func() { rename = old })
+}
+
+func stubSync(t *testing.T, fn func(*os.File) error) {
+	t.Helper()
+	old := syncFile
+	syncFile = fn
+	t.Cleanup(func() { syncFile = old })
 }
 
 func stubCrossDevice(t *testing.T) {
