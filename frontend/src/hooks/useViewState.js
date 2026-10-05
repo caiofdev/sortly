@@ -3,6 +3,7 @@ import { DEFAULT_LANGUAGE } from '../i18n/language';
 import defaultGateway from '../services/sortlyGateway';
 
 export const INITIAL_STATE = Object.freeze({
+  version: 0,
   sourceFolderPath: '',
   destinationFolderPath: '',
   hasUndo: false,
@@ -15,25 +16,30 @@ export const INITIAL_STATE = Object.freeze({
 // estado devolvido; o evento de estado cobre as mudanças no meio de uma ação
 // (ex.: "organizando"). ready fica verdadeiro depois do primeiro GetState,
 // para a tela não abrir no idioma padrão e trocar em seguida.
+//
+// Evento e retorno do binding podem chegar fora de ordem: só um estado com
+// versão maior substitui o atual, senão um "organizando" antigo travaria a tela.
+export const newest = (current, next) => (next && next.version > current.version ? next : current);
+
 function useViewState(gateway = defaultGateway) {
   const [state, setState] = useState(INITIAL_STATE);
   const [ready, setReady] = useState(false);
 
+  const show = useCallback((next) => setState((current) => newest(current, next)), []);
+
   const run = useCallback(
     (call) =>
       call()
-        .then((next) => {
-          if (next) setState(next);
-        })
+        .then(show)
         .catch(() => {}),
-    []
+    [show]
   );
 
   useEffect(() => {
     run(gateway.getState).finally(() => setReady(true));
   }, [gateway, run]);
 
-  useEffect(() => gateway.subscribeState((next) => setState(next)), [gateway]);
+  useEffect(() => gateway.subscribeState(show), [gateway, show]);
 
   useEffect(
     () => gateway.subscribeFileDrop((paths) => run(() => gateway.dropPaths(paths))),

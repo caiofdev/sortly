@@ -9,7 +9,9 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -369,6 +371,47 @@ func TestSnapshotDoesNotShareNotifications(t *testing.T) {
 	got.Notifications[0].Code = "ALTERADO"
 	if a.GetState().Notifications[0].Code == "ALTERADO" {
 		t.Fatal("o estado devolvido não pode compartilhar a lista interna")
+	}
+}
+
+func TestStateVersionGrowsOnEveryChange(t *testing.T) {
+	var emitted []uint64
+	a, _ := newTestApp(Deps{Emit: func(_ context.Context, s ViewState) { emitted = append(emitted, s.Version) }})
+	a.startup(context.Background())
+
+	first, second, third := a.GetState(), a.ClearNotifications(), a.SetLanguage("en")
+
+	if first.Version != 1 || second.Version != 2 || third.Version != 3 {
+		t.Fatalf("versões = %d, %d, %d; want 1, 2, 3", first.Version, second.Version, third.Version)
+	}
+	if !reflect.DeepEqual(emitted, []uint64{1, 2, 3}) {
+		t.Fatalf("emitidas = %v, want [1 2 3]", emitted)
+	}
+}
+
+// Regressão (#55): ações simultâneas recebem versões distintas, para que a
+// interface consiga descartar o estado que chegar atrasado.
+func TestStateVersionUniqueUnderConcurrency(t *testing.T) {
+	a, _ := newTestApp(Deps{})
+	const n = 50
+	versions := make(chan uint64, n)
+	var wg sync.WaitGroup
+	for range n {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			versions <- a.ClearNotifications().Version
+		}()
+	}
+	wg.Wait()
+	close(versions)
+
+	seen := map[uint64]bool{}
+	for v := range versions {
+		if seen[v] || v < 1 || v > n {
+			t.Fatalf("versão %d repetida ou fora de 1..%d", v, n)
+		}
+		seen[v] = true
 	}
 }
 

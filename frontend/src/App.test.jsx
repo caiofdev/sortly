@@ -11,7 +11,11 @@ const criteria = [
   { key: 'byExtension', enabled: true, locked: true }
 ];
 
+// Cada estado criado é mais novo que o anterior, como no backend.
+let lastVersion = 0;
+
 const viewState = (overrides = {}) => ({
+  version: ++lastVersion,
   sourceFolderPath: '',
   destinationFolderPath: '',
   hasUndo: false,
@@ -79,8 +83,9 @@ describe('App', () => {
   });
 
   it('ações chamam os bindings e mostram o estado devolvido', async () => {
+    const initial = viewState({ sourceFolderPath: 'C:\\origem' });
     const organized = viewState({ sourceFolderPath: 'C:\\origem', hasUndo: true });
-    mockBackend(viewState({ sourceFolderPath: 'C:\\origem' }), {
+    mockBackend(initial, {
       Organize: vi.fn().mockResolvedValue(organized)
     });
     render(<App />);

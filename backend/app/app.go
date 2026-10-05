@@ -249,13 +249,15 @@ func (a *App) update(change func(*ViewState)) ViewState {
 	a.mu.Lock()
 	a.ensureLoaded()
 	change(&a.state)
+	a.state.Version++
 	snapshot := a.state
 	// Lista sempre presente (nunca null no JSON): a interface percorre direto.
 	snapshot.Notifications = append([]Notification{}, a.state.Notifications...)
+	// Lidas sob o lock para que uma versão maior nunca traga preferências mais antigas.
+	snapshot.Settings = a.deps.Settings.Get().View()
 	ctx, started := a.ctx, a.started
 	a.mu.Unlock()
 
-	snapshot.Settings = a.deps.Settings.Get().View()
 	if started && a.deps.Emit != nil {
 		a.deps.Emit(ctx, snapshot)
 	}

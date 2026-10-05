@@ -73,6 +73,7 @@ O frontend só renderiza ([ADR 0005](adr/0005-estado-da-tela-no-backend.md)). A 
 
 ```
 ViewState {
+  version: number                            // cresce a cada estado entregue
   sourceFolderPath, destinationFolderPath: string
   hasUndo: bool
   busy: "" | "organize" | "restore"          // ação em andamento
@@ -84,6 +85,7 @@ ViewState {
 - **Erros não rejeitam a promessa:** viram uma notificação `kind: "error"` com o código (`INVALID_SOURCE`, `NOTHING_TO_UNDO`, `DROPPED_MISSING`, `LAST_CRITERION`, `UNEXPECTED`…) e a ação que falhou. O detalhe vai para o log. O frontend traduz o código, ou usa o texto padrão da ação quando o código não tem tradução própria (ADR 0004).
 - **Notificações de sucesso** também são códigos com dados: `ORGANIZE_DONE` (com `organize`: movidos, falhas, ignorados…), `UNDO_DONE` (com `undo`) e `SOURCE_DROPPED` (com `path`).
 - **Evento `sortly:state`:** emitido a cada mudança, com o estado inteiro. É por ele que a tela mostra "Organizando…" enquanto a chamada de `Organize` ainda não terminou.
+- **Estados fora de ordem:** evento e retorno do binding saem do lock antes de chegar à tela, então duas ações quase simultâneas podem entregá-los fora de ordem. O `useViewState` só troca o estado por um de `version` maior.
 - **Organizar e desfazer não rodam juntos:** uma chamada durante a outra devolve o estado sem fazer nada.
 - **Listas são sempre arrays** no JSON, nunca `null`.
 

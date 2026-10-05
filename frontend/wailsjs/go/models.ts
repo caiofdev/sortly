@@ -46,6 +46,7 @@ export namespace app {
 		}
 	}
 	export class ViewState {
+	    version: number;
 	    sourceFolderPath: string;
 	    destinationFolderPath: string;
 	    hasUndo: boolean;
@@ -59,6 +60,7 @@ export namespace app {
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.version = source["version"];
 	        this.sourceFolderPath = source["sourceFolderPath"];
 	        this.destinationFolderPath = source["destinationFolderPath"];
 	        this.hasUndo = source["hasUndo"];
