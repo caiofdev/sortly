@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/fs"
 	"os"
+	"path/filepath"
 
 	"github.com/caiofdev/sortly/backend/fs/paths"
 )
@@ -17,6 +18,7 @@ var (
 	rename     = os.Rename
 	removeFile = os.Remove
 	syncFile   = (*os.File).Sync
+	syncDir    = syncParentDir
 )
 
 // Move move src para dst, substituindo dst se ele existir (por exemplo, um
@@ -63,7 +65,7 @@ func copyThenRemove(src, dst string) error {
 	if err != nil {
 		return err
 	}
-	if err := copyFile(src, dst, info); err != nil {
+	if err := copyDurably(src, dst, info); err != nil {
 		_ = os.Remove(paths.Native(dst))
 		return err
 	}
@@ -72,6 +74,13 @@ func copyThenRemove(src, dst string) error {
 		return fmt.Errorf("files: cópia feita, mas a origem não pôde ser removida: %w", err)
 	}
 	return nil
+}
+
+func copyDurably(src, dst string, info fs.FileInfo) error {
+	if err := copyFile(src, dst, info); err != nil {
+		return err
+	}
+	return syncDir(paths.Native(filepath.Dir(dst)))
 }
 
 func copyFile(src, dst string, info fs.FileInfo) error {
