@@ -266,6 +266,35 @@ func TestOrganizeErrorBecomesNotification(t *testing.T) {
 	}
 }
 
+func TestOrganizeErrorAndUndo(t *testing.T) {
+	tests := []struct {
+		name   string
+		result organizer.Result
+		err    error
+		want   bool
+	}{
+		// Regressão (#53): o desfazer apontaria para a organização anterior.
+		{"registro não salvo desabilita o desfazer anterior",
+			organizer.Result{MovedFiles: 2}, fmt.Errorf("%w: disco cheio", organizer.ErrRecordNotSaved), false},
+		{"erro com arquivos movidos e registro salvo habilita o desfazer",
+			organizer.Result{MovedFiles: 1, CanUndo: true}, context.Canceled, true},
+		{"erro sem arquivos movidos mantém o desfazer anterior",
+			organizer.Result{}, organizer.ErrNoCriteria, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			a, _ := newTestApp(Deps{Organizer: &fakeOrganizer{result: tt.result, err: tt.err}})
+			a.state.SourceFolderPath, a.state.HasUndo = `C:\origem`, true
+
+			got := a.Organize()
+
+			if got.HasUndo != tt.want || last(got).Kind != KindError {
+				t.Fatalf("HasUndo = %v, want %v; aviso = %+v", got.HasUndo, tt.want, last(got))
+			}
+		})
+	}
+}
+
 func TestOrganizeEmitsBusyWhileRunning(t *testing.T) {
 	var emitted []ViewState
 	org := &fakeOrganizer{result: organizer.Result{CanUndo: true}}

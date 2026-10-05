@@ -177,15 +177,24 @@ func (a *App) Organize() ViewState {
 	result, err := a.deps.Organizer.Organize(a.runtimeContext(), req)
 	return a.update(func(s *ViewState) {
 		s.Busy = ""
-		if err != nil {
-			a.fail(s, ActionOrganize, err)
-			return
-		}
-		a.log.Info("organização concluída", "origem", result.SourceFolderPath, "destino", result.DestinationFolderPath,
-			"movidos", result.MovedFiles, "falhas", result.FailedFiles)
-		s.HasUndo = result.CanUndo
-		a.notify(s, Notification{Kind: KindOrganize, Code: CodeOrganizeDone, Action: ActionOrganize, Organize: &result})
+		a.applyOrganize(s, result, err)
 	})
+}
+
+// applyOrganize leva o resultado ao estado. Com arquivos movidos, o Result vale
+// mesmo com erro: se o registro não foi salvo, o desfazer anterior não pode
+// continuar disponível, porque desfaria a organização errada.
+func (a *App) applyOrganize(s *ViewState, result organizer.Result, err error) {
+	if err == nil || result.MovedFiles > 0 {
+		s.HasUndo = result.CanUndo
+	}
+	if err != nil {
+		a.fail(s, ActionOrganize, err)
+		return
+	}
+	a.log.Info("organização concluída", "origem", result.SourceFolderPath, "destino", result.DestinationFolderPath,
+		"movidos", result.MovedFiles, "falhas", result.FailedFiles)
+	a.notify(s, Notification{Kind: KindOrganize, Code: CodeOrganizeDone, Action: ActionOrganize, Organize: &result})
 }
 
 // Undo desfaz a última organização. Com outra ação em andamento, não faz nada.
