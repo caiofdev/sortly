@@ -142,6 +142,32 @@ func TestOrganizeRecordNotSaved(t *testing.T) {
 	}
 }
 
+type saveFailingStore struct {
+	previous *store.Operation
+}
+
+func (s *saveFailingStore) Load() (*store.Operation, error) { return s.previous, nil }
+func (s *saveFailingStore) Save(store.Operation) error      { return errors.New("disco cheio") }
+func (s *saveFailingStore) Clear() error                    { s.previous = nil; return nil }
+
+// Regressão (#53): depois de RECORD_NOT_SAVED, o registro da organização
+// anterior não pode continuar disponível para desfazer.
+func TestOrganizeRecordNotSavedClearsPrevious(t *testing.T) {
+	src := t.TempDir()
+	writeAt(t, filepath.Join(src, "a.txt"), "a", testTime)
+	st := &saveFailingStore{previous: &store.Operation{MovedItems: []store.MovedItem{{From: "x", To: "y"}}}}
+	svc := NewService(Deps{Metadata: metadata.Reader{}, Store: st, Location: testLoc})
+
+	got, err := svc.Organize(context.Background(), Request{SourceFolderPath: src, Options: criteria.Default})
+
+	if !errors.Is(err, ErrRecordNotSaved) || got.CanUndo {
+		t.Fatalf("Organize = (%+v, %v), want RECORD_NOT_SAVED sem desfazer", got, err)
+	}
+	if st.previous != nil {
+		t.Fatalf("registro anterior continua: %+v", st.previous)
+	}
+}
+
 func TestOrganizeErrorsHaveCodes(t *testing.T) {
 	svc, _ := newTestService(t)
 	_, err := svc.Organize(context.Background(), Request{})

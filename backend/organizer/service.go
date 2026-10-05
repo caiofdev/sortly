@@ -41,6 +41,7 @@ type Result struct {
 type RecordStore interface {
 	Load() (*store.Operation, error)
 	Save(store.Operation) error
+	Clear() error
 }
 
 // Deps são as dependências do serviço.
@@ -115,6 +116,10 @@ func (s *Service) record(plan Plan, out Outcome) error {
 		CreatedFolders:        out.CreatedFolders,
 	}
 	if err := s.store.Save(op); err != nil {
+		// O registro que ficou é da organização anterior: se sobrevivesse, o
+		// próximo desfazer (inclusive após reabrir o app) desfaria a errada.
+		// A falha ao apagar já vai para o log do store.
+		_ = s.store.Clear()
 		return fmt.Errorf("%w: %w", ErrRecordNotSaved, err)
 	}
 	return nil

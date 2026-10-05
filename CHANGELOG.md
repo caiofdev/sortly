@@ -10,6 +10,7 @@ Mantido por Caio Reis & Claude.
 
 ### Corrigido
 - Ao mover para outro disco ou pendrive, o arquivo original só é apagado depois que a cópia está gravada de fato. Uma queda de energia ou um pendrive removido logo depois não perde mais o arquivo.
+- Quando o registro para desfazer não pode ser salvo (disco cheio, sem permissão), o botão "Desfazer" fica desabilitado, em vez de desfazer a organização anterior por engano. Isso vale também depois de reabrir o app.
 
 ### Alterado
 - O idioma e os critérios escolhidos ficam salvos na pasta `.sortly` do usuário, junto do registro para desfazer. Eles não se perdem mais quando os dados internos da janela do app são limpos.
