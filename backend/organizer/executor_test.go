@@ -35,7 +35,8 @@ func TestApplySuccess(t *testing.T) {
 		{From: filepath.Join(src, "b.pdf"), To: filepath.Join(dst, "pdf", "b (1).pdf")},
 		{From: filepath.Join(src, "c.png"), To: filepath.Join(dst, "png", "c.png")},
 	}
-	wantFolders := []string{filepath.Join(dst, "pdf"), filepath.Join(dst, "png")}
+	// pdf/ já existia: só png/ foi criada (#57).
+	wantFolders := []string{filepath.Join(dst, "png")}
 	if !equalMoved(out.MovedItems, wantMoved) || !equalStrings(out.CreatedFolders, wantFolders) || out.FailedFiles != 0 {
 		t.Fatalf("Outcome = %+v", out)
 	}
@@ -85,6 +86,66 @@ func TestApplyMkdirFails(t *testing.T) {
 	}})
 	if err != nil || out.FailedFiles != 1 || len(out.MovedItems) != 0 {
 		t.Fatalf("Apply = (%+v, %v)", out, err)
+	}
+}
+
+func TestApplyRecordsEveryCreatedLevel(t *testing.T) {
+	src := t.TempDir()
+	dst := filepath.Join(t.TempDir(), "novo-destino")
+	writeAt(t, filepath.Join(src, "a.pdf"), "a", testTime)
+	writeAt(t, filepath.Join(src, "b.pdf"), "b", testTime)
+	plan := Plan{Moves: []Move{
+		{filepath.Join(src, "a.pdf"), filepath.Join(dst, "pdf", "pages-1", "a.pdf")},
+		{filepath.Join(src, "b.pdf"), filepath.Join(dst, "pdf", "pages-2", "b.pdf")},
+	}}
+
+	out, err := NewExecutor(nil).Apply(context.Background(), plan)
+
+	want := []string{
+		filepath.Join(dst, "pdf", "pages-1"), filepath.Join(dst, "pdf"), dst,
+		filepath.Join(dst, "pdf", "pages-2"),
+	}
+	if err != nil || !equalStrings(out.CreatedFolders, want) {
+		t.Fatalf("CreatedFolders = %v (%v), want %v", out.CreatedFolders, err, want)
+	}
+}
+
+func TestApplyMoveFailsKeepsCreatedFolder(t *testing.T) {
+	src, dst := t.TempDir(), t.TempDir()
+	e := NewExecutor(nil)
+	e.move = func(string, string) (string, error) { return "", os.ErrPermission }
+
+	out, _ := e.Apply(context.Background(), Plan{Moves: []Move{
+		{filepath.Join(src, "a.txt"), filepath.Join(dst, "txt", "a.txt")},
+	}})
+
+	if want := []string{filepath.Join(dst, "txt")}; out.FailedFiles != 1 || !equalStrings(out.CreatedFolders, want) {
+		t.Fatalf("Outcome = %+v, want a pasta criada registrada mesmo com a falha", out)
+	}
+}
+
+func TestMissingDirs(t *testing.T) {
+	root := filepath.VolumeName(os.TempDir()) + string(filepath.Separator)
+	a := filepath.Join(root, "a")
+	ab := filepath.Join(a, "b")
+	tests := []struct {
+		name     string
+		existing map[string]bool
+		want     []string
+	}{
+		{"já existe", map[string]bool{ab: true, a: true, root: true}, nil},
+		{"só a última falta", map[string]bool{a: true, root: true}, []string{ab}},
+		{"dois níveis faltam", map[string]bool{root: true}, []string{ab, a}},
+		{"nem a raiz do volume existe: para nela", map[string]bool{}, []string{ab, a, root}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			e := NewExecutor(nil)
+			e.exists = func(p string) bool { return tt.existing[p] }
+			if got := e.missingDirs(ab); !equalStrings(got, tt.want) {
+				t.Fatalf("missingDirs = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }
 

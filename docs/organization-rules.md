@@ -141,6 +141,7 @@ Ao final, a operação é salva em `~/.sortly/last-operation.json`, no mesmo for
 ```
 
 - Cada movimento concluído entra no registro, mesmo que outro falhe depois.
+- `createdFolders` lista só as pastas que a organização **criou**, em todos os níveis (ex.: `pdf` e `pdfpages-3` quando nenhuma existia). Pastas que já existiam no destino não entram. A versão 1.0 listava a pasta de cada arquivo; o formato é o mesmo.
 - Se nada for movido, o registro anterior é preservado e o desfazer dele continua disponível.
 - A gravação é atômica (arquivo temporário na mesma pasta, depois rename): um crash no meio deixa o registro anterior intacto. Falhas de gravação vão para o log e viram o erro `RECORD_NOT_SAVED`; nesse caso o registro anterior é apagado, porque descreve outra organização e o desfazer não pode apontar para ela.
 - Um arquivo vazio ou corrompido é tratado como "nada para desfazer".
@@ -153,7 +154,7 @@ Ao final, a operação é salva em `~/.sortly/last-operation.json`, no mesmo for
 - Só voltam itens com `from` dentro da pasta de origem e `to` dentro da pasta de destino do registro (destino vazio = origem), sem ser a própria pasta. Um registro editado ou corrompido com caminhos de fora não move nada: o item é pulado, conta em `skippedMissing` e vai para o log. Registro sem pasta de origem não restaura nada.
 - Se o local original estiver ocupado, aplica a regra de conflito (§5) e conta em `renamedOnRestore`.
 - Uma falha num arquivo não interrompe os demais. O registro é regravado só com os itens que falharam, e o desfazer continua disponível para tentar de novo (`failedFiles`). Sem falhas, o registro é apagado.
-- Depois, remove as pastas que ficaram **vazias**, subindo da pasta do arquivo até a raiz do destino (exclusive). Nada fora dessa raiz é tocado. Pastas com outros arquivos são preservadas, e a raiz nunca é removida, mesmo com diferença de maiúsculas/minúsculas no caminho (Windows).
+- Depois, remove as pastas de `createdFolders` que ficaram **vazias**, da mais funda para a mais rasa. Pastas que já existiam antes da organização ficam, mesmo vazias. Em registros antigos, sem `createdFolders`, sobe da pasta de cada arquivo até a raiz do destino (exclusive). Nada fora dessa raiz é tocado. Pastas com outros arquivos são preservadas, e a raiz nunca é removida, mesmo com diferença de maiúsculas/minúsculas no caminho (Windows).
 
 O estado de desfazer sobrevive ao fechamento do app: ao abrir, a interface recupera origem e destino e avisa que é possível desfazer.
 

@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"log/slog"
 	"path/filepath"
+	"slices"
 
 	"github.com/caiofdev/sortly/backend/apperr"
 	"github.com/caiofdev/sortly/backend/fs/files"
@@ -210,17 +211,35 @@ func (s *Service) updateRecord(op *store.Operation, left []store.MovedItem) bool
 	return true
 }
 
-// cleanup remove as pastas que ficaram vazias, subindo de cada pasta usada
-// pela organização até a raiz do destino (sem removê-la). Pastas com outros
-// arquivos são preservadas, e nada fora da raiz é tocado.
+// cleanup remove as pastas criadas pela organização que ficaram vazias, da
+// mais funda para a mais rasa. Pastas que já existiam não estão na lista e
+// ficam. Registros antigos, sem createdFolders, não dizem o que foi
+// criado: sobe-se de cada pasta de arquivo até a raiz. Nada fora da raiz é
+// tocado, e pastas com conteúdo nunca são removidas.
 func (s *Service) cleanup(op *store.Operation) {
 	root := rootOf(op)
 	if root == "" {
 		return
 	}
-	for _, dir := range cleanupCandidates(op) {
-		s.removeEmptyAncestors(dir, root)
+	if op.CreatedFolders == nil {
+		for _, dir := range itemFolders(op) {
+			s.removeEmptyAncestors(dir, root)
+		}
+		return
 	}
+	for _, dir := range deepestFirst(op.CreatedFolders) {
+		if strictlyInside(dir, root) {
+			s.removeDir(dir)
+		}
+	}
+}
+
+// deepestFirst ordena as pastas para que cada filha venha antes da mãe: o
+// caminho da filha é sempre mais longo que o da mãe.
+func deepestFirst(dirs []string) []string {
+	sorted := slices.Clone(dirs)
+	slices.SortStableFunc(sorted, func(a, b string) int { return len(b) - len(a) })
+	return sorted
 }
 
 // removeEmptyAncestors sobe de start até root (exclusive). A comparação ignora
@@ -231,22 +250,15 @@ func (s *Service) removeEmptyAncestors(start, root string) {
 	}
 }
 
-// cleanupCandidates junta as pastas registradas e as pastas dos arquivos
-// movidos (registros antigos não têm createdFolders), sem repetir.
-func cleanupCandidates(op *store.Operation) []string {
+// itemFolders devolve as pastas onde os arquivos foram parar, sem repetir.
+func itemFolders(op *store.Operation) []string {
 	seen := map[string]bool{}
 	var dirs []string
-	add := func(dir string) {
-		if !seen[dir] {
+	for _, item := range op.MovedItems {
+		if dir := filepath.Dir(item.To); !seen[dir] {
 			seen[dir] = true
 			dirs = append(dirs, dir)
 		}
-	}
-	for _, dir := range op.CreatedFolders {
-		add(dir)
-	}
-	for _, item := range op.MovedItems {
-		add(filepath.Dir(item.To))
 	}
 	return dirs
 }
