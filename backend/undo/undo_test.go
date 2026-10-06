@@ -3,6 +3,7 @@ package undo
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"log/slog"
 	"os"
@@ -112,11 +113,53 @@ func TestUndoPreservesNonEmptyFolder(t *testing.T) {
 	assertTree(t, dst, "txt/do-usuario.txt") // date-* (vazia) removida; txt (1 arquivo) preservada
 }
 
+// Regressão (#57): pasta que já existia no destino não é removida pelo
+// desfazer, mesmo vazia; as criadas pela organização são.
+func TestUndoKeepsFoldersThatAlreadyExisted(t *testing.T) {
+	src, dst := t.TempDir(), t.TempDir()
+	mkdir(t, filepath.Join(dst, "pdf")) // vazia, do usuário
+	a := move(t, src, dst, "a.pdf", "pdf/pages-1")
+	st := newStore(t)
+	saveRecord(t, st, store.Operation{SourceFolderPath: src, DestinationFolderPath: dst, MovedItems: []store.MovedItem{a},
+		CreatedFolders: []string{filepath.Join(dst, "pdf", "pages-1")}})
+
+	if _, err := NewService(st, nil).Undo(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	assertTree(t, dst, "pdf/")
+}
+
+func TestUndoCreatedFolderOutsideRootIsKept(t *testing.T) {
+	src, dst := t.TempDir(), t.TempDir()
+	outside := filepath.Join(t.TempDir(), "vazia")
+	mkdir(t, outside)
+	a := move(t, src, dst, "a.txt", "txt")
+	st := newStore(t)
+	saveRecord(t, st, store.Operation{SourceFolderPath: src, DestinationFolderPath: dst, MovedItems: []store.MovedItem{a},
+		CreatedFolders: []string{filepath.Join(dst, "txt"), outside, dst}})
+
+	if _, err := NewService(st, nil).Undo(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if !files.Exists(outside) || !files.Exists(dst) || files.Exists(filepath.Join(dst, "txt")) {
+		t.Fatal("só a pasta dentro da raiz pode ser removida; a raiz e o que está fora ficam")
+	}
+}
+
 func TestUndoLegacyRecordWithoutCreatedFolders(t *testing.T) {
 	src, dst := t.TempDir(), t.TempDir()
 	a := move(t, src, dst, "a.txt", "txt/size-1mb")
 	st := newStore(t)
-	saveRecord(t, st, store.Operation{SourceFolderPath: src, DestinationFolderPath: dst, MovedItems: []store.MovedItem{a}})
+	// Sem o campo createdFolders no arquivo, como nos registros antigos: o
+	// store sempre grava a lista, então o JSON é escrito à mão.
+	legacy, err := json.Marshal(map[string]any{
+		"sourceFolderPath": src, "destinationFolderPath": dst,
+		"movedItems": []map[string]string{{"from": a.From, "to": a.To}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	writeFile(t, st.Path(), string(legacy))
 
 	if _, err := NewService(st, nil).Undo(context.Background()); err != nil {
 		t.Fatal(err)
@@ -128,7 +171,8 @@ func TestUndoDestinationEmptyUsesSourceAsRoot(t *testing.T) {
 	src := t.TempDir()
 	a := move(t, src, src, "a.txt", "txt")
 	st := newStore(t)
-	saveRecord(t, st, store.Operation{SourceFolderPath: src, MovedItems: []store.MovedItem{a}})
+	saveRecord(t, st, store.Operation{SourceFolderPath: src, MovedItems: []store.MovedItem{a},
+		CreatedFolders: []string{filepath.Join(src, "txt")}})
 
 	if _, err := NewService(st, nil).Undo(context.Background()); err != nil {
 		t.Fatal(err)
@@ -385,27 +429,47 @@ func TestUpdateRecordFailuresAreLogged(t *testing.T) {
 	}
 }
 
-func TestCleanupCandidates(t *testing.T) {
-	pdf, png, txt := filepath.Join("d", "pdf"), filepath.Join("d", "png"), filepath.Join("d", "txt")
+func TestItemFolders(t *testing.T) {
+	pdf, txt := filepath.Join("d", "pdf"), filepath.Join("d", "txt")
 	tests := []struct {
 		name string
 		op   store.Operation
 		want []string
 	}{
-		{"registro vazio", store.Operation{}, nil},
-		{"só pastas registradas", store.Operation{CreatedFolders: []string{pdf, png}}, []string{pdf, png}},
-		{"registro antigo: só as pastas dos arquivos", store.Operation{MovedItems: []store.MovedItem{
-			{To: filepath.Join(txt, "a.txt")}, {To: filepath.Join(txt, "b.txt")},
-		}}, []string{txt}},
-		{"pastas repetidas entram uma vez, na ordem", store.Operation{
-			CreatedFolders: []string{pdf, png, pdf},
-			MovedItems:     []store.MovedItem{{To: filepath.Join(pdf, "a.pdf")}, {To: filepath.Join(txt, "b.txt")}},
-		}, []string{pdf, png, txt}},
+		{"sem arquivos", store.Operation{}, nil},
+		{"uma pasta por arquivo", store.Operation{MovedItems: []store.MovedItem{
+			{To: filepath.Join(pdf, "a.pdf")}, {To: filepath.Join(txt, "b.txt")},
+		}}, []string{pdf, txt}},
+		{"pasta repetida entra uma vez, na ordem", store.Operation{MovedItems: []store.MovedItem{
+			{To: filepath.Join(txt, "a.txt")}, {To: filepath.Join(pdf, "b.pdf")}, {To: filepath.Join(txt, "c.txt")},
+		}}, []string{txt, pdf}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := cleanupCandidates(&tt.op); !reflect.DeepEqual(got, tt.want) {
-				t.Fatalf("cleanupCandidates = %v, want %v", got, tt.want)
+			if got := itemFolders(&tt.op); !reflect.DeepEqual(got, tt.want) {
+				t.Fatalf("itemFolders = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestDeepestFirst(t *testing.T) {
+	d := filepath.Join("d")
+	pdf, pages := filepath.Join(d, "pdf"), filepath.Join(d, "pdf", "pages-3")
+	tests := []struct {
+		name string
+		in   []string
+		want []string
+	}{
+		{"vazia", nil, nil},
+		{"mãe antes da filha", []string{d, pdf, pages}, []string{pages, pdf, d}},
+		{"já na ordem", []string{pages, pdf}, []string{pages, pdf}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := deepestFirst(tt.in)
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Fatalf("deepestFirst = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -464,13 +528,15 @@ func move(t *testing.T, src, dst, name, sub string) store.MovedItem {
 	return store.MovedItem{From: from, To: to}
 }
 
+// withRecord grava o registro como a organização faria quando todas as
+// pastas abaixo de dst foram criadas por ela.
 func withRecord(t *testing.T, src, dst string, items ...store.MovedItem) *store.FileStore {
 	t.Helper()
 	st := newStore(t)
 	folders := map[string]bool{}
 	var created []string
 	for _, it := range items {
-		if dir := filepath.Dir(it.To); !folders[dir] {
+		for dir := filepath.Dir(it.To); dir != dst && !folders[dir]; dir = filepath.Dir(dir) {
 			folders[dir] = true
 			created = append(created, dir)
 		}
