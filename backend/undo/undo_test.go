@@ -332,8 +332,8 @@ func TestRemoveEmptyAncestors(t *testing.T) {
 }
 
 func TestRemoveEmptyAncestorsCaseInsensitiveRoot(t *testing.T) {
-	if runtime.GOOS != "windows" {
-		t.Skip("caixa diferente só é o mesmo caminho no Windows")
+	if !caseInsensitivePlatform() {
+		t.Skip("caixa diferente só é o mesmo caminho no Windows e no macOS")
 	}
 	root := filepath.Join(t.TempDir(), "Destino")
 	mkdir(t, filepath.Join(root, "pdf"))
@@ -606,3 +606,5 @@ func mkdir(t *testing.T, path string) {
 		t.Fatal(err)
 	}
 }
+
+func caseInsensitivePlatform() bool { return runtime.GOOS == "windows" || runtime.GOOS == "darwin" }

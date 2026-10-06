@@ -243,7 +243,8 @@ func deepestFirst(dirs []string) []string {
 }
 
 // removeEmptyAncestors sobe de start até root (exclusive). A comparação ignora
-// maiúsculas no Windows, então a raiz nunca é removida por diferença de caixa.
+// maiúsculas no Windows e no macOS, então a raiz nunca é removida por
+// diferença de caixa.
 func (s *Service) removeEmptyAncestors(start, root string) {
 	for dir := start; paths.IsInside(dir, root) && !paths.Equal(dir, root); dir = filepath.Dir(dir) {
 		s.removeDir(dir)

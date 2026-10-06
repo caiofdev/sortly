@@ -154,7 +154,7 @@ Ao final, a operação é salva em `~/.sortly/last-operation.json`, no mesmo for
 - Só voltam itens com `from` dentro da pasta de origem e `to` dentro da pasta de destino do registro (destino vazio = origem), sem ser a própria pasta. Um registro editado ou corrompido com caminhos de fora não move nada: o item é pulado, conta em `skippedMissing` e vai para o log. Registro sem pasta de origem não restaura nada.
 - Se o local original estiver ocupado, aplica a regra de conflito (§5) e conta em `renamedOnRestore`.
 - Uma falha num arquivo não interrompe os demais. O registro é regravado só com os itens que falharam, e o desfazer continua disponível para tentar de novo (`failedFiles`). Sem falhas, o registro é apagado.
-- Depois, remove as pastas de `createdFolders` que ficaram **vazias**, da mais funda para a mais rasa. Pastas que já existiam antes da organização ficam, mesmo vazias. Em registros antigos, sem `createdFolders`, sobe da pasta de cada arquivo até a raiz do destino (exclusive). Nada fora dessa raiz é tocado. Pastas com outros arquivos são preservadas, e a raiz nunca é removida, mesmo com diferença de maiúsculas/minúsculas no caminho (Windows).
+- Depois, remove as pastas de `createdFolders` que ficaram **vazias**, da mais funda para a mais rasa. Pastas que já existiam antes da organização ficam, mesmo vazias. Em registros antigos, sem `createdFolders`, sobe da pasta de cada arquivo até a raiz do destino (exclusive). Nada fora dessa raiz é tocado. Pastas com outros arquivos são preservadas, e a raiz nunca é removida, mesmo com diferença de maiúsculas/minúsculas no caminho (Windows e macOS).
 
 O estado de desfazer sobrevive ao fechamento do app: ao abrir, a interface recupera origem e destino e avisa que é possível desfazer.
 

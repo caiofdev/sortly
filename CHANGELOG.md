@@ -12,6 +12,7 @@ Mantido por Caio Reis & Claude.
 - Ao mover para outro disco ou pendrive, o arquivo original só é apagado depois que a cópia está gravada de fato. Uma queda de energia ou um pendrive removido logo depois não perde mais o arquivo.
 - Quando o registro para desfazer não pode ser salvo (disco cheio, sem permissão), o botão "Desfazer" fica desabilitado, em vez de desfazer a organização anterior por engano. Isso vale também depois de reabrir o app.
 - O desfazer só devolve arquivos para dentro das pastas da última organização. Um registro danificado ou editado à mão não move mais arquivos para outros lugares.
+- No macOS, uma pasta digitada com maiúsculas diferentes (`~/downloads` em vez de `~/Downloads`) é reconhecida como a mesma: arquivos que já estão no lugar não são mais renomeados para `nome (1)`.
 - Desfazer não remove mais pastas que já existiam no destino antes da organização (por exemplo, uma pasta `pdf` vazia criada por você). Só as pastas criadas pelo Sortly são apagadas.
 - A tela não fica mais presa em "Organizando…" quando outra ação (como trocar o idioma) termina quase junto com a organização.
 

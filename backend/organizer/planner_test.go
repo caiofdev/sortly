@@ -7,6 +7,8 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"runtime"
+	"strings"
 	"testing"
 	"time"
 
@@ -91,6 +93,22 @@ func TestPlanScenarios(t *testing.T) {
 				t.Fatalf("Plan =\n%+v\nwant\n%+v", got, want)
 			}
 		})
+	}
+}
+
+// Regressão (#58): no macOS (APFS) e no Windows, o destino escrito com outra
+// caixa é a própria origem; o arquivo fica onde está, sem virar "nota (1).txt" (B8).
+func TestPlanDestinationDifferingOnlyInCase(t *testing.T) {
+	if runtime.GOOS != "windows" && runtime.GOOS != "darwin" {
+		t.Skip("no Linux, caixa diferente é outra pasta")
+	}
+	src := t.TempDir()
+	writeAt(t, filepath.Join(src, "nota.txt"), "x", testTime)
+
+	got, err := newTestPlanner().Plan(context.Background(), src, strings.ToUpper(src), criteria.Options{ByResolution: true})
+
+	if err != nil || got.UnchangedFiles != 1 || len(got.Moves) != 0 {
+		t.Fatalf("Plan = (%+v, %v), want o arquivo sem movimento", got, err)
 	}
 }
 
