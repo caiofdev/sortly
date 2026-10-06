@@ -1,10 +1,20 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 // Marca o painel como área de drop do Wails (a propriedade é herdada pelos filhos).
 const DROP_TARGET_STYLE = { '--wails-drop-target': 'drop' };
 
 function DragDropPanel({ isLoading, labels, onSelectSourceFolder }) {
   const [isDragging, setIsDragging] = useState(false);
+  // Entrar num elemento interno dispara dragleave no painel; contar entradas e
+  // saídas evita o destaque piscar. O relatedTarget resolveria no Chromium, mas
+  // o WebKit (macOS e Linux) costuma entregá-lo vazio.
+  const depth = useRef(0);
+
+  const handleDragEnter = (event) => {
+    event.preventDefault();
+    depth.current += 1;
+    setIsDragging(true);
+  };
 
   const handleDragOver = (event) => {
     event.preventDefault();
@@ -13,18 +23,21 @@ function DragDropPanel({ isLoading, labels, onSelectSourceFolder }) {
 
   const handleDragLeave = (event) => {
     event.preventDefault();
-    setIsDragging(false);
+    depth.current = Math.max(0, depth.current - 1);
+    if (depth.current === 0) setIsDragging(false);
   };
 
   const handleDrop = (event) => {
     event.preventDefault();
     // O caminho não vem no evento do navegador: o Wails o entrega por
     // gateway.subscribeFileDrop. Aqui só desliga o destaque.
+    depth.current = 0;
     setIsDragging(false);
   };
 
   return (
     <div
+      onDragEnter={handleDragEnter}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}

@@ -1,3 +1,5 @@
+import Spinner from './Spinner';
+
 function OrganizerActions({
   labels,
   isLoading,
@@ -18,27 +20,13 @@ function OrganizerActions({
         type="button"
         onClick={onOrganizeFiles}
         disabled={isLoading || !hasSource}
+        aria-busy={isOrganizing}
         title={isOrganizing ? labels.organizing : labels.organize}
         aria-label={isOrganizing ? labels.organizing : labels.organize}
         className={`${baseIconButtonClass} bg-[#22C55E] text-white hover:-translate-y-0.5 hover:bg-[#32d26b] disabled:cursor-not-allowed disabled:bg-[#1c4a33] disabled:text-slate-300`}
       >
         {isOrganizing ? (
-          <svg viewBox="0 0 24 24" className="h-5 w-5 animate-spin" aria-hidden="true">
-            <circle
-              cx="12"
-              cy="12"
-              r="9"
-              className="opacity-25"
-              stroke="currentColor"
-              strokeWidth="3"
-              fill="none"
-            />
-            <path
-              className="opacity-90"
-              fill="currentColor"
-              d="M12 3a9 9 0 0 1 9 9h-3a6 6 0 0 0-6-6V3Z"
-            />
-          </svg>
+          <Spinner />
         ) : (
           <svg
             viewBox="0 0 24 24"
@@ -61,27 +49,13 @@ function OrganizerActions({
         type="button"
         onClick={onUndoLastOrganization}
         disabled={isLoading || !hasUndo}
+        aria-busy={isRestoring}
         title={labels.undo}
         aria-label={labels.undo}
         className={`${baseIconButtonClass} bg-[#DC2626] text-white hover:-translate-y-0.5 hover:bg-[#ef4444] disabled:cursor-not-allowed disabled:bg-[#4f2020] disabled:text-slate-300`}
       >
         {isRestoring ? (
-          <svg viewBox="0 0 24 24" className="h-5 w-5 animate-spin" aria-hidden="true">
-            <circle
-              cx="12"
-              cy="12"
-              r="9"
-              className="opacity-25"
-              stroke="currentColor"
-              strokeWidth="3"
-              fill="none"
-            />
-            <path
-              className="opacity-90"
-              fill="currentColor"
-              d="M12 3a9 9 0 0 1 9 9h-3a6 6 0 0 0-6-6V3Z"
-            />
-          </svg>
+          <Spinner />
         ) : (
           <svg
             viewBox="0 0 24 24"

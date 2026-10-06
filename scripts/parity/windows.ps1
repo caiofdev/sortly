@@ -61,7 +61,7 @@ function Start-App {
   $psi.EnvironmentVariables['APPDATA'] = "$home_\AppData\Roaming"
   $psi.EnvironmentVariables['LOCALAPPDATA'] = "$home_\AppData\Local"
   $script:proc = [Diagnostics.Process]::Start($psi)
-  $null = Find-Element 'PT-BR PT-BR', 'EN EN' 60
+  $null = Find-Element 'PT-BR', 'EN' 60
 }
 
 # Fecha a janela como o usuário (o WebView2 grava o localStorage ao fechar);
@@ -93,7 +93,18 @@ function Find-Element([string[]]$names, [int]$timeoutSeconds = 20, $type = $null
 }
 
 function Click([string[]]$name) {
-  (Find-Element $name -type ([Windows.Automation.ControlType]::Button)).GetCurrentPattern([Windows.Automation.InvokePattern]::Pattern).Invoke()
+  $element = Find-Element $name -type ([Windows.Automation.ControlType]::Button)
+  $pattern = $null
+  # Botões com aria-pressed (idioma) são de alternância: expõem Toggle, não Invoke.
+  if ($element.TryGetCurrentPattern([Windows.Automation.InvokePattern]::Pattern, [ref]$pattern)) {
+    $pattern.Invoke()
+  } else {
+    $element.GetCurrentPattern([Windows.Automation.TogglePattern]::Pattern).Toggle()
+  }
+}
+
+function Toggle-State([string[]]$name) {
+  (Find-Element $name -type ([Windows.Automation.ControlType]::Button)).GetCurrentPattern([Windows.Automation.TogglePattern]::Pattern).Current.ToggleState
 }
 
 function Is-Enabled([string[]]$name) { (Find-Element $name -type ([Windows.Automation.ControlType]::Button)).Current.IsEnabled }
@@ -201,7 +212,10 @@ try {
   Check 'WIN_B8' ($renamed.Count -eq 0 -and ($after -contains '3x2\3x2.png')) "renomeados: $($renamed.Count)"
 
   # --- 7) Idioma, preferências e erro em inglês (B6) ---
-  Click 'EN EN'; Start-Sleep -Milliseconds 500
+  $on = [Windows.Automation.ToggleState]::On
+  $off = [Windows.Automation.ToggleState]::Off
+  Check 'WIN_A11Y_LANG' ((Toggle-State 'PT-BR') -eq $on -and (Toggle-State 'EN') -eq $off) 'leitor de tela: botão "PT-BR" marcado, "EN" não (aria-pressed)'
+  Click 'EN'; Start-Sleep -Milliseconds 500
   Stop-App
   Start-App
   $en = $null -ne (Find-Element 'Organize files' 10)

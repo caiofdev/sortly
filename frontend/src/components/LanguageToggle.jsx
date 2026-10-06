@@ -15,6 +15,7 @@ function LanguageToggle({ language, onChange }) {
           <button
             key={option.value}
             type="button"
+            aria-pressed={isActive}
             onClick={() => onChange(option.value)}
             className={`rounded-xl px-3 py-2 text-sm font-semibold transition-colors ${
               isActive
@@ -24,7 +25,7 @@ function LanguageToggle({ language, onChange }) {
           >
             <img
               src={option.icon}
-              alt={option.label}
+              alt=""
               className="mr-2 inline-block h-5 w-5 rounded-full object-cover"
             />
             {option.label}

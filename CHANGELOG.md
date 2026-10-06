@@ -16,6 +16,8 @@ Mantido por Caio Reis & Claude.
 - No macOS, uma pasta digitada com maiúsculas diferentes (`~/downloads` em vez de `~/Downloads`) é reconhecida como a mesma: arquivos que já estão no lugar não são mais renomeados para `nome (1)`.
 - Desfazer não remove mais pastas que já existiam no destino antes da organização (por exemplo, uma pasta `pdf` vazia criada por você). Só as pastas criadas pelo Sortly são apagadas.
 - A tela não fica mais presa em "Organizando…" quando outra ação (como trocar o idioma) termina quase junto com a organização.
+- Leitores de tela: os botões de idioma dizem qual está ativo e não repetem mais o nome ("PT-BR PT-BR"), e os botões de organizar e desfazer avisam quando a ação está em andamento.
+- O destaque da área de arrastar e soltar não pisca mais ao passar o arquivo sobre o texto e o link dentro dela.
 
 ### Alterado
 - O idioma e os critérios escolhidos ficam salvos na pasta `.sortly` do usuário, junto do registro para desfazer. Eles não se perdem mais quando os dados internos da janela do app são limpos.
