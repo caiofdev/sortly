@@ -94,8 +94,53 @@ func TestExportedPathHelpers(t *testing.T) {
 	if IsInside(root, child) {
 		t.Error("IsInside(root, child) = true")
 	}
-	// No Windows a comparação ignora maiúsculas; nos demais sistemas, não.
+	// No Windows e no macOS a comparação ignora maiúsculas; no Linux, não.
 	if got := Equal(child, strings.ToUpper(child)); got != caseInsensitive && strings.ToUpper(child) != child {
 		t.Errorf("Equal com caixa diferente = %v, caseInsensitive = %v", got, caseInsensitive)
+	}
+}
+
+func TestCaseInsensitiveOS(t *testing.T) {
+	for goos, want := range map[string]bool{"windows": true, "darwin": true, "linux": false, "freebsd": false} {
+		if got := caseInsensitiveOS[goos]; got != want {
+			t.Errorf("caseInsensitiveOS[%q] = %v, want %v", goos, got, want)
+		}
+	}
+}
+
+func TestSameFile(t *testing.T) {
+	dir := t.TempDir()
+	a := filepath.Join(dir, "a.txt")
+	if err := os.WriteFile(a, []byte("x"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	link := filepath.Join(dir, "link.txt")
+	if err := os.Link(a, link); err != nil {
+		t.Fatal(err)
+	}
+	other := filepath.Join(dir, "b.txt")
+	if err := os.WriteFile(other, []byte("x"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	missing := filepath.Join(dir, "nada.txt")
+	tests := []struct {
+		name string
+		a, b string
+		want bool
+	}{
+		{"o mesmo arquivo por outro nome (link físico)", a, link, true},
+		{"arquivos diferentes", a, other, false},
+		{"o primeiro não existe", missing, a, false},
+		{"o segundo não existe", a, missing, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := sameFile(tt.a, tt.b); got != tt.want {
+				t.Fatalf("sameFile = %v, want %v", got, tt.want)
+			}
+		})
+	}
+	if !Equal(a, link) {
+		t.Error("Equal deveria reconhecer o mesmo arquivo por outro caminho")
 	}
 }
