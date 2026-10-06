@@ -5,14 +5,14 @@ import OrganizerActions from './OrganizerActions';
 
 const labels = organizerCopy['pt-BR'];
 
-function renderActions(loadingAction) {
+function renderActions(loadingAction, { hasSource = true, hasUndo = true } = {}) {
   return render(
     <OrganizerActions
       labels={labels}
       isLoading={loadingAction !== ''}
       loadingAction={loadingAction}
-      hasUndo
-      hasSource
+      hasUndo={hasUndo}
+      hasSource={hasSource}
       onOrganizeFiles={vi.fn()}
       onUndoLastOrganization={vi.fn()}
     />
@@ -39,5 +39,17 @@ describe('OrganizerActions', () => {
     expect(busy).toHaveAttribute('aria-busy', 'true');
     expect(busy.querySelector('svg.animate-spin')).not.toBeNull();
     expect(screen.getByRole('button', { name: idleName })).toHaveAttribute('aria-busy', 'false');
+  });
+
+  it.each([
+    ['tudo disponível', '', {}, false, false],
+    ['ação em andamento desabilita os dois', 'organize', {}, true, true],
+    ['sem origem não organiza', '', { hasSource: false }, true, false],
+    ['sem organização anterior não desfaz', '', { hasUndo: false }, false, true]
+  ])('%s', (_name, action, state, organizeDisabled, undoDisabled) => {
+    renderActions(action, state);
+    const organizeName = action === 'organize' ? labels.organizing : labels.organize;
+    expect(screen.getByRole('button', { name: organizeName }).disabled).toBe(organizeDisabled);
+    expect(screen.getByRole('button', { name: labels.undo }).disabled).toBe(undoDisabled);
   });
 });
