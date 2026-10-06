@@ -89,7 +89,7 @@ ViewState {
 - **Organizar e desfazer não rodam juntos:** uma chamada durante a outra devolve o estado sem fazer nada.
 - **Listas são sempre arrays** no JSON, nunca `null`.
 
-**Log:** `backend/logging` grava em `sortly.log` na pasta de configuração do usuário (`%AppData%\Sortly\logs` no Windows, `~/Library/Application Support/Sortly/logs` no macOS, `~/.config/Sortly/logs` no Linux). Ao passar de 5 MB, o arquivo vira `sortly.log.1` na próxima abertura. Se a pasta não puder ser usada, o log vai para o stderr e o app abre normalmente.
+**Log:** `backend/logging` grava em `sortly.log` na pasta de configuração do usuário (`%AppData%\Sortly\logs` no Windows, `~/Library/Application Support/Sortly/logs` no macOS, `~/.config/Sortly/logs` no Linux). Ao passar de 5 MB, o arquivo vira `sortly.log.1` na próxima abertura. Como o log traz caminhos de arquivos do usuário, no macOS e no Linux a pasta é `0o700` e os arquivos `0o600` (logs de versões anteriores são corrigidos ao abrir); a pasta `~/.sortly` também é criada só para o dono. Se a pasta não puder ser usada, o log vai para o stderr e o app abre normalmente.
 
 ## 4. Frontend
 
