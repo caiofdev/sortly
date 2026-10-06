@@ -235,16 +235,31 @@ func TestFailLogs(t *testing.T) {
 }
 
 func TestEncode(t *testing.T) {
-	t.Run("listas nil viram []", func(t *testing.T) {
-		got, err := encode(Operation{SourceFolderPath: "a"})
-		if err != nil {
-			t.Fatal(err)
-		}
-		want := `{"sourceFolderPath":"a","destinationFolderPath":"","movedItems":[],"createdFolders":[]}`
-		if string(got) != want {
-			t.Fatalf("encode = %s, want %s", got, want)
-		}
-	})
+	item := []MovedItem{{From: "a/x.txt", To: "b/txt/x.txt"}}
+	folder := []string{"b/txt"}
+	const movedJSON = `[{"from":"a/x.txt","to":"b/txt/x.txt"}]`
+	tests := []struct {
+		name string
+		op   Operation
+		want string
+	}{
+		{"listas nil viram []", Operation{SourceFolderPath: "a"},
+			`{"sourceFolderPath":"a","destinationFolderPath":"","movedItems":[],"createdFolders":[]}`},
+		{"só movedItems preenchida", Operation{SourceFolderPath: "a", MovedItems: item},
+			`{"sourceFolderPath":"a","destinationFolderPath":"","movedItems":` + movedJSON + `,"createdFolders":[]}`},
+		{"só createdFolders preenchida", Operation{SourceFolderPath: "a", CreatedFolders: folder},
+			`{"sourceFolderPath":"a","destinationFolderPath":"","movedItems":[],"createdFolders":["b/txt"]}`},
+		{"as duas preenchidas", Operation{SourceFolderPath: "a", DestinationFolderPath: "b", MovedItems: item, CreatedFolders: folder},
+			`{"sourceFolderPath":"a","destinationFolderPath":"b","movedItems":` + movedJSON + `,"createdFolders":["b/txt"]}`},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := encode(tt.op)
+			if err != nil || string(got) != tt.want {
+				t.Fatalf("encode = (%s, %v), want %s", got, err, tt.want)
+			}
+		})
+	}
 
 	t.Run("& e acentos sem escape", func(t *testing.T) {
 		got, _ := encode(Operation{SourceFolderPath: "Fotos & Vídeos <2026>"})
