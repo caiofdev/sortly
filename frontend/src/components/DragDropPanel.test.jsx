@@ -24,6 +24,27 @@ describe('DragDropPanel', () => {
     expect(panel.className).toContain('border-white/20');
   });
 
+  // Regressão (#60): entrar num elemento interno dispara dragleave no painel.
+  it('arrastar sobre um elemento interno não apaga o destaque', () => {
+    const { panel } = renderPanel();
+    const inner = screen.getByRole('button', { name: labels.dropSelectHintAction });
+    fireEvent.dragEnter(panel);
+    fireEvent.dragEnter(inner);
+    fireEvent.dragLeave(panel);
+    expect(panel.className).toContain('border-[#3B82F6]');
+    fireEvent.dragLeave(inner);
+    expect(panel.className).toContain('border-white/20');
+  });
+
+  it('dragleave sem dragenter não deixa o contador negativo', () => {
+    const { panel } = renderPanel();
+    fireEvent.dragLeave(panel);
+    fireEvent.dragEnter(panel);
+    expect(panel.className).toContain('border-[#3B82F6]');
+    fireEvent.dragLeave(panel);
+    expect(panel.className).toContain('border-white/20');
+  });
+
   it('soltar desliga o destaque', () => {
     const { panel } = renderPanel();
     fireEvent.dragOver(panel);
