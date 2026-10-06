@@ -36,10 +36,10 @@ jobs:
           version: v2.14.0
           args: --build-tags=${{ env.LINUX_BUILD_TAGS }}
 
-      - name: Complexidade × casos de teste (informativo)
+      - name: Complexidade × casos de teste
         run: |
           echo "## Complexidade ciclomática × casos de teste" >> "$GITHUB_STEP_SUMMARY"
-          go run ./scripts/cccases >> "$GITHUB_STEP_SUMMARY"
+          go run ./scripts/cccases -strict >> "$GITHUB_STEP_SUMMARY"
 
   go-test:
     name: Go · testes (${{ matrix.os }})

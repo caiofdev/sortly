@@ -261,18 +261,29 @@ func TestWithinRecordedFolders(t *testing.T) {
 
 func TestRemoveEmptyAncestors(t *testing.T) {
 	root := filepath.Join(t.TempDir(), "Destino")
-	deep := filepath.Join(root, "pdf", "pages-3")
-	outside := filepath.Join(filepath.Dir(root), "outra")
-	svc := NewService(newStore(t), nil)
-	var removed []string
-	svc.removeDir = func(dir string) bool { removed = append(removed, dir); return true }
+	tests := []struct {
+		name  string
+		start string
+		want  []string
+	}{
+		{"fora da raiz: nada", filepath.Join(filepath.Dir(root), "outra"), nil},
+		{"a própria raiz: nada", root, nil},
+		{"um nível: só a pasta", filepath.Join(root, "pdf"), []string{filepath.Join(root, "pdf")}},
+		{"vários níveis: sobe até a raiz, exclusive", filepath.Join(root, "pdf", "pages-3"),
+			[]string{filepath.Join(root, "pdf", "pages-3"), filepath.Join(root, "pdf")}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			svc := NewService(newStore(t), nil)
+			var removed []string
+			svc.removeDir = func(dir string) bool { removed = append(removed, dir); return true }
 
-	svc.removeEmptyAncestors(deep, root)
-	svc.removeEmptyAncestors(outside, root)
+			svc.removeEmptyAncestors(tt.start, root)
 
-	want := []string{deep, filepath.Join(root, "pdf")} // para exatamente na raiz; fora da raiz, nada
-	if !reflect.DeepEqual(removed, want) {
-		t.Fatalf("removidas = %v, want %v", removed, want)
+			if !reflect.DeepEqual(removed, tt.want) {
+				t.Fatalf("removidas = %v, want %v", removed, tt.want)
+			}
+		})
 	}
 }
 
@@ -375,16 +386,28 @@ func TestUpdateRecordFailuresAreLogged(t *testing.T) {
 }
 
 func TestCleanupCandidates(t *testing.T) {
-	op := &store.Operation{
-		CreatedFolders: []string{filepath.Join("d", "pdf"), filepath.Join("d", "png")},
-		MovedItems: []store.MovedItem{
-			{To: filepath.Join("d", "pdf", "a.pdf")},
-			{To: filepath.Join("d", "txt", "b.txt")},
-		},
+	pdf, png, txt := filepath.Join("d", "pdf"), filepath.Join("d", "png"), filepath.Join("d", "txt")
+	tests := []struct {
+		name string
+		op   store.Operation
+		want []string
+	}{
+		{"registro vazio", store.Operation{}, nil},
+		{"só pastas registradas", store.Operation{CreatedFolders: []string{pdf, png}}, []string{pdf, png}},
+		{"registro antigo: só as pastas dos arquivos", store.Operation{MovedItems: []store.MovedItem{
+			{To: filepath.Join(txt, "a.txt")}, {To: filepath.Join(txt, "b.txt")},
+		}}, []string{txt}},
+		{"pastas repetidas entram uma vez, na ordem", store.Operation{
+			CreatedFolders: []string{pdf, png, pdf},
+			MovedItems:     []store.MovedItem{{To: filepath.Join(pdf, "a.pdf")}, {To: filepath.Join(txt, "b.txt")}},
+		}, []string{pdf, png, txt}},
 	}
-	want := []string{filepath.Join("d", "pdf"), filepath.Join("d", "png"), filepath.Join("d", "txt")}
-	if got := cleanupCandidates(op); !reflect.DeepEqual(got, want) {
-		t.Fatalf("cleanupCandidates = %v, want %v", got, want)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := cleanupCandidates(&tt.op); !reflect.DeepEqual(got, tt.want) {
+				t.Fatalf("cleanupCandidates = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }
 

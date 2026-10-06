@@ -89,7 +89,7 @@ A complexidade ciclomática conta os caminhos independentes de uma função: com
   - Go: `gocyclo` e `cyclop` (via `golangci-lint`).
   - JavaScript: regra `complexity` do ESLint.
 - **Casos de teste:** uma função com CC = N precisa de **pelo menos N casos**, cobrindo os caminhos básicos independentes.
-- **Rastreabilidade:** [`scripts/cccases`](../scripts/cccases) cruza a CC de cada função Go com os casos de teste que a chamam e aponta as funções com casos < CC. A CI publica o relatório no resumo do job "Go · lint" (informativo, não bloqueia). No frontend, a contagem é manual (cada `it` ou linha de `it.each`).
+- **Rastreabilidade:** [`scripts/cccases`](../scripts/cccases) cruza a CC de cada função Go com os casos de teste que a chamam e aponta as funções com casos < CC. A CI publica o relatório no resumo do job "Go · lint" e falha se alguma função tiver casos < CC (`-strict`). A contagem é heurística: se ela errar para menos num teste correto, prefira reescrever o teste em tabela a desligar a checagem. No frontend, a contagem é manual (cada `it` ou linha de `it.each`).
 
   ```bash
   go run ./scripts/cccases            # funções com CC ≥ 2 em backend/
@@ -155,7 +155,7 @@ npm run test:watch    # Vitest em modo observação
 
 | Job | Sistema | Passos |
 |---|---|---|
-| Go · lint | Ubuntu | `golangci-lint` (gofmt, goimports, govet, staticcheck, errcheck, gocyclo, cyclop, errorlint, revive, …) e o relatório de `scripts/cccases` no resumo do job (informativo) |
+| Go · lint | Ubuntu | `golangci-lint` (gofmt, goimports, govet, staticcheck, errcheck, gocyclo, cyclop, errorlint, revive, …) e o relatório de `scripts/cccases -strict` no resumo do job (falha com casos < CC) |
 | Go · testes | Ubuntu, Windows, macOS | `go vet`, `go test` (com `-race` no Linux e no macOS), cobertura de `backend/` no Ubuntu |
 | Frontend | Ubuntu | `npm ci`, ESLint, Prettier, Vitest, `vite build` |
 
