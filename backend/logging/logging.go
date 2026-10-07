@@ -28,7 +28,6 @@ const (
 // userConfigDir é substituível nos testes.
 var userConfigDir = os.UserConfigDir
 
-// DefaultDir devolve a pasta de logs do app.
 func DefaultDir() (string, error) {
 	base, err := userConfigDir()
 	if err != nil {

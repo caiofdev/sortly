@@ -43,7 +43,6 @@ func nativeDirectoryPicker(ctx context.Context, title string) (string, error) {
 	return runtime.OpenDirectoryDialog(ctx, runtime.OpenDialogOptions{Title: title})
 }
 
-// emitState envia o estado para a interface pelo evento StateEvent.
 func emitState(ctx context.Context, state ViewState) {
 	runtime.EventsEmit(ctx, StateEvent, state)
 }

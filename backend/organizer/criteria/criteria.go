@@ -28,7 +28,6 @@ type File struct {
 	ModTime time.Time
 }
 
-// NewFile descreve o arquivo info dentro da pasta dir.
 func NewFile(dir string, info fs.FileInfo) File {
 	return File{
 		Name:    info.Name(),
@@ -46,9 +45,7 @@ type MetadataReader interface {
 	Pages(ctx context.Context, path, ext string) (int, error)
 }
 
-// Rule é um critério de organização.
 type Rule interface {
-	// Enabled informa se o critério está ligado nas opções.
 	Enabled(opts Options) bool
 	// Applies informa se o critério vale para o arquivo (ex.: resolução só para imagens).
 	Applies(f File) bool

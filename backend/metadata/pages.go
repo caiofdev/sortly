@@ -17,7 +17,6 @@ import (
 // protegendo contra arquivos compactados maliciosos (zip bomb).
 const maxXMLEntrySize = 1 << 20
 
-// PageCounter conta as páginas de um tipo de documento.
 type PageCounter interface {
 	CountPages(ctx context.Context, path string) (int, error)
 }

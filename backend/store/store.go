@@ -21,7 +21,6 @@ import (
 // Para o usuário, equivale a "nada para desfazer".
 var ErrCorrupted = errors.New("store: registro da última operação corrompido")
 
-// MovedItem é um arquivo movido pela organização.
 type MovedItem struct {
 	From string `json:"from"`
 	To   string `json:"to"`
@@ -37,7 +36,6 @@ type Operation struct {
 	CreatedFolders []string `json:"createdFolders"`
 }
 
-// CanUndo informa se há arquivos movidos para desfazer.
 func (o *Operation) CanUndo() bool {
 	return o != nil && len(o.MovedItems) > 0
 }
@@ -66,7 +64,6 @@ func New(path string, log *slog.Logger) *FileStore {
 	return &FileStore{path: path, log: log}
 }
 
-// Path devolve o caminho do arquivo.
 func (s *FileStore) Path() string {
 	return s.path
 }

@@ -45,7 +45,6 @@ type Mover interface {
 	Apply(ctx context.Context, plan organizer.Plan) (organizer.Outcome, error)
 }
 
-// Service desfaz a última organização.
 type Service struct {
 	store     RecordStore
 	mover     Mover

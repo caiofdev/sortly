@@ -44,7 +44,6 @@ type RecordStore interface {
 	Clear() error
 }
 
-// Deps são as dependências do serviço.
 type Deps struct {
 	Metadata criteria.MetadataReader
 	Store    RecordStore
@@ -52,14 +51,12 @@ type Deps struct {
 	Logger   *slog.Logger
 }
 
-// Service executa a organização de ponta a ponta.
 type Service struct {
 	planner  *Planner
 	executor *Executor
 	store    RecordStore
 }
 
-// NewService monta o serviço com as dependências dadas.
 func NewService(d Deps) *Service {
 	loc := d.Location
 	if loc == nil {

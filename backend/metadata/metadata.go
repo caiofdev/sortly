@@ -31,17 +31,14 @@ type Size struct {
 // O valor zero está pronto para uso.
 type Reader struct{}
 
-// Resolution devolve as dimensões da imagem. Veja a função Resolution.
 func (Reader) Resolution(path string) (Size, error) {
 	return Resolution(path)
 }
 
-// Duration devolve a duração do mp4 em segundos. Veja a função Duration.
 func (Reader) Duration(path string) (float64, error) {
 	return Duration(path)
 }
 
-// Pages devolve o número de páginas do documento. Veja a função Pages.
 func (Reader) Pages(ctx context.Context, path, ext string) (int, error) {
 	return Pages(ctx, path, ext)
 }

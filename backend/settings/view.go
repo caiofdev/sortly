@@ -17,7 +17,6 @@ type View struct {
 	Criteria []Criterion `json:"criteria"`
 }
 
-// View monta a visão das preferências para a interface.
 func (st Settings) View() View {
 	lastOne := st.Options.Count() == 1
 	list := make([]Criterion, 0, len(criteria.Keys))

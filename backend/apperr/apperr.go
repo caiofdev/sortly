@@ -15,14 +15,12 @@ type Error struct {
 	msg  string
 }
 
-// New cria um erro com código.
 func New(code, msg string) *Error {
 	return &Error{code: code, msg: msg}
 }
 
 func (e *Error) Error() string { return e.msg }
 
-// Code devolve o código estável do erro.
 func (e *Error) Code() string { return e.code }
 
 // CodeOf devolve o código do primeiro erro com código na cadeia de err, ou
