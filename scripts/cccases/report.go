@@ -29,14 +29,13 @@ type row struct {
 }
 
 func (r row) status() status {
-	switch {
-	case len(r.tests) == 0:
+	if len(r.tests) == 0 {
 		return statusIndirect
-	case r.cases < r.fn.cc:
-		return statusShort
-	default:
-		return statusOK
 	}
+	if r.cases < r.fn.cc {
+		return statusShort
+	}
+	return statusOK
 }
 
 func matchRows(funcs []function, tests []testFunc) []row {

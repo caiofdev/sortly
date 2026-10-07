@@ -31,7 +31,6 @@ const DefaultLanguage = "pt-BR"
 
 var languages = map[string]bool{"pt-BR": true, "en": true}
 
-// Settings são as preferências do usuário.
 type Settings struct {
 	Language string
 	Options  criteria.Options
@@ -59,14 +58,12 @@ func New(path string, log *slog.Logger) *Service {
 	return &Service{path: path, log: log}
 }
 
-// Get devolve as preferências atuais.
 func (s *Service) Get() Settings {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	return s.load()
 }
 
-// SetLanguage troca o idioma.
 func (s *Service) SetLanguage(lang string) (Settings, error) {
 	return s.update(func(st Settings) (Settings, error) {
 		if !languages[lang] {
@@ -118,12 +115,11 @@ func (s *Service) load() Settings {
 	}
 	st := Default()
 	data, err := os.ReadFile(s.path)
-	switch {
-	case errors.Is(err, fs.ErrNotExist):
-	case err != nil:
-		s.log.Warn("preferências ilegíveis; usando o padrão", "path", s.path, "err", err)
-	default:
+	if err == nil {
 		st = s.decode(data)
+	}
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		s.log.Warn("preferências ilegíveis; usando o padrão", "path", s.path, "err", err)
 	}
 	s.current = &st
 	return st

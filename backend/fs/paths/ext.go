@@ -28,12 +28,15 @@ func Ext(name string) string {
 func scanDots(base string) (startDot, preDotState int) {
 	startDot = -1
 	for i := len(base) - 1; i >= 0; i-- {
-		switch {
-		case base[i] == '.' && startDot == -1:
+		if base[i] == '.' && startDot == -1 {
 			startDot = i
-		case base[i] == '.':
+			continue
+		}
+		if base[i] == '.' {
 			preDotState = 1
-		case startDot != -1:
+			continue
+		}
+		if startDot != -1 {
 			preDotState = -1
 		}
 	}

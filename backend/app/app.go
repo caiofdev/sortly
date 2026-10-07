@@ -16,7 +16,6 @@ import (
 	"github.com/caiofdev/sortly/backend/undo"
 )
 
-// Títulos dos seletores de pasta.
 const (
 	SourceDialogTitle      = "Selecione a pasta com os arquivos para organizar"
 	DestinationDialogTitle = "Selecione a pasta de destino para receber os arquivos organizados"
@@ -47,7 +46,6 @@ type SettingsStore interface {
 // DirectoryPicker abre o seletor de pasta e devolve o caminho escolhido ("" se cancelado).
 type DirectoryPicker func(ctx context.Context, title string) (string, error)
 
-// Emitter avisa a interface de que o estado mudou.
 type Emitter func(ctx context.Context, state ViewState)
 
 // Deps são as dependências da fachada. Logger, Emit e Now são opcionais.
@@ -79,7 +77,6 @@ type App struct {
 	nextID int
 }
 
-// New cria a fachada com as dependências dadas.
 func New(d Deps) *App {
 	if d.Logger == nil {
 		d.Logger = slog.New(slog.DiscardHandler)
@@ -112,12 +109,10 @@ func (a *App) GetState() ViewState {
 	return a.update(func(*ViewState) {})
 }
 
-// SelectSource abre o seletor da pasta de origem.
 func (a *App) SelectSource() ViewState {
 	return a.pick(SourceDialogTitle, ActionSelectSource, func(s *ViewState, p string) { s.SourceFolderPath = p })
 }
 
-// SelectDestination abre o seletor da pasta de destino.
 func (a *App) SelectDestination() ViewState {
 	return a.pick(DestinationDialogTitle, ActionSelectDestination, func(s *ViewState, p string) { s.DestinationFolderPath = p })
 }
@@ -125,10 +120,11 @@ func (a *App) SelectDestination() ViewState {
 func (a *App) pick(title, action string, set func(*ViewState, string)) ViewState {
 	path, err := a.deps.PickDir(a.runtimeContext(), title)
 	return a.update(func(s *ViewState) {
-		switch {
-		case err != nil:
+		if err != nil {
 			a.fail(s, action, err)
-		case path != "":
+			return
+		}
+		if path != "" {
 			set(s, path)
 		}
 	})
@@ -218,18 +214,15 @@ func (a *App) Undo() ViewState {
 	})
 }
 
-// ClearNotifications apaga o histórico de notificações.
 func (a *App) ClearNotifications() ViewState {
 	return a.update(func(s *ViewState) { s.Notifications = nil })
 }
 
-// SetLanguage troca o idioma.
 func (a *App) SetLanguage(lang string) ViewState {
 	_, err := a.deps.Settings.SetLanguage(lang)
 	return a.afterSettings(err)
 }
 
-// SetCriterion liga ou desliga um critério.
 func (a *App) SetCriterion(key string, enabled bool) ViewState {
 	_, err := a.deps.Settings.SetCriterion(key, enabled)
 	return a.afterSettings(err)

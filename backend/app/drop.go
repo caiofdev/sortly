@@ -24,12 +24,11 @@ func resolveDroppedPath(path string) (string, error) {
 	if err != nil {
 		return "", ErrDroppedMissing
 	}
-	switch {
-	case info.IsDir():
+	if info.IsDir() {
 		return path, nil
-	case info.Mode().IsRegular():
-		return filepath.Dir(path), nil
-	default:
-		return "", ErrDroppedUnsupported
 	}
+	if info.Mode().IsRegular() {
+		return filepath.Dir(path), nil
+	}
+	return "", ErrDroppedUnsupported
 }

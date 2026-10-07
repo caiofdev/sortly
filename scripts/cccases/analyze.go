@@ -111,20 +111,27 @@ func receiverType(fn *ast.FuncDecl) string {
 		return ""
 	}
 	expr := fn.Recv.List[0].Type
-	for {
-		switch x := expr.(type) {
-		case *ast.StarExpr:
-			expr = x.X
-		case *ast.IndexExpr:
-			expr = x.X
-		case *ast.IndexListExpr:
-			expr = x.X
-		case *ast.Ident:
-			return x.Name
-		default:
-			return ""
+	for expr != nil {
+		if id, ok := expr.(*ast.Ident); ok {
+			return id.Name
 		}
+		expr = typeOperand(expr)
 	}
+	return ""
+}
+
+// typeOperand desembrulha *T, T[P] e T[P, Q]; devolve nil para o resto.
+func typeOperand(expr ast.Expr) ast.Expr {
+	if x, ok := expr.(*ast.StarExpr); ok {
+		return x.X
+	}
+	if x, ok := expr.(*ast.IndexExpr); ok {
+		return x.X
+	}
+	if x, ok := expr.(*ast.IndexListExpr); ok {
+		return x.X
+	}
+	return nil
 }
 
 // complexity segue a definição do gocyclo: 1 + if, for, range, case e comm
@@ -132,25 +139,37 @@ func receiverType(fn *ast.FuncDecl) string {
 func complexity(fn ast.Node) int {
 	cc := 1
 	ast.Inspect(fn, func(n ast.Node) bool {
-		switch x := n.(type) {
-		case *ast.IfStmt, *ast.ForStmt, *ast.RangeStmt:
+		if isBranch(n) || isNonDefaultCase(n) || isLogicalOp(n) {
 			cc++
-		case *ast.CaseClause:
-			if x.List != nil {
-				cc++
-			}
-		case *ast.CommClause:
-			if x.Comm != nil {
-				cc++
-			}
-		case *ast.BinaryExpr:
-			if x.Op == token.LAND || x.Op == token.LOR {
-				cc++
-			}
 		}
 		return true
 	})
 	return cc
+}
+
+func isBranch(n ast.Node) bool {
+	_, isIf := n.(*ast.IfStmt)
+	return isIf || isLoop(n)
+}
+
+func isLoop(n ast.Node) bool {
+	_, isFor := n.(*ast.ForStmt)
+	_, isRange := n.(*ast.RangeStmt)
+	return isFor || isRange
+}
+
+// isNonDefaultCase: o default de switch e select não conta como decisão.
+func isNonDefaultCase(n ast.Node) bool {
+	if c, ok := n.(*ast.CaseClause); ok {
+		return c.List != nil
+	}
+	c, ok := n.(*ast.CommClause)
+	return ok && c.Comm != nil
+}
+
+func isLogicalOp(n ast.Node) bool {
+	b, ok := n.(*ast.BinaryExpr)
+	return ok && (b.Op == token.LAND || b.Op == token.LOR)
 }
 
 // collectTests devolve os testes do arquivo e guarda em helpers as demais
@@ -211,19 +230,24 @@ func keys(m map[string]bool) []string {
 func references(body *ast.BlockStmt) (calls, idents map[string]bool) {
 	calls, idents = map[string]bool{}, map[string]bool{}
 	ast.Inspect(body, func(n ast.Node) bool {
-		switch x := n.(type) {
-		case *ast.Ident:
-			idents[x.Name] = true
-		case *ast.CallExpr:
-			switch fun := x.Fun.(type) {
-			case *ast.Ident:
-				calls[fun.Name] = true
-			case *ast.SelectorExpr:
-				calls["."+fun.Sel.Name] = true
-				calls[fun.Sel.Name] = true
-			}
+		if id, ok := n.(*ast.Ident); ok {
+			idents[id.Name] = true
+		}
+		if call, ok := n.(*ast.CallExpr); ok {
+			recordCall(calls, call.Fun)
 		}
 		return true
 	})
 	return calls, idents
+}
+
+func recordCall(calls map[string]bool, fun ast.Expr) {
+	if id, ok := fun.(*ast.Ident); ok {
+		calls[id.Name] = true
+		return
+	}
+	if sel, ok := fun.(*ast.SelectorExpr); ok {
+		calls["."+sel.Sel.Name] = true
+		calls[sel.Sel.Name] = true
+	}
 }

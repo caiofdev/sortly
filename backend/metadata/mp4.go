@@ -80,10 +80,10 @@ func readBoxHeader(r io.Reader) (string, int64, error) {
 	typ := string(header[4:])
 	headerLen := int64(8)
 
-	switch size {
-	case 0:
+	if size == 0 {
 		return typ, -1, nil
-	case 1:
+	}
+	if size == 1 {
 		var large [8]byte
 		if _, err := io.ReadFull(r, large[:]); err != nil {
 			return "", 0, err

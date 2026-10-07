@@ -1,6 +1,5 @@
 package criteria
 
-// Options diz quais critérios estão ligados.
 type Options struct {
 	ByDuration   bool
 	ByPages      bool
@@ -10,19 +9,16 @@ type Options struct {
 	ByExtension  bool
 }
 
-// Default é o padrão do primeiro uso: só a extensão.
 var Default = Options{ByExtension: true}
 
 // Keys são as chaves dos critérios na ordem em que a interface os mostra. É
 // diferente da ordem de aninhamento das pastas (veja New).
 var Keys = []string{"byDuration", "byPages", "byResolution", "byDate", "bySize", "byExtension"}
 
-// Any informa se pelo menos um critério está ligado.
 func (o Options) Any() bool {
 	return o != Options{}
 }
 
-// Count devolve quantos critérios estão ligados.
 func (o Options) Count() int {
 	n := 0
 	for _, key := range Keys {
@@ -52,20 +48,19 @@ func (o Options) With(key string, on bool) (Options, bool) {
 	return o, true
 }
 
+var fields = map[string]func(*Options) *bool{
+	"byDuration":   func(o *Options) *bool { return &o.ByDuration },
+	"byPages":      func(o *Options) *bool { return &o.ByPages },
+	"byResolution": func(o *Options) *bool { return &o.ByResolution },
+	"byDate":       func(o *Options) *bool { return &o.ByDate },
+	"bySize":       func(o *Options) *bool { return &o.BySize },
+	"byExtension":  func(o *Options) *bool { return &o.ByExtension },
+}
+
 func (o *Options) field(key string) *bool {
-	switch key {
-	case "byDuration":
-		return &o.ByDuration
-	case "byPages":
-		return &o.ByPages
-	case "byResolution":
-		return &o.ByResolution
-	case "byDate":
-		return &o.ByDate
-	case "bySize":
-		return &o.BySize
-	case "byExtension":
-		return &o.ByExtension
+	get, ok := fields[key]
+	if !ok {
+		return nil
 	}
-	return nil
+	return get(o)
 }
