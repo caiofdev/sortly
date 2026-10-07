@@ -44,4 +44,5 @@
 - [ ] Retorno antecipado em vez de `else` aninhado.
 - [ ] **Sem `switch`/`case`** (Go e JS), por decisão do projeto: use mapa de lookup (chave → valor ou função), `if` com retorno antecipado ou Strategy. Em Go, type switch vira `if v, ok := x.(T); ok` ou um mapa de handlers. Todo `switch` é achado 🔵.
 - [ ] Comentário explica o porquê; comentário que repete o código, tabela de CC em arquivo de teste ou narrativa da migração ("como na versão Electron") é achado 🔵.
+- [ ] Comentário que fica termina com a issue que motivou o trecho, entre parênteses (`(#52)`, `(ADR 0004, #8)`), sem repetir o nome do identificador; regressão começa com `Regressão (#N):`. Sem a referência é achado 🔵.
 - [ ] Números mágicos viram constantes com nome (80 notificações, 10 000 tentativas, 5 MB de log).
