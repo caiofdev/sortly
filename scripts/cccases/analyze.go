@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 )
 
@@ -120,18 +121,21 @@ func receiverType(fn *ast.FuncDecl) string {
 	return ""
 }
 
-// typeOperand desembrulha *T, T[P] e T[P, Q]; devolve nil para o resto.
+// typeOperands desembrulha *T, T[P] e T[P, Q] até o nome do tipo. A chave é
+// o tipo do nó, então a asserção dentro de cada função nunca falha.
+var typeOperands = map[reflect.Type]func(ast.Expr) ast.Expr{
+	reflect.TypeFor[*ast.StarExpr]():      func(e ast.Expr) ast.Expr { return e.(*ast.StarExpr).X },
+	reflect.TypeFor[*ast.IndexExpr]():     func(e ast.Expr) ast.Expr { return e.(*ast.IndexExpr).X },
+	reflect.TypeFor[*ast.IndexListExpr](): func(e ast.Expr) ast.Expr { return e.(*ast.IndexListExpr).X },
+}
+
+// typeOperand devolve o operando de *T, T[P] ou T[P, Q], e nil para o resto.
 func typeOperand(expr ast.Expr) ast.Expr {
-	if x, ok := expr.(*ast.StarExpr); ok {
-		return x.X
+	unwrap, ok := typeOperands[reflect.TypeOf(expr)]
+	if !ok {
+		return nil
 	}
-	if x, ok := expr.(*ast.IndexExpr); ok {
-		return x.X
-	}
-	if x, ok := expr.(*ast.IndexListExpr); ok {
-		return x.X
-	}
-	return nil
+	return unwrap(expr)
 }
 
 // complexity segue a definição do gocyclo: 1 + if, for, range, case e comm
