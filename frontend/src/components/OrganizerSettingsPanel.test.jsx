@@ -1,20 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import organizerCopy from '../i18n/organizerCopy';
-import FolderPathsPanel from './FolderPathsPanel';
-import { getItemTone } from './NotificationsCenter';
 import OrganizerSettingsPanel from './OrganizerSettingsPanel';
 
 const labels = organizerCopy['pt-BR'];
-
-describe('getItemTone', () => {
-  it('organize é verde; restore e error compartilham o tom de alerta; o resto é azul', () => {
-    expect(getItemTone('organize')).toContain('#22C55E');
-    expect(getItemTone('restore')).toBe(getItemTone('error'));
-    expect(getItemTone('info')).toContain('#3B82F6');
-    expect(getItemTone('qualquer')).toBe(getItemTone('info'));
-  });
-});
 
 describe('OrganizerSettingsPanel', () => {
   it('mostra os critérios na ordem recebida e desabilita o travado', () => {
@@ -52,24 +41,23 @@ describe('OrganizerSettingsPanel', () => {
     fireEvent.click(boxes[3]);
     expect(onCriterionChange).toHaveBeenCalledWith('byDate', true);
   });
-});
 
-describe('FolderPathsPanel', () => {
-  it('abrevia o destino de 73 caracteres e mantém o caminho completo no title', () => {
-    const long = `C:\\${'x'.repeat(70)}`;
-    render(
-      <FolderPathsPanel
-        sourceLabel="Origem"
-        destinationLabel="Destino"
-        sourcePath="C:\\origem"
-        destinationPath={long}
-        destinationSelectHintPrefix=""
-        destinationSelectHintAction="Selecione"
-        onSelectDestinationFolder={vi.fn()}
+  it.each([
+    [true, 'opacity-100'],
+    [false, 'pointer-events-none']
+  ])('aberto = %s: painel com %s; a engrenagem alterna', (isOpen, cls) => {
+    const onToggle = vi.fn();
+    const { container } = render(
+      <OrganizerSettingsPanel
+        isOpen={isOpen}
+        labels={labels}
+        criteria={[]}
+        onToggle={onToggle}
+        onCriterionChange={vi.fn()}
       />
     );
-    const shown = screen.getByTitle(long);
-    expect(shown.textContent).toContain('...');
-    expect(shown.textContent).toHaveLength(67);
+    expect(container.querySelector('h3').parentElement.className).toContain(cls);
+    fireEvent.click(screen.getByRole('button', { name: labels.settingsTitle }));
+    expect(onToggle).toHaveBeenCalled();
   });
 });

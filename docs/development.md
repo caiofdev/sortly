@@ -61,7 +61,9 @@ sortly/
     fs/files/             # mover, reservar nome, pastas
     tests/                # testes de integração (só API pública)
   frontend/
-    src/                  # React + Tailwind
+    src/                  # React + Tailwind; cada módulo com o seu .test.js(x) ao lado
+    tests/                # testes de integração (App inteiro com os bindings reais)
+    vitest.setup.js       # configuração do Vitest (jest-dom e limpeza)
     wailsjs/              # bindings gerados pelo Wails (versionados)
   build/                  # ícones, manifesto do Windows, Info.plist, NSIS e nfpm
   scripts/
@@ -75,7 +77,7 @@ sortly/
 
 ### Bindings do frontend
 
-Os métodos públicos de `backend/app.App` viram funções em `frontend/wailsjs/go/app/App.js`. O `wails dev` e o `wails build` regeneram esses arquivos; depois de mudar a assinatura de um método, rode um dos dois e versione o resultado. O frontend não importa os bindings diretamente: tudo passa por `services/sortlyGateway.js`, e cada binding devolve o estado completo da tela ([ADR 0005](adr/0005-estado-da-tela-no-backend.md)).
+Os métodos públicos de `backend/app.App` viram funções em `frontend/wailsjs/go/app/App.js`. O `wails dev` e o `wails build` regeneram esses arquivos; depois de mudar a assinatura de um método, rode um dos dois e versione o resultado. Só o `hooks/useViewState.js` importa os bindings e o runtime do Wails, e cada binding devolve o estado completo da tela ([ADR 0005](adr/0005-estado-da-tela-no-backend.md)).
 
 ## 4. Testes e qualidade
 
@@ -123,7 +125,7 @@ As regras completas, com os valores esperados, estão em [organization-rules.md]
 - **Go:** testes em tabela (`t.Run`), `t.TempDir()` para tocar no disco e fakes para as interfaces (`FileSystem`, `OperationStore`, …).
 - **Integração:** organizar e depois desfazer deve devolver a árvore de arquivos idêntica à original (comparada por hash).
 - **Regressão:** todo bug corrigido ganha um teste que falharia no código antigo.
-- **Frontend:** Vitest + React Testing Library + jsdom. Os hooks são testados com `renderHook`; o backend é mockado.
+- **Frontend:** Vitest + React Testing Library + jsdom. Um arquivo de teste por módulo, ao lado dele, como no backend; `frontend/tests/` só para integração. O `useViewState` é testado com `renderHook` e `vi.mock` dos bindings e do runtime; o teste de integração usa os bindings reais com `window.go` e `window.runtime` falsos.
 
 ### 4.4 Cobertura
 

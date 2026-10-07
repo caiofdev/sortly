@@ -23,11 +23,11 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom',
-    setupFiles: ['./src/test/setup.js'],
+    setupFiles: ['./vitest.setup.js'],
     restoreMocks: true,
     coverage: {
       include: ['src/**/*.{js,jsx}'],
-      exclude: ['src/test/**', 'src/main.jsx']
+      exclude: ['src/main.jsx']
     }
   }
 });
