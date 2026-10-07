@@ -94,7 +94,7 @@ func TestExportedPathHelpers(t *testing.T) {
 	if IsInside(root, child) {
 		t.Error("IsInside(root, child) = true")
 	}
-	// No Windows e no macOS a comparação ignora maiúsculas; no Linux, não.
+	// No Windows e no macOS a comparação ignora maiúsculas; no Linux, não (#58).
 	if got := Equal(child, strings.ToUpper(child)); got != caseInsensitive && strings.ToUpper(child) != child {
 		t.Errorf("Equal com caixa diferente = %v, caseInsensitive = %v", got, caseInsensitive)
 	}

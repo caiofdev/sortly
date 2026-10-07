@@ -12,8 +12,8 @@ import (
 )
 
 // Substituíveis nos testes para simular falhas que não dá para provocar de
-// forma portável (outro volume, origem que não pode ser removida, disco que
-// não confirma a gravação).
+// forma portável: outro volume, origem que não pode ser removida, disco que não
+// confirma a gravação (#5, #52).
 var (
 	rename     = os.Rename
 	removeFile = os.Remove
@@ -21,10 +21,9 @@ var (
 	syncDir    = syncParentDir
 )
 
-// Move move src para dst, substituindo dst se ele existir (por exemplo, um
-// nome reservado com Reserve). Se src e dst estão em volumes diferentes, o
-// rename falha; nesse caso o arquivo é copiado, a data de modificação é
-// preservada e a origem é removida.
+// Substitui dst se ele existir (um nome reservado com Reserve). Entre volumes o
+// rename falha, e o arquivo é copiado, com a data de modificação preservada,
+// antes de a origem ser removida (#5).
 func Move(src, dst string) error {
 	err := rename(paths.Native(src), paths.Native(dst))
 	if err == nil || !isCrossDevice(err) {
@@ -33,9 +32,8 @@ func Move(src, dst string) error {
 	return copyThenRemove(src, dst)
 }
 
-// MoveUnique move src para o primeiro nome livre a partir de dst (veja
-// Reserve) e devolve o caminho final. Nunca sobrescreve um arquivo existente.
-// Se o movimento falhar, a reserva é desfeita.
+// Nunca sobrescreve: usa o primeiro nome livre a partir de dst (veja Reserve) e
+// desfaz a reserva se o movimento falhar (#5).
 func MoveUnique(src, dst string) (string, error) {
 	final, err := Reserve(dst)
 	if err != nil {
@@ -48,7 +46,7 @@ func MoveUnique(src, dst string) (string, error) {
 	return final, nil
 }
 
-// MkdirAll cria a pasta e as intermediárias (com paths.Native no Windows).
+// Com paths.Native, para nomes que o Win32 normalizaria (#8).
 func MkdirAll(path string) error {
 	return os.MkdirAll(paths.Native(path), 0o755)
 }
@@ -57,9 +55,8 @@ func isCrossDevice(err error) bool {
 	return errors.Is(err, errCrossDevice)
 }
 
-// copyThenRemove é o fallback entre volumes. Em qualquer falha, a cópia é
-// apagada e a origem continua intacta, então o arquivo nunca fica duplicado
-// nem perdido.
+// Em qualquer falha, a cópia é apagada e a origem fica intacta: o arquivo
+// nunca fica duplicado nem perdido (#5).
 func copyThenRemove(src, dst string) error {
 	info, err := os.Stat(paths.Native(src))
 	if err != nil {
@@ -99,7 +96,7 @@ func copyFile(src, dst string, info fs.FileInfo) error {
 		return err
 	}
 	// Sem o Sync, a cópia pode estar só no cache do sistema quando a origem for
-	// apagada: uma queda de energia ou um pendrive removido perderia o arquivo.
+	// apagada: uma queda de energia ou um pendrive removido perderia o arquivo (#52).
 	if err := errors.Join(syncFile(out), out.Close()); err != nil {
 		return err
 	}

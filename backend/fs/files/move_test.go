@@ -36,7 +36,7 @@ func TestMove(t *testing.T) {
 		assertExists(t, src)
 	})
 
-	t.Run("outro volume usa cópia e preserva a data (B3)", func(t *testing.T) {
+	t.Run("outro volume usa cópia e preserva a data (#5)", func(t *testing.T) {
 		dir := t.TempDir()
 		src, dst := writeFile(t, dir, "a.txt", "conteúdo"), filepath.Join(dir, "b.txt")
 		mtime := time.Date(2026, 3, 5, 23, 59, 59, 0, time.Local)

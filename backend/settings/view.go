@@ -2,16 +2,15 @@ package settings
 
 import "github.com/caiofdev/sortly/backend/organizer/criteria"
 
-// Criterion é um critério como a interface o mostra. Locked marca o último
-// critério ligado, que não pode ser desmarcado.
+// Locked marca o último critério ligado, que não pode ser desmarcado (#44).
 type Criterion struct {
 	Key     string `json:"key"`
 	Enabled bool   `json:"enabled"`
 	Locked  bool   `json:"locked"`
 }
 
-// View são as preferências prontas para a interface: o idioma e os critérios
-// na ordem dos checkboxes, já com a regra do último critério aplicada.
+// Os critérios vêm na ordem dos checkboxes, já com a regra do último critério aplicada
+// (#44).
 type View struct {
 	Language string      `json:"language"`
 	Criteria []Criterion `json:"criteria"`

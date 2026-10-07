@@ -1,7 +1,7 @@
-// Package organizer organiza os arquivos de uma pasta em subpastas, segundo
-// os critérios escolhidos: valida o pedido, planeja (Planner), executa
-// (Executor) e grava o registro para desfazer. As regras de negócio estão em
-// docs/organization-rules.md.
+// Package organizer organiza os arquivos de uma pasta em subpastas, segundo os
+// critérios escolhidos: valida o pedido, planeja (Planner), executa (Executor)
+// e grava o registro para desfazer. As regras estão em
+// docs/organization-rules.md (#8).
 package organizer
 
 import (
@@ -16,15 +16,14 @@ import (
 	"github.com/caiofdev/sortly/backend/store"
 )
 
-// Request é o pedido de organização. Options vem das preferências salvas.
+// Options vem das preferências salvas (#44).
 type Request struct {
 	SourceFolderPath      string
 	DestinationFolderPath string
 	Options               criteria.Options
 }
 
-// Result resume a organização. Não traz mensagem pronta: o frontend monta o
-// texto no idioma do usuário (B7).
+// Sem mensagem pronta: o frontend monta o texto no idioma do usuário (ADR 0004, #8).
 type Result struct {
 	SourceFolderPath        string `json:"sourceFolderPath"`
 	DestinationFolderPath   string `json:"destinationFolderPath"`
@@ -37,7 +36,6 @@ type Result struct {
 	CanUndo                 bool   `json:"canUndo"`
 }
 
-// RecordStore guarda o registro da última organização. É satisfeito por *store.FileStore.
 type RecordStore interface {
 	Load() (*store.Operation, error)
 	Save(store.Operation) error
@@ -47,7 +45,7 @@ type RecordStore interface {
 type Deps struct {
 	Metadata criteria.MetadataReader
 	Store    RecordStore
-	Location *time.Location // fuso das pastas por data; nil = fuso local
+	Location *time.Location // fuso das pastas por data; nil = fuso local (#8)
 	Logger   *slog.Logger
 }
 
@@ -69,10 +67,8 @@ func NewService(d Deps) *Service {
 	}
 }
 
-// Organize valida o pedido, move os arquivos e grava o registro para desfazer.
-//
 // Mesmo com erro (falha ao gravar o registro, contexto cancelado), o Result
-// descreve o que foi feito, porque arquivos podem ter sido movidos.
+// descreve o que foi feito, porque arquivos podem ter sido movidos (#8).
 func (s *Service) Organize(ctx context.Context, req Request) (Result, error) {
 	src, dst, opts, err := validate(req)
 	if err != nil {
@@ -100,8 +96,8 @@ func (s *Service) Organize(ctx context.Context, req Request) (Result, error) {
 	return result, errors.Join(applyErr, saveErr)
 }
 
-// record grava o registro só se algo foi movido. Uma organização sem
-// movimentos preserva o desfazer da anterior (B2).
+// Só grava se algo foi movido: uma organização sem movimentos preserva o desfazer da
+// anterior (#8).
 func (s *Service) record(plan Plan, out Outcome) error {
 	if len(out.MovedItems) == 0 {
 		return nil
@@ -113,9 +109,9 @@ func (s *Service) record(plan Plan, out Outcome) error {
 		CreatedFolders:        out.CreatedFolders,
 	}
 	if err := s.store.Save(op); err != nil {
-		// O registro que ficou é da organização anterior: se sobrevivesse, o
-		// próximo desfazer (inclusive após reabrir o app) desfaria a errada.
-		// A falha ao apagar já vai para o log do store.
+		// O registro que ficou é da organização anterior: se sobrevivesse, o próximo
+		// desfazer (inclusive após reabrir o app) desfaria a errada. A falha ao apagar
+		// já vai para o log do store (#53).
 		_ = s.store.Clear()
 		return fmt.Errorf("%w: %w", ErrRecordNotSaved, err)
 	}
@@ -130,9 +126,9 @@ func (s *Service) canUndo(out Outcome, saveErr error) bool {
 	return err == nil && previous.CanUndo()
 }
 
-// validate checa origem, destino e critérios nessa ordem, que decide qual erro
-// o usuário vê quando há mais de um problema.
-// Destino vazio usa a própria origem; destino inexistente será criado.
+// A ordem (origem, destino, critérios) decide qual erro o usuário vê quando há
+// mais de um problema. Destino vazio usa a própria origem; destino inexistente
+// será criado (#8).
 func validate(req Request) (src, dst string, opts criteria.Options, err error) {
 	src = req.SourceFolderPath
 	if src == "" || !isDir(src) {

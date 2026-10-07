@@ -1,6 +1,6 @@
-// Package app contém a fachada exposta ao frontend pelo Wails e a
-// configuração da janela. A fachada guarda o estado da tela (ViewState) e
-// delega as regras aos serviços de backend/; o frontend só renderiza (ADR 0005).
+// Package app é a fachada exposta ao frontend pelo Wails e a configuração da
+// janela: guarda o estado da tela (ViewState) e delega as regras aos serviços;
+// o frontend só renderiza (ADR 0005, #45).
 package app
 
 import (
@@ -21,34 +21,30 @@ const (
 	DestinationDialogTitle = "Selecione a pasta de destino para receber os arquivos organizados"
 )
 
-// Organizer organiza uma pasta. É satisfeito por *organizer.Service.
 type Organizer interface {
 	Organize(ctx context.Context, req organizer.Request) (organizer.Result, error)
 }
 
-// Undoer desfaz a última organização. É satisfeito por *undo.Service.
 type Undoer interface {
 	Undo(ctx context.Context) (undo.Result, error)
 }
 
-// RecordReader lê o registro da última organização. É satisfeito por *store.FileStore.
 type RecordReader interface {
 	Load() (*store.Operation, error)
 }
 
-// SettingsStore lê e altera as preferências. É satisfeito por *settings.Service.
 type SettingsStore interface {
 	Get() settings.Settings
 	SetLanguage(lang string) (settings.Settings, error)
 	SetCriterion(key string, enabled bool) (settings.Settings, error)
 }
 
-// DirectoryPicker abre o seletor de pasta e devolve o caminho escolhido ("" se cancelado).
+// Devolve "" quando o usuário cancela o seletor (#10).
 type DirectoryPicker func(ctx context.Context, title string) (string, error)
 
 type Emitter func(ctx context.Context, state ViewState)
 
-// Deps são as dependências da fachada. Logger, Emit e Now são opcionais.
+// Logger, Emit e Now são opcionais (#10).
 type Deps struct {
 	Organizer Organizer
 	Undoer    Undoer
@@ -60,16 +56,15 @@ type Deps struct {
 	Logger    *slog.Logger
 }
 
-// App é a fachada exposta ao frontend. Seus métodos públicos viram os
-// bindings JavaScript gerados em frontend/wailsjs/go/app/App.js; todos
-// devolvem o estado completo da tela, e os erros viram notificações.
+// Os métodos públicos viram os bindings em frontend/wailsjs/go/app/App.js;
+// todos devolvem o estado completo da tela, e os erros viram notificações (ADR 0005, #45).
 type App struct {
 	ctx     context.Context
 	started bool
 	deps    Deps
 	log     *slog.Logger
 
-	// work impede organizar e desfazer ao mesmo tempo; mu protege state.
+	// work impede organizar e desfazer ao mesmo tempo; mu protege state (#45).
 	work   sync.Mutex
 	mu     sync.Mutex
 	state  ViewState
@@ -87,7 +82,7 @@ func New(d Deps) *App {
 	return &App{ctx: context.Background(), deps: d, log: d.Logger}
 }
 
-// startup guarda o contexto do runtime do Wails, necessário para diálogos e eventos.
+// O contexto do runtime do Wails é necessário para diálogos e eventos (#3).
 func (a *App) startup(ctx context.Context) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -95,16 +90,14 @@ func (a *App) startup(ctx context.Context) {
 	a.started = true
 }
 
-// runtimeContext devolve o contexto do Wails guardado no startup, que roda em
-// outra goroutine.
+// Lido sob o lock porque o startup roda em outra goroutine (#45).
 func (a *App) runtimeContext() context.Context {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	return a.ctx
 }
 
-// GetState devolve o estado atual. Na primeira chamada, recupera a última
-// organização para que ela possa ser desfeita.
+// Na primeira chamada, recupera a última organização para que ela possa ser desfeita (#45).
 func (a *App) GetState() ViewState {
 	return a.update(func(*ViewState) {})
 }
@@ -130,7 +123,7 @@ func (a *App) pick(title, action string, set func(*ViewState, string)) ViewState
 	})
 }
 
-// DropPaths define a origem a partir dos itens soltos no painel; usa o primeiro.
+// Só o primeiro item solto vale (#12).
 func (a *App) DropPaths(paths []string) ViewState {
 	if len(paths) == 0 {
 		return a.GetState()
@@ -146,8 +139,7 @@ func (a *App) DropPaths(paths []string) ViewState {
 	})
 }
 
-// Organize organiza a pasta de origem com os critérios salvos. Destino vazio
-// usa a própria origem. Com outra ação em andamento, não faz nada.
+// Destino vazio usa a própria origem. Com outra ação em andamento, não faz nada (#45).
 func (a *App) Organize() ViewState {
 	if !a.work.TryLock() {
 		return a.GetState()
@@ -177,9 +169,9 @@ func (a *App) Organize() ViewState {
 	})
 }
 
-// applyOrganize leva o resultado ao estado. Com arquivos movidos, o Result vale
-// mesmo com erro: se o registro não foi salvo, o desfazer anterior não pode
-// continuar disponível, porque desfaria a organização errada.
+// Com arquivos movidos, o Result vale mesmo com erro: se o registro não foi
+// salvo, o desfazer anterior não pode continuar disponível, porque desfaria a
+// organização errada (#53).
 func (a *App) applyOrganize(s *ViewState, result organizer.Result, err error) {
 	if err == nil || result.MovedFiles > 0 {
 		s.HasUndo = result.CanUndo
@@ -193,7 +185,7 @@ func (a *App) applyOrganize(s *ViewState, result organizer.Result, err error) {
 	a.notify(s, Notification{Kind: KindOrganize, Code: CodeOrganizeDone, Action: ActionOrganize, Organize: &result})
 }
 
-// Undo desfaz a última organização. Com outra ação em andamento, não faz nada.
+// Com outra ação em andamento, não faz nada (#45).
 func (a *App) Undo() ViewState {
 	if !a.work.TryLock() {
 		return a.GetState()
@@ -236,17 +228,17 @@ func (a *App) afterSettings(err error) ViewState {
 	})
 }
 
-// update aplica change ao estado, emite o estado novo e o devolve. As
-// preferências entram na hora, lidas do serviço, para nunca ficarem defasadas.
+// As preferências entram em todo estado, lidas do serviço, para nunca ficarem defasadas
+// (#44).
 func (a *App) update(change func(*ViewState)) ViewState {
 	a.mu.Lock()
 	a.ensureLoaded()
 	change(&a.state)
 	a.state.Version++
 	snapshot := a.state
-	// Lista sempre presente (nunca null no JSON): a interface percorre direto.
+	// Lista sempre presente (nunca null no JSON): a interface percorre direto (#45).
 	snapshot.Notifications = append([]Notification{}, a.state.Notifications...)
-	// Lidas sob o lock para que uma versão maior nunca traga preferências mais antigas.
+	// Sob o lock, para que uma versão maior nunca traga preferências mais antigas (#55).
 	snapshot.Settings = a.deps.Settings.Get().View()
 	ctx, started := a.ctx, a.started
 	a.mu.Unlock()
@@ -257,8 +249,7 @@ func (a *App) update(change func(*ViewState)) ViewState {
 	return snapshot
 }
 
-// ensureLoaded recupera, uma única vez, a última organização desfazível.
-// Um registro corrompido conta como "nada para desfazer".
+// Só uma vez; um registro corrompido conta como "nada para desfazer" (#45).
 func (a *App) ensureLoaded() {
 	if a.loaded {
 		return
@@ -285,8 +276,8 @@ func (a *App) notify(s *ViewState, n Notification) {
 	s.push(n)
 }
 
-// fail registra o erro completo no log e notifica só o código estável (ex.:
-// "NOTHING_TO_UNDO"), que a interface traduz para o idioma do usuário.
+// O erro completo vai para o log; a interface recebe só o código estável
+// (ex.: "NOTHING_TO_UNDO") e o traduz (ADR 0004, #45).
 func (a *App) fail(s *ViewState, action string, err error) {
 	code := apperr.CodeOf(err)
 	a.log.Error("falha", "acao", action, "codigo", code, "err", err)

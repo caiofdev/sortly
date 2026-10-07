@@ -79,7 +79,6 @@ func (f *fakeSettings) SetCriterion(key string, enabled bool) (settings.Settings
 	return f.current, nil
 }
 
-// newTestApp preenche as dependências que o teste não informou com fakes neutros.
 func newTestApp(d Deps) (*App, *bytes.Buffer) {
 	var logs bytes.Buffer
 	d.Logger = slog.New(slog.NewTextHandler(&logs, nil))

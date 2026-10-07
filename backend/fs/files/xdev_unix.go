@@ -10,9 +10,8 @@ import (
 
 var errCrossDevice error = syscall.EXDEV
 
-// syncParentDir grava em disco a entrada da pasta onde a cópia foi criada. No
-// Unix, o Sync do arquivo não garante o nome: depois de uma queda, o conteúdo
-// pode estar no disco sem nenhuma pasta apontando para ele.
+// No Unix, o Sync do arquivo não grava o nome na pasta: depois de uma queda, o
+// conteúdo pode estar no disco sem nenhuma pasta apontando para ele (#52).
 func syncParentDir(dir string) error {
 	d, err := os.Open(dir)
 	if err != nil {

@@ -48,7 +48,7 @@ func TestOpen(t *testing.T) {
 
 	t.Run("arquivo de log não abre", func(t *testing.T) {
 		dir := t.TempDir()
-		if err := os.MkdirAll(filepath.Join(dir, fileName, "x"), 0o755); err != nil { // sortly.log é uma pasta
+		if err := os.MkdirAll(filepath.Join(dir, fileName, "x"), 0o755); err != nil { // sortly.log é uma pasta (#10)
 			t.Fatal(err)
 		}
 		if _, _, err := Open(dir); err == nil {

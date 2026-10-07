@@ -9,11 +9,11 @@ import (
 	"testing"
 )
 
-// Os valores esperados são os do pdf-lib e do JSZip usados na versão 1.0.
+// Os valores esperados são os do pdf-lib e do JSZip usados na versão 1.0 (#7).
 func TestPagesFixtures(t *testing.T) {
 	cases := []struct {
 		file    string
-		want    int // 0 = "pages-unknown" na versão 1.0
+		want    int // 0 = "pages-unknown" na versão 1.0 (#7)
 		wantErr error
 	}{
 		{"1-page.pdf", 1, nil},

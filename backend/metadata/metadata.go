@@ -1,10 +1,9 @@
 // Package metadata lê as informações usadas pelos critérios de organização:
 // resolução de imagens, duração de vídeos mp4 e número de páginas de documentos.
 //
-// O pacote só lê valores; os nomes de pasta ("1920x1080", "pages-12",
-// "duration-00h01m00s", "unknown") são responsabilidade do organizador.
-// O comportamento segue as bibliotecas da versão 1.0 (image-size,
-// music-metadata, pdf-lib e JSZip), conferido contra elas nas mesmas fixtures.
+// Só lê valores; os nomes de pasta ("1920x1080", "pages-12", "unknown") são do
+// organizador. O comportamento segue as bibliotecas da versão 1.0 (image-size,
+// music-metadata, pdf-lib e JSZip), conferido contra elas nas mesmas fixtures (#7).
 package metadata
 
 import (
@@ -13,22 +12,20 @@ import (
 )
 
 var (
-	// ErrNoMetadata indica que o arquivo foi lido, mas a informação não existe
-	// ou é inválida (dimensão zero, duração zero, contagem de páginas ausente).
+	// O arquivo foi lido, mas a informação não existe ou é inválida: dimensão zero,
+	// duração zero, contagem de páginas ausente (#7).
 	ErrNoMetadata = errors.New("metadata: informação indisponível")
 
-	// ErrUnsupported indica que não há leitor para o tipo de arquivo (ex.: .doc).
+	// Sem leitor para o tipo de arquivo, como .doc (#7).
 	ErrUnsupported = errors.New("metadata: tipo de arquivo não suportado")
 )
 
-// Size é a largura e altura de uma imagem, em pixels.
 type Size struct {
 	Width  int
 	Height int
 }
 
-// Reader agrupa os leitores do pacote, para ser injetado no organizador.
-// O valor zero está pronto para uso.
+// O valor zero está pronto para uso (#7).
 type Reader struct{}
 
 func (Reader) Resolution(path string) (Size, error) {

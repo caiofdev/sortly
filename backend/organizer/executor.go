@@ -9,16 +9,16 @@ import (
 	"github.com/caiofdev/sortly/backend/store"
 )
 
-// Outcome é o journal da execução: o que foi movido de fato.
+// O journal da execução: só o que foi movido de fato (#8).
 type Outcome struct {
 	MovedItems []store.MovedItem
-	// CreatedFolders são só as pastas que não existiam antes, da mais funda
-	// para a mais rasa em cada movimento: o desfazer remove apenas essas.
+	// Só as pastas que não existiam antes, da mais funda para a mais rasa em cada
+	// movimento: o desfazer remove apenas essas (#57).
 	CreatedFolders []string
 	FailedFiles    int
 }
 
-// Executor aplica um plano, movendo um arquivo por vez sem sobrescrever nada.
+// Um arquivo por vez, sem sobrescrever nada (#8).
 type Executor struct {
 	mkdirAll func(string) error
 	exists   func(string) bool
@@ -26,7 +26,7 @@ type Executor struct {
 	log      *slog.Logger
 }
 
-// NewExecutor cria o executor. Com log nil, nada é registrado.
+// Com log nil, nada é registrado (#8).
 func NewExecutor(log *slog.Logger) *Executor {
 	if log == nil {
 		log = slog.New(slog.DiscardHandler)
@@ -34,10 +34,10 @@ func NewExecutor(log *slog.Logger) *Executor {
 	return &Executor{mkdirAll: files.MkdirAll, exists: files.Exists, move: files.MoveUnique, log: log}
 }
 
-// Apply move os arquivos do plano. Uma falha em um arquivo não interrompe os
-// demais: ela é registrada no log e contada em FailedFiles. Cada movimento
-// concluído entra no journal, então tudo o que foi movido pode ser desfeito
-// (B1). Se o contexto for cancelado, devolve o journal parcial e o erro.
+// Uma falha num arquivo não interrompe os demais: vai para o log e conta em
+// FailedFiles. Cada movimento concluído entra no journal, então tudo o que foi
+// movido pode ser desfeito; com o contexto cancelado, devolve o journal parcial
+// e o erro (#8).
 func (e *Executor) Apply(ctx context.Context, plan Plan) (Outcome, error) {
 	var out Outcome
 	for _, m := range plan.Moves {
@@ -56,8 +56,8 @@ func (e *Executor) Apply(ctx context.Context, plan Plan) (Outcome, error) {
 	return out, nil
 }
 
-// moveOne cria a pasta do destino e move o arquivo. As pastas criadas são
-// devolvidas mesmo se o movimento falhar, para que o desfazer as limpe.
+// As pastas criadas são devolvidas mesmo se o movimento falhar, para que o desfazer as
+// limpe (#57).
 func (e *Executor) moveOne(m Move) (final string, created []string, err error) {
 	dir := filepath.Dir(m.To)
 	missing := e.missingDirs(dir)
@@ -68,8 +68,7 @@ func (e *Executor) moveOne(m Move) (final string, created []string, err error) {
 	return final, missing, err
 }
 
-// missingDirs devolve dir e as pastas acima dele que ainda não existem, da
-// mais funda para a mais rasa.
+// dir e as pastas acima dele que ainda não existem, da mais funda para a mais rasa (#57).
 func (e *Executor) missingDirs(dir string) []string {
 	var missing []string
 	for d := dir; !e.exists(d); {

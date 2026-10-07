@@ -67,7 +67,7 @@ func TestApplyFailureMidBatch(t *testing.T) {
 	out, err := e.Apply(context.Background(), plan)
 
 	if err != nil || out.FailedFiles != 1 || len(out.MovedItems) != 2 {
-		t.Fatalf("Apply = (%+v, %v), want 2 movidos e 1 falha (B1)", out, err)
+		t.Fatalf("Apply = (%+v, %v), want 2 movidos e 1 falha (#8)", out, err)
 	}
 	assertFile(t, filepath.Join(src, "b.txt"), "b.txt")
 	if !strings.Contains(logs.String(), "b.txt") {
@@ -157,7 +157,7 @@ func TestApplyCanceled(t *testing.T) {
 	e := NewExecutor(nil)
 	realMove := e.move
 	e.move = func(from, to string) (string, error) {
-		defer cancel() // cancela depois do primeiro movimento
+		defer cancel() // cancela depois do primeiro movimento (#8)
 		return realMove(from, to)
 	}
 

@@ -1,7 +1,7 @@
-// Package settings guarda as preferências do usuário (idioma e critérios de
-// organização) em ~/.sortly/settings.json. Fora do WebView, elas sobrevivem à
-// limpeza dos dados do navegador embutido e às atualizações do app. O caminho
-// do arquivo é decidido na composição (app.NewDefault).
+// Package settings guarda as preferências do usuário (idioma e critérios) em
+// ~/.sortly/settings.json. Fora do WebView, elas sobrevivem à limpeza dos dados
+// do navegador embutido e às atualizações do app. O caminho do arquivo é
+// decidido na composição, em app.NewDefault (#44).
 package settings
 
 import (
@@ -18,7 +18,6 @@ import (
 	"github.com/caiofdev/sortly/backend/organizer/criteria"
 )
 
-// Erros com código devolvidos ao frontend (ADR 0004).
 var (
 	ErrInvalidLanguage  = apperr.New("INVALID_LANGUAGE", "settings: idioma desconhecido")
 	ErrUnknownCriterion = apperr.New("UNKNOWN_CRITERION", "settings: critério desconhecido")
@@ -26,7 +25,6 @@ var (
 	ErrNotSaved         = apperr.New("SETTINGS_NOT_SAVED", "settings: preferências não foram salvas")
 )
 
-// DefaultLanguage é o idioma do primeiro uso.
 const DefaultLanguage = "pt-BR"
 
 var languages = map[string]bool{"pt-BR": true, "en": true}
@@ -36,13 +34,11 @@ type Settings struct {
 	Options  criteria.Options
 }
 
-// Default devolve as preferências do primeiro uso: português e só a extensão.
 func Default() Settings {
 	return Settings{Language: DefaultLanguage, Options: criteria.Default}
 }
 
-// Service lê e altera as preferências. É seguro para uso concorrente: os
-// bindings do Wails rodam em goroutines separadas.
+// Seguro para uso concorrente: os bindings do Wails rodam em goroutines separadas (#44).
 type Service struct {
 	mu      sync.Mutex
 	path    string
@@ -50,7 +46,7 @@ type Service struct {
 	current *Settings
 }
 
-// New cria o serviço para o arquivo indicado. Com log nil, nada é registrado.
+// Com log nil, nada é registrado (#44).
 func New(path string, log *slog.Logger) *Service {
 	if log == nil {
 		log = slog.New(slog.DiscardHandler)
@@ -74,7 +70,7 @@ func (s *Service) SetLanguage(lang string) (Settings, error) {
 	})
 }
 
-// SetCriterion liga ou desliga um critério. Desligar o último ligado é recusado.
+// Desligar o último critério ligado é recusado (#44).
 func (s *Service) SetCriterion(key string, enabled bool) (Settings, error) {
 	return s.update(func(st Settings) (Settings, error) {
 		opts, ok := st.Options.With(key, enabled)
@@ -89,8 +85,8 @@ func (s *Service) SetCriterion(key string, enabled bool) (Settings, error) {
 	})
 }
 
-// update aplica change e grava o resultado. Se a validação ou a gravação
-// falhar, as preferências em memória continuam as anteriores.
+// Se a validação ou a gravação falhar, as preferências em memória continuam as anteriores
+// (#44).
 func (s *Service) update(change func(Settings) (Settings, error)) (Settings, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -107,8 +103,8 @@ func (s *Service) update(change func(Settings) (Settings, error)) (Settings, err
 	return next, nil
 }
 
-// load lê o arquivo na primeira chamada. Arquivo ausente, ilegível ou
-// corrompido vale como as preferências padrão; só os dois últimos vão para o log.
+// Lido só na primeira chamada. Arquivo ausente, ilegível ou corrompido vale
+// como as preferências padrão; só os dois últimos vão para o log (#44).
 func (s *Service) load() Settings {
 	if s.current != nil {
 		return *s.current
@@ -125,15 +121,14 @@ func (s *Service) load() Settings {
 	return st
 }
 
-// fileFormat é o JSON gravado. Os critérios ficam num mapa para que chaves
-// desconhecidas (de uma versão futura) sejam ignoradas em vez de quebrar a leitura.
+// Os critérios ficam num mapa para que chaves desconhecidas (de uma versão
+// futura) sejam ignoradas em vez de quebrar a leitura (#44).
 type fileFormat struct {
 	Language            string          `json:"language"`
 	OrganizationOptions map[string]bool `json:"organizationOptions"`
 }
 
-// decode aceita só valores válidos: idioma desconhecido ou nenhum critério
-// ligado voltam ao padrão.
+// Só valores válidos: idioma desconhecido ou nenhum critério ligado voltam ao padrão (#44).
 func (s *Service) decode(data []byte) Settings {
 	st := Default()
 	var f fileFormat
@@ -159,7 +154,7 @@ func (s *Service) save(st Settings) error {
 	for _, key := range criteria.Keys {
 		f.OrganizationOptions[key], _ = st.Options.Get(key)
 	}
-	// Marshal de string e map[string]bool não falha.
+	// Marshal de string e map[string]bool não falha (#44).
 	data, _ := json.Marshal(f)
 	if err := files.WriteAtomic(s.path, data); err != nil {
 		s.log.Error("preferências não salvas", "path", s.path, "err", err)

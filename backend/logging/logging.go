@@ -1,5 +1,5 @@
-// Package logging configura o log do app (log/slog) em arquivo, na pasta de
-// configuração do usuário:
+// Package logging grava o log do app (log/slog) num arquivo na pasta de
+// configuração do usuário (#10):
 //
 //	Windows: %AppData%\Sortly\logs\sortly.log
 //	macOS:   ~/Library/Application Support/Sortly/logs/sortly.log
@@ -13,19 +13,19 @@ import (
 	"path/filepath"
 )
 
-// MaxSize é o tamanho a partir do qual o log atual vira sortly.log.1 ao abrir o app.
+// Ao abrir o app, o log atual vira sortly.log.1 a partir deste tamanho (#10).
 const MaxSize = 5 << 20
 
 const fileName = "sortly.log"
 
 // O log registra caminhos de arquivos do usuário: pasta e arquivos são só do
-// dono. No Windows, o modo não se aplica (as permissões vêm da pasta do perfil).
+// dono. No Windows, o modo não se aplica; as permissões vêm da pasta do perfil (#59).
 const (
 	dirMode  = 0o700
 	fileMode = 0o600
 )
 
-// userConfigDir é substituível nos testes.
+// Substituível nos testes (#10).
 var userConfigDir = os.UserConfigDir
 
 func DefaultDir() (string, error) {
@@ -36,7 +36,6 @@ func DefaultDir() (string, error) {
 	return filepath.Join(base, "Sortly", "logs"), nil
 }
 
-// Open abre (ou cria) o arquivo de log em dir. A função devolvida fecha o arquivo.
 func Open(dir string) (*slog.Logger, func() error, error) {
 	if err := os.MkdirAll(dir, dirMode); err != nil {
 		return nil, nil, err
@@ -52,8 +51,8 @@ func Open(dir string) (*slog.Logger, func() error, error) {
 	return newLogger(f), f.Close, nil
 }
 
-// OpenDefault abre o log na pasta padrão. Se não for possível, registra no
-// stderr: o app nunca deixa de abrir por causa do log.
+// Sem a pasta padrão, registra no stderr: o app nunca deixa de abrir por causa do log
+// (#10).
 func OpenDefault(stderr io.Writer) (*slog.Logger, func() error) {
 	dir, err := DefaultDir()
 	if err == nil {
@@ -72,9 +71,9 @@ func newLogger(w io.Writer) *slog.Logger {
 	return slog.New(slog.NewTextHandler(w, &slog.HandlerOptions{Level: slog.LevelInfo}))
 }
 
-// restrict corrige o modo de pasta e arquivos que já existiam, criados por
-// versões anteriores com 0o755/0o644: o modo do MkdirAll e do OpenFile só vale
-// na criação. Uma falha (arquivo ausente, outro dono) não impede o log.
+// O modo do MkdirAll e do OpenFile só vale na criação: pasta e arquivos criados
+// por versões anteriores (0o755/0o644) são corrigidos aqui. Uma falha (arquivo
+// ausente, outro dono) não impede o log (#59).
 func restrict(dir string, files ...string) {
 	_ = os.Chmod(dir, dirMode)
 	for _, f := range files {
@@ -82,8 +81,7 @@ func restrict(dir string, files ...string) {
 	}
 }
 
-// rotate guarda o log anterior como .1 quando ele atinge max bytes,
-// substituindo um .1 mais antigo.
+// Substitui um .1 mais antigo (#10).
 func rotate(path string, max int64) {
 	info, err := os.Stat(path)
 	if err != nil || info.Size() < max {

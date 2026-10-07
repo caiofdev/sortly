@@ -11,8 +11,8 @@ type Options struct {
 
 var Default = Options{ByExtension: true}
 
-// Keys são as chaves dos critérios na ordem em que a interface os mostra. É
-// diferente da ordem de aninhamento das pastas (veja New).
+// Ordem em que a interface mostra os critérios, diferente da ordem de
+// aninhamento das pastas (veja New) (#44).
 var Keys = []string{"byDuration", "byPages", "byResolution", "byDate", "bySize", "byExtension"}
 
 func (o Options) Any() bool {
@@ -29,7 +29,6 @@ func (o Options) Count() int {
 	return n
 }
 
-// Get devolve o valor do critério com a chave dada; ok é false para chave desconhecida.
 func (o Options) Get(key string) (on, ok bool) {
 	field := o.field(key)
 	if field == nil {
@@ -38,7 +37,6 @@ func (o Options) Get(key string) (on, ok bool) {
 	return *field, true
 }
 
-// With devolve uma cópia com o critério alterado; ok é false para chave desconhecida.
 func (o Options) With(key string, on bool) (Options, bool) {
 	field := o.field(key)
 	if field == nil {

@@ -62,7 +62,7 @@ func TestNewWithoutLogger(t *testing.T) {
 	if s.log == nil {
 		t.Fatal("logger nil deveria virar um logger que descarta")
 	}
-	// Não deve entrar em pânico ao registrar.
+	// Não deve entrar em pânico ao registrar (#6).
 	_ = s.fail("teste", errors.New("x"))
 }
 
@@ -172,7 +172,7 @@ func TestSave(t *testing.T) {
 		}
 	})
 
-	t.Run("falha na gravação vai para o log (B5)", func(t *testing.T) {
+	t.Run("falha na gravação vai para o log (#6)", func(t *testing.T) {
 		var logs bytes.Buffer
 		path := filepath.Join(t.TempDir(), "last-operation.json")
 		if err := os.MkdirAll(filepath.Join(path, "conteudo"), 0o755); err != nil {

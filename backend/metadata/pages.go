@@ -13,25 +13,23 @@ import (
 	"github.com/pdfcpu/pdfcpu/pkg/api"
 )
 
-// maxXMLEntrySize limita a leitura do XML de metadados dentro do docx/odt,
-// protegendo contra arquivos compactados maliciosos (zip bomb).
+// Protege contra arquivos compactados maliciosos (zip bomb) (#7).
 const maxXMLEntrySize = 1 << 20
 
 type PageCounter interface {
 	CountPages(ctx context.Context, path string) (int, error)
 }
 
-// pageCounters associa cada extensão (minúscula, sem ponto) ao seu contador.
-// ".doc" não tem contador: o organizador o coloca em "pages-unknown".
+// Chave: extensão minúscula, sem ponto. ".doc" não tem contador e o
+// organizador o coloca em "pages-unknown" (#7).
 var pageCounters = map[string]PageCounter{
 	"pdf":  pdfCounter{},
 	"docx": zipRegexCounter{entry: "docProps/app.xml", pattern: regexp.MustCompile(`(?i)<Pages>(\d+)</Pages>`)},
 	"odt":  zipRegexCounter{entry: "meta.xml", pattern: regexp.MustCompile(`(?i)meta:page-count="(\d+)"`)},
 }
 
-// Pages devolve o número de páginas do documento. ext é a extensão sem ponto.
-// Sem contador para a extensão, devolve ErrUnsupported; contagem ausente ou
-// zero devolve ErrNoMetadata.
+// ext vem sem ponto. Sem contador para a extensão, ErrUnsupported; contagem
+// ausente ou zero, ErrNoMetadata (#7).
 func Pages(ctx context.Context, path, ext string) (int, error) {
 	counter, ok := pageCounters[strings.ToLower(ext)]
 	if !ok {
@@ -56,7 +54,7 @@ func (pdfCounter) CountPages(ctx context.Context, path string) (int, error) {
 	}
 	defer func() { _ = f.Close() }()
 
-	// Modo sem estado: o pdfcpu não lê nem cria configuração na pasta do usuário.
+	// Modo sem estado: o pdfcpu não lê nem cria configuração na pasta do usuário (#7).
 	conf, err := api.LoadConfiguration(api.ConfigurationOptions{Mode: api.ConfigurationModeStateless})
 	if err != nil {
 		return 0, err
@@ -68,9 +66,8 @@ func (pdfCounter) CountPages(ctx context.Context, path string) (int, error) {
 	return n, nil
 }
 
-// zipRegexCounter lê a contagem de páginas gravada nos metadados de um
-// documento compactado (docx, odt): abre a entrada XML e aplica a expressão.
-// O primeiro grupo da expressão é o número de páginas.
+// docx e odt guardam a contagem num XML de metadados dentro do zip; o primeiro
+// grupo da expressão é o número de páginas (#7).
 type zipRegexCounter struct {
 	entry   string
 	pattern *regexp.Regexp

@@ -8,17 +8,15 @@ import (
 	"os"
 )
 
-// maxMoovSize limita a leitura do índice do vídeo (box "moov"). Ele costuma
-// ter alguns KB a poucos MB; o conteúdo de mídia ("mdat") nunca é lido.
+// O índice do vídeo (box "moov") costuma ter de alguns KB a poucos MB; o
+// conteúdo de mídia ("mdat") nunca é lido (#7).
 const maxMoovSize = 64 << 20
 
 var errBadBox = errors.New("box mp4 inválido")
 
-// Duration devolve a duração do mp4 em segundos.
-//
-// Usa a duração da primeira faixa de áudio, como a versão 1.0
-// (music-metadata). Se o vídeo não tem áudio, usa a duração do filme
-// (box "mvhd"), que é a que o player mostra.
+// Em segundos, pela duração da primeira faixa de áudio, como a versão 1.0
+// (music-metadata). Sem áudio, usa a duração do filme (box "mvhd"), que é a que
+// o player mostra (#7).
 func Duration(path string) (float64, error) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -39,8 +37,7 @@ func Duration(path string) (float64, error) {
 	return 0, ErrNoMetadata
 }
 
-// findTopLevelBox percorre os boxes do arquivo pulando o conteúdo, sem
-// carregá-lo, e devolve o payload do primeiro box do tipo pedido.
+// Pula o conteúdo dos boxes sem carregá-lo (#7).
 func findTopLevelBox(r io.ReadSeeker, want string) ([]byte, error) {
 	for {
 		typ, size, err := readBoxHeader(r)
@@ -68,9 +65,8 @@ func readPayload(r io.ReadSeeker, size int64) ([]byte, error) {
 	return payload, err
 }
 
-// readBoxHeader lê tamanho e tipo do próximo box e devolve o tamanho do
-// payload. Tamanho 1 indica "largesize" (64 bits); tamanho 0 indica que o
-// box vai até o fim do arquivo (devolvido como -1).
+// Tamanho 1 indica "largesize" (64 bits); tamanho 0 indica que o box vai até o
+// fim do arquivo, devolvido como -1 (#7).
 func readBoxHeader(r io.Reader) (string, int64, error) {
 	var header [8]byte
 	if _, err := io.ReadFull(r, header[:]); err != nil {
@@ -97,7 +93,7 @@ func readBoxHeader(r io.Reader) (string, int64, error) {
 	return typ, size - headerLen, nil
 }
 
-// boxes divide um payload nos boxes filhos. Para no primeiro box malformado.
+// Para no primeiro box malformado (#7).
 func boxes(data []byte) map[string][][]byte {
 	children := map[string][][]byte{}
 	for len(data) >= 8 {
@@ -112,8 +108,7 @@ func boxes(data []byte) map[string][][]byte {
 	return children
 }
 
-// childBox devolve o payload do primeiro filho com o caminho de tipos dado
-// (ex.: "mdia", "mdhd"), ou nil.
+// path é a sequência de tipos (ex.: "mdia", "mdhd"); nil se não houver (#7).
 func childBox(data []byte, path ...string) []byte {
 	for _, typ := range path {
 		found := boxes(data)[typ]
@@ -125,8 +120,8 @@ func childBox(data []byte, path ...string) []byte {
 	return data
 }
 
-// firstAudioTrackDuration repete a regra do music-metadata: a duração vem do
-// "mdhd" da primeira faixa de áudio (handler "soun"/"audi" com pelo menos um canal).
+// Mesma regra do music-metadata: a duração vem do "mdhd" da primeira faixa de
+// áudio (handler "soun"/"audi" com pelo menos um canal) (#7).
 func firstAudioTrackDuration(moov []byte) (float64, bool) {
 	for _, trak := range boxes(moov)["trak"] {
 		if isAudioTrack(trak) {
@@ -148,9 +143,9 @@ func isAudioTrack(trak []byte) bool {
 	return audioChannels(childBox(trak, "mdia", "minf", "stbl", "stsd")) > 0
 }
 
-// audioChannels lê o número de canais da primeira descrição de amostra de som.
-// stsd: versão/flags (4) + quantidade (4) + entrada [tamanho (4) + formato (4)
-// + reservado (6) + índice (2) + versão (2) + revisão (2) + fornecedor (4) + canais (2)].
+// Layout do stsd: versão/flags (4) + quantidade (4) + entrada [tamanho (4) +
+// formato (4) + reservado (6) + índice (2) + versão (2) + revisão (2) +
+// fornecedor (4) + canais (2)] (#7).
 func audioChannels(stsd []byte) int {
 	const channelsOffset = 8 + 8 + 8 + 8
 	if len(stsd) < channelsOffset+2 {
@@ -159,8 +154,7 @@ func audioChannels(stsd []byte) int {
 	return int(binary.BigEndian.Uint16(stsd[channelsOffset:]))
 }
 
-// headerSeconds lê escala de tempo e duração de um "mvhd" ou "mdhd"
-// (versão 0 com campos de 32 bits ou versão 1 com campos de 64 bits).
+// "mvhd" ou "mdhd", na versão 0 (campos de 32 bits) ou 1 (campos de 64 bits) (#7).
 func headerSeconds(header []byte) (float64, bool) {
 	if len(header) < 20 {
 		return 0, false

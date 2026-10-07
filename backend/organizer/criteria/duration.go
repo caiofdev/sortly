@@ -23,8 +23,7 @@ func (r durationRule) Segment(_ context.Context, f File) (string, error) {
 	return segmentOrUnknown("duration-", formatDuration(seconds), err), nil
 }
 
-// formatDuration arredonda como o Math.round do JavaScript (0,5 sobe) e
-// formata como HHhMMmSSs.
+// Arredonda como o Math.round do JavaScript (0,5 sobe), como a versão 1.0 (#8).
 func formatDuration(seconds float64) string {
 	total := int64(math.Floor(math.Max(0, seconds) + 0.5))
 	return fmt.Sprintf("%02dh%02dm%02ds", total/3600, total%3600/60, total%60)

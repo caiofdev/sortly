@@ -17,20 +17,19 @@ const (
 	windowMinHeight = 600
 )
 
-// Arrastar e soltar: o Wails só entrega os caminhos quando o arquivo é solto
-// sobre um elemento com este estilo (o painel de arrastar e soltar).
+// O Wails só entrega os caminhos quando o arquivo é solto sobre um elemento
+// com este estilo: o painel de arrastar e soltar (#12).
 const (
 	DropTargetProperty = "--wails-drop-target"
 	DropTargetValue    = "drop"
 )
 
-// backgroundColour é o #0f172a usado enquanto a interface carrega.
+// #0f172a, o fundo da interface enquanto ela carrega (#3).
 var backgroundColour = options.RGBA{R: 15, G: 23, B: 42, A: 255}
 
-// Options monta a configuração da janela e do servidor de assets.
-// A janela abre maximizada e sem menu. icon é o PNG
-// do app (build/appicon.png), usado como ícone da janela no Linux; no Windows
-// e no macOS o ícone vem do executável e do pacote .app.
+// A janela abre maximizada e sem menu. icon é o PNG do app (build/appicon.png),
+// usado só no Linux: no Windows e no macOS o ícone vem do executável e do
+// pacote .app (#13).
 func Options(a *App, assets fs.FS, icon []byte) *options.App {
 	bg := backgroundColour
 
@@ -54,7 +53,7 @@ func Options(a *App, assets fs.FS, icon []byte) *options.App {
 		// por software. No Windows, o processo de GPU do WebView2 respondia por ~80%
 		// da memória comprometida (docs/benchmark.md). No Linux, Never é o padrão do
 		// Wails quando options.Linux é nil (wailsapp/wails#2977) e precisa ser repetido
-		// aqui porque o ícone exige options.Linux. O macOS não tem opção equivalente.
+		// aqui porque o ícone exige options.Linux. O macOS não tem opção equivalente (#34).
 		Windows: &windows.Options{
 			WebviewGpuIsDisabled: true,
 		},

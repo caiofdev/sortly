@@ -1,8 +1,8 @@
 package tests
 
-// Teste ponta a ponta: organizar com todos os critérios e desfazer devolve a
-// árvore idêntica à original (mesmos caminhos, conteúdos e datas de modificação),
-// remove todas as pastas criadas e apaga o registro.
+// Ponta a ponta: organizar com todos os critérios e desfazer devolve a árvore
+// idêntica à original (mesmos caminhos, conteúdos e datas de modificação),
+// remove todas as pastas criadas e apaga o registro (#9).
 
 import (
 	"context"
@@ -74,8 +74,8 @@ func roundTrip(t *testing.T, inPlace bool) {
 	assertNoRecord(t, st)
 }
 
-// copyFixtures copia as fixtures de metadados (imagens, mp4, documentos) para
-// dir, mais arquivos sem extensão e uma subpasta, todos com a mesma data.
+// Fixtures de metadados (imagens, mp4, documentos), mais arquivos sem extensão e
+// uma subpasta, todos com a mesma data (#9).
 func copyFixtures(t *testing.T, dir string) {
 	t.Helper()
 	root := filepath.Join("..", "metadata", "testdata")
@@ -110,7 +110,7 @@ func copyFile(t *testing.T, from, to string) {
 	writeFile(t, to, string(data))
 }
 
-// treeHash resume a árvore: caminho relativo, hash do conteúdo e data de modificação.
+// Caminho relativo, hash do conteúdo e data de modificação de cada arquivo (#9).
 func treeHash(t *testing.T, root string) string {
 	t.Helper()
 	var lines []string
@@ -150,7 +150,6 @@ func assertNoRecord(t *testing.T, st *store.FileStore) {
 	}
 }
 
-// assertEmptyTree falha se sobrou algum arquivo ou pasta dentro de root.
 func assertEmptyTree(t *testing.T, root string) {
 	t.Helper()
 	entries, err := os.ReadDir(root)
