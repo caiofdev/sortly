@@ -11,6 +11,11 @@ function renderPanel() {
 }
 
 describe('DragDropPanel', () => {
+  it('carregando: painel esmaecido', () => {
+    render(<DragDropPanel isLoading labels={labels} onSelectSourceFolder={vi.fn()} />);
+    expect(screen.getByText(labels.dropTitle).parentElement.className).toContain('opacity-60');
+  });
+
   it('é a área de drop do Wails', () => {
     const { panel } = renderPanel();
     expect(panel.style.getPropertyValue('--wails-drop-target')).toBe('drop');

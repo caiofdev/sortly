@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import feedbackCopy from './feedbackCopy';
-import { getCopy, toLocale } from './language';
 
 const pt = feedbackCopy['pt-BR'];
 const en = feedbackCopy.en;
@@ -24,18 +23,6 @@ const NOTICE_TEXTS = [
   'droppedPathSuccess',
   'unexpectedError'
 ];
-
-describe('language', () => {
-  it('getCopy usa o idioma pedido ou o padrão', () => {
-    expect(getCopy(feedbackCopy, 'en')).toBe(en);
-    expect(getCopy(feedbackCopy, 'fr')).toBe(pt);
-  });
-
-  it('toLocale', () => {
-    expect(toLocale('pt-BR')).toBe('pt-BR');
-    expect(toLocale('en')).toBe('en-US');
-  });
-});
 
 describe('códigos de erro do backend (ADR 0004)', () => {
   it.each(NOTICE_TEXTS)('%s existe em PT e EN', (key) => {

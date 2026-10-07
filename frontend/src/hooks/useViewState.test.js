@@ -1,10 +1,48 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, renderHook, waitFor } from '@testing-library/react';
-import useViewState, { INITIAL_STATE, newest } from './useViewState';
+import * as Backend from '../../wailsjs/go/app/App';
+import { EventsOn, OnFileDrop, OnFileDropOff } from '../../wailsjs/runtime/runtime';
+import useViewState, { INITIAL_STATE, STATE_EVENT, newest } from './useViewState';
+
+vi.mock('../../wailsjs/go/app/App', () => ({
+  GetState: vi.fn(),
+  SelectSource: vi.fn(),
+  SelectDestination: vi.fn(),
+  DropPaths: vi.fn(),
+  Organize: vi.fn(),
+  Undo: vi.fn(),
+  ClearNotifications: vi.fn(),
+  SetLanguage: vi.fn(),
+  SetCriterion: vi.fn()
+}));
+
+vi.mock('../../wailsjs/runtime/runtime', () => ({
+  EventsOn: vi.fn(),
+  OnFileDrop: vi.fn(),
+  OnFileDropOff: vi.fn()
+}));
 
 // Cada estado criado é mais novo que o anterior, como no backend.
 let lastVersion = 0;
 const state = (overrides = {}) => ({ ...INITIAL_STATE, version: ++lastVersion, ...overrides });
+
+const unsubscribeState = vi.fn();
+
+beforeEach(() => {
+  window.runtime = {};
+  EventsOn.mockReturnValue(unsubscribeState);
+  Backend.GetState.mockResolvedValue(state({ sourceFolderPath: 'C:\\origem' }));
+});
+
+afterEach(() => {
+  delete window.runtime;
+});
+
+async function setup() {
+  const hook = renderHook(() => useViewState());
+  await waitFor(() => expect(hook.result.current.ready).toBe(true));
+  return hook;
+}
 
 describe('newest', () => {
   const current = { version: 5 };
@@ -18,108 +56,76 @@ describe('newest', () => {
   });
 });
 
-function fakeGateway(overrides = {}) {
-  return {
-    getState: vi.fn().mockResolvedValue(state({ sourceFolderPath: 'C:\\origem' })),
-    selectSource: vi.fn().mockResolvedValue(state({ sourceFolderPath: 'C:\\nova' })),
-    selectDestination: vi.fn().mockResolvedValue(state({ destinationFolderPath: 'C:\\destino' })),
-    dropPaths: vi.fn().mockResolvedValue(state({ sourceFolderPath: 'C:\\solta' })),
-    organize: vi.fn().mockResolvedValue(state({ hasUndo: true })),
-    undo: vi.fn().mockResolvedValue(state({ hasUndo: false })),
-    clearNotifications: vi.fn().mockResolvedValue(state()),
-    setLanguage: vi.fn((language) =>
-      Promise.resolve(state({ settings: { language, criteria: [] } }))
-    ),
-    setCriterion: vi.fn().mockResolvedValue(state()),
-    subscribeState: vi.fn(() => vi.fn()),
-    subscribeFileDrop: vi.fn(() => vi.fn()),
-    ...overrides
-  };
-}
-
-async function setup(gateway = fakeGateway()) {
-  const hook = renderHook(() => useViewState(gateway));
-  await waitFor(() => expect(hook.result.current.ready).toBe(true));
-  return { ...hook, gateway };
-}
-
 describe('useViewState', () => {
   it('começa sem estado e fica pronto com o estado do backend', async () => {
-    const gateway = fakeGateway();
-    const { result } = renderHook(() => useViewState(gateway));
+    const { result } = renderHook(() => useViewState());
     expect(result.current.ready).toBe(false);
     expect(result.current.state).toBe(INITIAL_STATE);
     await waitFor(() => expect(result.current.ready).toBe(true));
     expect(result.current.state.sourceFolderPath).toBe('C:\\origem');
   });
 
-  it('sem backend fica pronto com o estado inicial', async () => {
-    const { result } = await setup(
-      fakeGateway({ getState: vi.fn().mockRejectedValue(new Error('sem backend')) })
-    );
+  it('binding que rejeita: fica pronto com o estado inicial', async () => {
+    Backend.GetState.mockRejectedValue(new Error('pânico'));
+    const { result } = await setup();
     expect(result.current.state).toBe(INITIAL_STATE);
   });
 
+  // npm run dev no navegador: sem window.runtime, os bindings lançam erro
+  // síncrono e as assinaturas do runtime não podem ser chamadas.
+  it('fora do Wails: fica pronto com o estado inicial e não assina eventos', async () => {
+    delete window.runtime;
+    Backend.GetState.mockImplementation(() => {
+      throw new TypeError("Cannot read properties of undefined (reading 'app')");
+    });
+    const { result } = await setup();
+    expect(result.current.state).toBe(INITIAL_STATE);
+    expect(EventsOn).not.toHaveBeenCalled();
+    expect(OnFileDrop).not.toHaveBeenCalled();
+  });
+
   it.each([
-    ['selectSource', [], { sourceFolderPath: 'C:\\nova' }],
-    ['selectDestination', [], { destinationFolderPath: 'C:\\destino' }],
-    ['organize', [], { hasUndo: true }],
-    ['undo', [], { hasUndo: false }],
-    ['setLanguage', ['en'], { settings: { language: 'en', criteria: [] } }]
-  ])('%s mostra o estado devolvido', async (action, args, expected) => {
-    const { result, gateway } = await setup();
+    ['selectSource', 'SelectSource', [], { sourceFolderPath: 'C:\\nova' }],
+    ['selectDestination', 'SelectDestination', [], { destinationFolderPath: 'C:\\destino' }],
+    ['organize', 'Organize', [], { hasUndo: true }],
+    ['undo', 'Undo', [], { hasUndo: false }],
+    ['clearNotifications', 'ClearNotifications', [], { notifications: [] }],
+    ['setLanguage', 'SetLanguage', ['en'], { settings: { language: 'en', criteria: [] } }],
+    ['setCriterion', 'SetCriterion', ['byDate', true], { busy: '' }]
+  ])('%s chama %s e mostra o estado devolvido', async (action, binding, args, expected) => {
+    const { result } = await setup();
+    Backend[binding].mockResolvedValue(state(expected));
     await act(() => result.current.actions[action](...args));
-    expect(gateway[action]).toHaveBeenCalledWith(...args);
+    expect(Backend[binding]).toHaveBeenCalledWith(...args);
     expect(result.current.state).toMatchObject(expected);
   });
 
-  it('limpar notificações e alterar critério chamam o backend', async () => {
-    const { result, gateway } = await setup();
-    await act(() => result.current.actions.clearNotifications());
-    await act(() => result.current.actions.setCriterion('byDate', true));
-    expect(gateway.clearNotifications).toHaveBeenCalled();
-    expect(gateway.setCriterion).toHaveBeenCalledWith('byDate', true);
-  });
-
   it('ação que falha mantém o estado anterior', async () => {
-    const { result } = await setup(
-      fakeGateway({ organize: vi.fn().mockRejectedValue(new Error('pânico')) })
-    );
+    const { result } = await setup();
+    Backend.Organize.mockRejectedValue(new Error('pânico'));
     await act(() => result.current.actions.organize());
     expect(result.current.state.sourceFolderPath).toBe('C:\\origem');
   });
 
   it('evento de estado substitui o estado e é cancelado ao desmontar', async () => {
-    const unsubscribe = vi.fn();
-    let onState;
-    const gateway = fakeGateway({
-      subscribeState: vi.fn((handler) => {
-        onState = handler;
-        return unsubscribe;
-      })
-    });
-    const { result, unmount } = await setup(gateway);
+    const { result, unmount } = await setup();
+    expect(EventsOn).toHaveBeenCalledWith(STATE_EVENT, expect.any(Function));
+    const onState = EventsOn.mock.calls[0][1];
 
     act(() => onState(state({ busy: 'organize' })));
     expect(result.current.state.busy).toBe('organize');
 
     unmount();
-    expect(unsubscribe).toHaveBeenCalled();
+    expect(unsubscribeState).toHaveBeenCalled();
   });
 
   // Regressão (#55): o "organizando" atrasado não pode travar a tela.
   it('estado antigo que chega depois não sobrescreve o mais novo', async () => {
-    let onState;
-    const busy = state({ version: 1000, busy: 'organize' });
-    const done = state({ version: 1001, busy: '', hasUndo: true });
-    const gateway = fakeGateway({
-      organize: vi.fn().mockResolvedValue(done),
-      subscribeState: vi.fn((handler) => {
-        onState = handler;
-        return vi.fn();
-      })
-    });
-    const { result } = await setup(gateway);
+    const busy = state({ busy: 'organize' });
+    const done = state({ busy: '', hasUndo: true });
+    const { result } = await setup();
+    Backend.Organize.mockResolvedValue(done);
+    const onState = EventsOn.mock.calls[0][1];
 
     await act(() => result.current.actions.organize());
     act(() => onState(busy));
@@ -127,19 +133,17 @@ describe('useViewState', () => {
     expect(result.current.state).toBe(done);
   });
 
-  it('arquivos soltos viram DropPaths', async () => {
-    let onDrop;
-    const gateway = fakeGateway({
-      subscribeFileDrop: vi.fn((handler) => {
-        onDrop = handler;
-        return vi.fn();
-      })
-    });
-    const { result } = await setup(gateway);
+  it('arquivos soltos no alvo viram DropPaths; a assinatura é cancelada ao desmontar', async () => {
+    Backend.DropPaths.mockResolvedValue(state({ sourceFolderPath: 'C:\\solta' }));
+    const { result, unmount } = await setup();
+    expect(OnFileDrop).toHaveBeenCalledWith(expect.any(Function), true);
+    const onDrop = OnFileDrop.mock.calls[0][0];
 
-    await act(async () => onDrop(['C:\\solta\\a.txt']));
+    await act(async () => onDrop(10, 20, ['C:\\solta\\a.txt']));
 
-    expect(gateway.dropPaths).toHaveBeenCalledWith(['C:\\solta\\a.txt']);
+    expect(Backend.DropPaths).toHaveBeenCalledWith(['C:\\solta\\a.txt']);
     expect(result.current.state.sourceFolderPath).toBe('C:\\solta');
+    unmount();
+    expect(OnFileDropOff).toHaveBeenCalled();
   });
 });
