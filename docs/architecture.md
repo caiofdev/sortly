@@ -12,10 +12,9 @@ O Wails usa o WebView nativo do sistema (WebView2 no Windows, WKWebView no macOS
 flowchart LR
   subgraph Frontend["Frontend — React 18 + Tailwind (WebView nativo)"]
     UI[Componentes<br/>e i18n] --> VS[useViewState]
-    VS --> GW[services/sortlyGateway]
   end
-  GW -- "bindings: ação → ViewState" --> App
-  App -. "evento sortly:state" .-> GW
+  VS -- "bindings: ação → ViewState" --> App
+  App -. "evento sortly:state" .-> VS
   subgraph Backend["Backend — Go"]
     App[App<br/>ViewState · notificações] --> Org[organizer<br/>Planner · Executor]
     Org --> Crit[organizer/criteria<br/>uma regra por critério]
@@ -97,8 +96,7 @@ A interface é a mesma da versão 1.0, e o frontend não tem regra de negócio (
 
 | Módulo | Responsabilidade |
 |---|---|
-| `services/sortlyGateway.js` | Único módulo que importa os bindings e o runtime do Wails |
-| `hooks/useViewState.js` | Espelho do `ViewState`: estado inicial, evento `sortly:state`, arquivos soltos (`DropPaths`) e as ações |
+| `hooks/useViewState.js` | Único módulo que importa os bindings e o runtime do Wails. Espelho do `ViewState`: estado inicial, evento `sortly:state`, arquivos soltos (`DropPaths`) e as ações; fora do Wails, fica no estado inicial |
 | `i18n/` | Textos PT/EN; `notifications.js` transforma notificações estruturadas em frases no idioma atual |
 | `views/`, `components/` | Apresentação, painéis abertos ou fechados e destaque ao arrastar |
 

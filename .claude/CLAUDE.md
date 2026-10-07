@@ -22,7 +22,8 @@ backend/            backend Go (pacotes por responsabilidade; teste sempre ao la
   apperr/           erros com código estável
   logging/          slog em arquivo
   tests/            testes de integração (só API pública, disco de verdade)
-frontend/src/       React só de apresentação: components/, views/, hooks/useViewState, services/sortlyGateway, i18n/
+frontend/src/       React só de apresentação: components/, views/, hooks/useViewState (único que importa wailsjs/), i18n/; teste ao lado de cada módulo
+frontend/tests/     testes de integração do frontend (App inteiro)
 frontend/wailsjs/   bindings gerados pelo Wails (versionados; regenerados por wails dev/build)
 build/              ícones, manifesto Windows, Info.plist, NSIS (windows/installer), nfpm (linux)
 scripts/            check-coverage.sh, cccases/ (CC × casos), benchmark/ e parity/ (PowerShell)

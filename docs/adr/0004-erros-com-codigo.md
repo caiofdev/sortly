@@ -25,7 +25,7 @@ Na versão Electron, o backend lança erros com texto fixo, em português em alg
   | `UNEXPECTED` | Erro inesperado (detalhes vão para o log) |
 
 - Em Go, são erros sentinela criados com `apperr.New(código, mensagem)` (`backend/apperr`), verificados com `errors.Is`. `apperr.CodeOf(err)` devolve o código para o frontend (`UNEXPECTED` quando não há).
-- O gateway do frontend ([ADR 0002](0002-gateway-frontend.md)) converte o código no texto do idioma atual, via `feedbackCopy`.
+- O frontend converte o código no texto do idioma atual, via `feedbackCopy` (`i18n/notifications.js`; o gateway da [ADR 0002](0002-gateway-frontend.md) saiu na #61).
 - Os textos em português continuam **idênticos** aos atuais.
 - O campo `message` sai dos resultados de `organizeFiles` e `undoLastOrganization`.
 

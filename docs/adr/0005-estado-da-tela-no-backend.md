@@ -18,7 +18,7 @@ Depois da migração, o frontend ainda guardava regra e estado: um controller co
 - **Evento `sortly:state`**: emitido a cada mudança. É o que mostra "Organizando…" enquanto a chamada de `Organize` não termina.
 - **`version`** cresce a cada estado entregue, sob o lock. Evento e retorno podem chegar fora de ordem, e o frontend descarta o estado com versão menor ou igual à que já mostra (#55).
 - Organizar e desfazer não rodam ao mesmo tempo: uma segunda chamada durante a primeira devolve o estado sem fazer nada.
-- O gateway continua sendo o único módulo que importa os bindings, mas não normaliza erros nem tem regra. A assinatura dos arquivos soltos fica no JS porque o filtro `--wails-drop-target` é feito pelo runtime JS do Wails; ela só chama `DropPaths`.
+- O gateway continua sendo o único módulo que importa os bindings, mas não normaliza erros nem tem regra (veja a atualização abaixo). A assinatura dos arquivos soltos fica no JS porque o filtro `--wails-drop-target` é feito pelo runtime JS do Wails; ela só chama `DropPaths`.
 
 ## Alternativas consideradas
 
@@ -36,3 +36,7 @@ Depois da migração, o frontend ainda guardava regra e estado: um controller co
 - Toda lista do `ViewState` precisa ser um array no JSON, nunca `null` (teste `TestStateJSONAlwaysHasLists`).
 - A tela só aparece depois do primeiro `GetState`, então abre direto no idioma salvo.
 - O horário das notificações é formatado no idioma atual, não no idioma do momento do aviso.
+
+## Atualização (2026-10-07, #61)
+
+O `services/sortlyGateway.js` foi removido. Depois desta decisão, ele só repassava chamadas: não normalizava erros, não isolava outro runtime, e os fakes que justificavam a camada são feitos com `vi.mock` do Vitest. Agora o `hooks/useViewState.js` é o único módulo que importa os bindings (`wailsjs/go/app/App`) e o runtime do Wails, e trata a ausência do backend (`npm run dev` no navegador): sem `window.runtime`, não assina eventos e as ações deixam o estado inicial.
