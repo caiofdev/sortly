@@ -18,7 +18,7 @@
 |---|---|---|
 | Strategy + Registry | `organizer` regras, `metadata` PageCounter | variação de comportamento por tipo/critério |
 | Command | journal do desfazer (move ↔ inverso) | operação que precisa ser revertida |
-| Adapter / Gateway | `frontend/services/sortlyGateway.js` | isolar a fronteira com o backend |
+| Fronteira única com o backend | `frontend/src/hooks/useViewState.js` (o gateway saiu na #61) | só um módulo importa `wailsjs/` |
 | Injeção por construtor | todos os serviços | sempre |
 | Planejar × executar | `Planner` puro + `Executor` | cálculo testável sem disco |
 
@@ -42,5 +42,6 @@
 - [ ] Nomes revelam intenção; sem abreviação obscura; booleanos como pergunta (`hasUndo`, `isDir`).
 - [ ] Função cabe na tela e tem um nível de abstração.
 - [ ] Retorno antecipado em vez de `else` aninhado.
+- [ ] **Sem `switch`/`case`** (Go e JS), por decisão do projeto: use mapa de lookup (chave → valor ou função), `if` com retorno antecipado ou Strategy. Em Go, type switch vira `if v, ok := x.(T); ok` ou um mapa de handlers. Todo `switch` é achado 🔵.
 - [ ] Comentário explica o porquê; comentário que repete o código, tabela de CC em arquivo de teste ou narrativa da migração ("como na versão Electron") é achado 🔵.
 - [ ] Números mágicos viram constantes com nome (80 notificações, 10 000 tentativas, 5 MB de log).

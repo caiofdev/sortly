@@ -25,4 +25,15 @@ Regras que já falharam neste projeto e que a revisão deve conferir sempre. Cad
 
 - Slice nil em struct enviada ao frontend vira `null` no JSON, e o JS que faz `.map` quebra a tela inteira. Toda lista de um binding é inicializada (`[]T{}`) e há teste do JSON. — #45 (2026-10-04)
 
+- Preferência do projeto: nada de `switch`/`case`; mapa, retorno antecipado ou Strategy. — Caio (2026-10-04)
+- Comentário que repete o nome da função ("// Get devolve as preferências") é ruído, mesmo em identificador exportado; comente só o porquê. — Caio (2026-10-04)
+
+- Cópia entre volumes só é segura depois de `Sync` do arquivo **e** da pasta de destino (Unix); só então a origem é apagada. — #52 (2026-10-05)
+- Erro com resultado parcial ainda muda o estado: se arquivos foram movidos e o registro falhou, o desfazer anterior não pode continuar disponível (nem após reabrir). — #53 (2026-10-05)
+- Dado lido do disco que vira caminho de destino (registro do desfazer) é validado contra as pastas registradas antes de mover. — #54 (2026-10-05)
+- "Pasta criada" registrada tem de ser só a que não existia; pasta do usuário nunca é removida por limpeza. — #57 (2026-10-06)
+- macOS (APFS) também não diferencia maiúsculas; plataforma insensível não é só Windows. — #58 (2026-10-06)
+- Contagem de CC no JS estimada de cabeça errou (CC 8 anotada como 5); liste pela regra `complexity` do ESLint. — #60 (2026-10-06)
+- Mudar atributo de acessibilidade (`aria-pressed`) muda o padrão de UI Automation e quebra o roteiro de paridade: rode a paridade em toda mudança de componente. — #60 (2026-10-06)
+
 <!-- Acrescente aqui: - Regra generalizada. — PR/issue (AAAA-MM-DD) -->

@@ -27,6 +27,7 @@ Base: [Effective Go](https://go.dev/doc/effective_go), [Go Code Review Comments]
 - [ ] `context.Context` é o primeiro parâmetro, propagado, nunca guardado em struct (exceto o ctx do Wails no `startup`); laços longos checam `ctx.Err()`.
 - [ ] Mapas acessados de várias goroutines estão protegidos.
 - [ ] Testes com `-race` passam (CI no Linux e macOS).
+- [ ] Estado enviado ao frontend por dois caminhos (evento + retorno do binding) pode chegar fora de ordem: snapshots tirados em goroutines diferentes e emitidos depois de soltar o lock. Exija versão monotônica (o frontend ignora a mais antiga) ou emissão sob o mesmo lock.
 
 ## APIs e tipos
 
@@ -50,7 +51,7 @@ Base: [Effective Go](https://go.dev/doc/effective_go), [Go Code Review Comments]
 ## Wails
 
 - [ ] Métodos públicos de `App` viram bindings: não exponha método sem querer (o Wails gera JS para todos).
-- [ ] Mudou assinatura de binding → `frontend/wailsjs` regenerado e versionado, gateway/frontend atualizados.
+- [ ] Mudou assinatura de binding → `frontend/wailsjs` regenerado e versionado, `useViewState` atualizado.
 - [ ] Nada bloqueia o `startup`/`domReady` (a janela fica branca).
 - [ ] Opções da janela por plataforma: Linux exige a tag `webkit2_41`; `options.Linux` não nil desliga padrões (ex.: política de GPU).
 

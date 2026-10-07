@@ -5,7 +5,7 @@ Base: [react.dev](https://react.dev) (especialmente "You Might Not Need an Effec
 ## Papel do frontend no Sortly
 
 - [ ] O frontend renderiza e traduz; regra de negócio (validação, decisão, limites, estado da organização) mora no Go (ADR 0005). Lógica nova no JS é achado 🟠, salvo apresentação pura.
-- [ ] Acesso ao backend só pelo gateway (`services/sortlyGateway.js`), nunca `window.go` direto em componente.
+- [ ] Acesso ao backend só pelo `hooks/useViewState.js`, o único módulo que importa `wailsjs/` (bindings e runtime); nunca `window.go` direto em componente. Fora do Wails (`npm run dev`), o hook fica no estado inicial.
 - [ ] Textos vêm do i18n (`i18n/*`), em PT e EN; nenhum texto fixo em componente; chaves novas existem nos dois idiomas.
 - [ ] Notificações traduzidas pelo código em `i18n/notifications.js`; código novo do backend tem texto em PT e EN (ou cai no texto padrão da ação).
 
@@ -30,6 +30,9 @@ Base: [react.dev](https://react.dev) (especialmente "You Might Not Need an Effec
 
 - [ ] Componente com uma responsabilidade; props explícitas, sem espalhar `{...props}` desconhecidas.
 - [ ] Elemento clicável é `<button>` (não `div` com `onClick`); botão só com ícone tem `aria-label`.
+- [ ] Imagem decorativa ao lado de texto tem `alt=""`: um `alt` igual ao texto faz o leitor de tela repetir o rótulo ("PT-BR PT-BR").
+- [ ] Botões de alternância (idioma, filtros) informam o estado com `aria-pressed`. Isso muda o padrão de UI Automation de Invoke para Toggle: confira o roteiro de paridade.
+- [ ] Eventos de arrastar: o WebKit (macOS e Linux) costuma entregar `relatedTarget` vazio; para "saiu do painel", conte `dragenter`/`dragleave`.
 - [ ] Inputs com `<label>` associado; checkbox controlado (`checked` + `onChange`).
 - [ ] Foco visível e navegação por teclado funcionando nos painéis (configurações, notificações).
 - [ ] Mudança visual não pedida é achado (a interface é congelada sem pedido explícito).
@@ -45,6 +48,8 @@ Base: [react.dev](https://react.dev) (especialmente "You Might Not Need an Effec
 
 - [ ] Consultas por papel/texto (`getByRole`, `getByText`), não por classe ou estrutura.
 - [ ] Testa comportamento visível, não detalhe de implementação (estado interno, nome de função).
-- [ ] Gateway falso injetado; nenhum teste depende de `window.go` real.
+- [ ] Um arquivo de teste por módulo, ao lado dele; `frontend/tests/` só para integração (App inteiro).
+- [ ] Teste do `useViewState` com `vi.mock` dos bindings e do runtime; só a integração usa `window.go`/`window.runtime` falsos.
+- [ ] Casos ≥ CC também no JS: liste a CC com a API do ESLint (regra `complexity` com máximo 1; cada ternário, `&&`, `||` e `??` conta) e compare com os `it`/linhas de `it.each` que exercitam a função. Não estime de cabeça.
 - [ ] `await`/`waitFor` em toda atualização assíncrona (sem warnings de `act`).
 - [ ] Limites: último critério marcado, caminho de 72/73 caracteres, 80/81 notificações.
