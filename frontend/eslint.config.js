@@ -23,7 +23,14 @@ export default [
       ...react.configs['jsx-runtime'].rules,
       ...reactHooks.configs.recommended.rules,
       'react/prop-types': 'off',
-      complexity: ['error', { max: 10 }]
+      complexity: ['error', { max: 10 }],
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'SwitchStatement',
+          message: 'Use mapa de lookup, if com retorno antecipado ou Strategy em vez de switch.'
+        }
+      ]
     }
   },
   {
