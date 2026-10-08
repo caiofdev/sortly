@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import Toast from './Toast';
 
-export const MAX_TOASTS = 3;
+// Um por vez, como no protótipo: empilhados, cobriam os botões Organizar e
+// Desfazer na janela padrão, e o de erro só sai quando o usuário fecha (#75).
+export const MAX_TOASTS = 1;
 
 // Toda notificação com id maior que o último visto vira toast; quais estão na
 // tela é estado de UI, e o texto vem do item atual para seguir o idioma (ADR 0005, #75).

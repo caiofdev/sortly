@@ -53,6 +53,22 @@ describe('Toast', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
+  it.each([
+    ['mouse', 'mouseEnter', 'mouseLeave'],
+    ['foco', 'focus', 'blur']
+  ])('com %s em cima, o prazo para e recomeça ao sair', (_how, enter, leave) => {
+    const { container, onClose } = renderToast();
+    act(() => vi.advanceTimersByTime(TOAST_MS - 1));
+    fireEvent[enter](container.firstChild);
+    act(() => vi.advanceTimersByTime(TOAST_MS * 10));
+    expect(onClose).not.toHaveBeenCalled();
+    fireEvent[leave](container.firstChild);
+    act(() => vi.advanceTimersByTime(TOAST_MS - 1));
+    expect(onClose).not.toHaveBeenCalled();
+    act(() => vi.advanceTimersByTime(1));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
   it('erro fica até o usuário fechar', () => {
     const { onClose } = renderToast({ kind: 'error' });
     act(() => vi.advanceTimersByTime(TOAST_MS * 10));

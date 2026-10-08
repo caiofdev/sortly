@@ -153,16 +153,13 @@ button {
   outline: none;
 }
 
-/* O mais novo fica no canto, junto da borda; os de pointer-events: none
-   deixam clicar no que está atrás do espaço vazio da pilha (#75). */
+/* pointer-events: none deixa clicar no que está atrás da área vazia da
+   região anunciável (#75). */
 .st-toasts {
   position: fixed;
   right: var(--space-6);
   bottom: var(--space-6);
   z-index: 20;
-  display: flex;
-  flex-direction: column-reverse;
-  gap: var(--space-2);
   max-width: calc(100vw - 2 * var(--space-6));
   pointer-events: none;
 }
@@ -170,6 +167,12 @@ button {
 .st-toasts .st-toast {
   max-width: 100%;
   pointer-events: auto;
+}
+
+/* Na janela mínima, o toast fica sobre os botões; com a folga embaixo, dá para
+   rolar a página e alcançá-los sem fechar o aviso (#75). */
+.st-app:has(.st-toast) .st-main {
+  padding-bottom: 160px;
 }
 
 .st-toast__body {

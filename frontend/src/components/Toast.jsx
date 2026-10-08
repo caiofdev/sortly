@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AlertIcon, CheckIcon, CloseIcon, InfoIcon } from './icons';
 
 export const TOAST_MS = 4000;
@@ -14,20 +14,32 @@ const VARIANTS = {
 function Toast({ kind, title, text, closeLabel, onClose }) {
   const variant = VARIANTS[kind] ?? VARIANTS.info;
   const sticky = Boolean(variant.role);
+  // Com o mouse ou o foco no toast, o prazo para: dá tempo de ler um caminho
+  // longo ou chegar ao botão de fechar (WCAG 2.2.1, #75).
+  const [paused, setPaused] = useState(false);
 
   // O pai recria onClose a cada estado novo; pela ref, o prazo de 4 s não
   // recomeça a cada atualização da tela (#75).
   const close = useRef(onClose);
-  close.current = onClose;
+  useEffect(() => {
+    close.current = onClose;
+  });
 
   useEffect(() => {
-    if (sticky) return undefined;
+    if (sticky || paused) return undefined;
     const timer = setTimeout(() => close.current(), TOAST_MS);
     return () => clearTimeout(timer);
-  }, [sticky]);
+  }, [sticky, paused]);
 
   return (
-    <div className={variant.className} role={variant.role}>
+    <div
+      className={variant.className}
+      role={variant.role}
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocus={() => setPaused(true)}
+      onBlur={() => setPaused(false)}
+    >
       <span className="st-toast__icon">
         <variant.Icon />
       </span>

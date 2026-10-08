@@ -22,10 +22,11 @@ describe('ToastStack', () => {
     expect(container.firstChild).toHaveAttribute('aria-live', 'polite');
   });
 
-  it('cada notificação nova vira toast, a mais recente primeiro', () => {
+  it('a notificação nova toma o lugar do toast anterior', () => {
     const { update } = renderStack(newestFirst(1));
+    expect(titles()).toEqual(['aviso 1']);
     update(newestFirst(1, 2));
-    expect(titles()).toEqual(['aviso 2', 'aviso 1']);
+    expect(titles()).toEqual(['aviso 2']);
   });
 
   it('uma notificação já vista não volta depois de fechada', () => {
@@ -39,11 +40,11 @@ describe('ToastStack', () => {
     [MAX_TOASTS - 1, MAX_TOASTS - 1],
     [MAX_TOASTS, MAX_TOASTS],
     [MAX_TOASTS + 1, MAX_TOASTS]
-  ])('%i notificações novas: %i toasts, as mais recentes', (count, shown) => {
+  ])('%i notificações novas de uma vez: %i toast(s), o mais recente', (count, shown) => {
     const ids = Array.from({ length: count }, (_, i) => i + 1);
     renderStack(newestFirst(...ids));
     expect(titles()).toHaveLength(shown);
-    expect(titles()[0]).toBe(`aviso ${count}`);
+    if (shown) expect(titles()[0]).toBe(`aviso ${count}`);
   });
 
   it('o texto segue o item atual (troca de idioma)', () => {
