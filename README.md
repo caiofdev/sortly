@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="frontend/src/assets/app-logo.svg" alt="Sortly" width="96" />
+  <img src="frontend/src/assets/sortly-logo.png" alt="Sortly" width="96" />
 </p>
 
 <h1 align="center">Sortly</h1>

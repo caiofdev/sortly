@@ -1,44 +1,47 @@
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import organizerCopy from '../i18n/organizerCopy';
 import OrganizerActions from './OrganizerActions';
 
 const labels = organizerCopy['pt-BR'];
 
 function renderActions(loadingAction, { hasSource = true, hasUndo = true } = {}) {
-  return render(
+  const handlers = { onOrganizeFiles: vi.fn(), onUndoLastOrganization: vi.fn() };
+  render(
     <OrganizerActions
       labels={labels}
       isLoading={loadingAction !== ''}
       loadingAction={loadingAction}
       hasUndo={hasUndo}
       hasSource={hasSource}
-      onOrganizeFiles={vi.fn()}
-      onUndoLastOrganization={vi.fn()}
+      {...handlers}
     />
   );
+  return handlers;
 }
 
 describe('OrganizerActions', () => {
   it.each([
-    ['', labels.organize, 0],
-    ['organize', labels.organizing, 1],
-    ['restore', labels.organize, 1]
-  ])('ação "%s": botão de organizar "%s" e %i spinner(s)', (action, organizeName, spinners) => {
-    const { container } = renderActions(action);
+    ['', labels.organize, labels.undo],
+    ['organize', labels.organizing, labels.undo],
+    ['restore', labels.organize, labels.restoring]
+  ])('ação "%s": botões "%s" e "%s"', (action, organizeName, undoName) => {
+    renderActions(action);
     expect(screen.getByRole('button', { name: organizeName })).toBeInTheDocument();
-    expect(container.querySelectorAll('svg.animate-spin')).toHaveLength(spinners);
+    expect(screen.getByRole('button', { name: undoName })).toBeInTheDocument();
   });
 
   it.each([
     ['organize', labels.organizing, labels.undo],
-    ['restore', labels.undo, labels.organize]
-  ])('em "%s", o botão da ação tem spinner e aria-busy', (action, busyName, idleName) => {
+    ['restore', labels.restoring, labels.organize]
+  ])('em "%s", só o botão da ação gira e tem aria-busy', (action, busyName, idleName) => {
     renderActions(action);
     const busy = screen.getByRole('button', { name: busyName });
+    const idle = screen.getByRole('button', { name: idleName });
     expect(busy).toHaveAttribute('aria-busy', 'true');
-    expect(busy.querySelector('svg.animate-spin')).not.toBeNull();
-    expect(screen.getByRole('button', { name: idleName })).toHaveAttribute('aria-busy', 'false');
+    expect(busy).toHaveClass('st-btn--busy');
+    expect(idle).toHaveAttribute('aria-busy', 'false');
+    expect(idle).not.toHaveClass('st-btn--busy');
   });
 
   it.each([
@@ -51,5 +54,17 @@ describe('OrganizerActions', () => {
     const organizeName = action === 'organize' ? labels.organizing : labels.organize;
     expect(screen.getByRole('button', { name: organizeName }).disabled).toBe(organizeDisabled);
     expect(screen.getByRole('button', { name: labels.undo }).disabled).toBe(undoDisabled);
+  });
+
+  it('primário amarelo para organizar, contorno vermelho para desfazer', () => {
+    const { onOrganizeFiles, onUndoLastOrganization } = renderActions('');
+    const organize = screen.getByRole('button', { name: labels.organize });
+    const undo = screen.getByRole('button', { name: labels.undo });
+    expect(organize).toHaveClass('st-btn--primary');
+    expect(undo).toHaveClass('st-btn--danger');
+    fireEvent.click(organize);
+    fireEvent.click(undo);
+    expect(onOrganizeFiles).toHaveBeenCalled();
+    expect(onUndoLastOrganization).toHaveBeenCalled();
   });
 });

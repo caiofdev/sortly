@@ -24,8 +24,8 @@ const (
 	DropTargetValue    = "drop"
 )
 
-// #0f172a, o fundo da interface enquanto ela carrega (#3).
-var backgroundColour = options.RGBA{R: 15, G: 23, B: 42, A: 255}
+// Preto, o fundo do design system (bg-000), enquanto a interface carrega (#74).
+var backgroundColour = options.RGBA{R: 0, G: 0, B: 0, A: 255}
 
 // A janela abre maximizada e sem menu. icon é o PNG do app (build/appicon.png),
 // usado só no Linux: no Windows e no macOS o ícone vem do executável e do

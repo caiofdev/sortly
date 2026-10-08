@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import App from '../src/App';
 
 const criteria = [
@@ -45,8 +45,9 @@ describe('App', () => {
     const { container } = render(<App />);
 
     expect(container).toBeEmptyDOMElement();
-    expect(await screen.findByRole('heading', { name: 'Sortly' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Organizar pasta' })).toBeInTheDocument();
     expect(screen.getByText('Arraste e solte uma pasta ou arquivo aqui')).toBeInTheDocument();
+    expect(document.documentElement.lang).toBe('pt-BR');
   });
 
   it('usa o idioma das preferências, sem passar pelo português', async () => {
@@ -55,6 +56,7 @@ describe('App', () => {
 
     expect(await screen.findByText('Drag and drop a folder or file here')).toBeInTheDocument();
     expect(screen.queryByText('Arraste e solte uma pasta ou arquivo aqui')).not.toBeInTheDocument();
+    expect(document.documentElement.lang).toBe('en');
   });
 
   it('mostra caminhos, carregamento e notificações traduzidas do estado', async () => {
@@ -76,7 +78,8 @@ describe('App', () => {
     render(<App />);
 
     expect(await screen.findByText('C:\\origem')).toBeInTheDocument();
-    expect(screen.getByText('Organizando arquivos...')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Organizando…' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Notificações' }));
     expect(
       screen.getByText('Última organização recuperada. Você pode desfazer essa alteração.')
     ).toBeInTheDocument();
@@ -90,10 +93,12 @@ describe('App', () => {
     });
     render(<App />);
 
-    const organize = await screen.findByRole('button', { name: 'Organizar arquivos' });
-    fireEvent.click(organize);
+    const main = await screen.findByRole('main');
+    fireEvent.click(within(main).getByRole('button', { name: 'Organizar' }));
 
     await vi.waitFor(() => expect(window.go.app.App.Organize).toHaveBeenCalled());
-    expect(await screen.findByRole('button', { name: 'Desfazer ultima separação' })).toBeEnabled();
+    await vi.waitFor(() =>
+      expect(within(main).getByRole('button', { name: 'Desfazer' })).toBeEnabled()
+    );
   });
 });

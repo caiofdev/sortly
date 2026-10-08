@@ -8,6 +8,11 @@ Mantido por Caio Reis & Claude.
 
 ## [Não lançado]
 
+### Adicionado
+- Visual novo, a partir da logo nova: barra lateral preta com as páginas Organizar e Configurações, amarelo do Sortly para a ação principal e fonte pixel no app todo.
+- Os critérios de organização ficam na página Configurações, como interruptores, cada um com um exemplo da pasta que cria.
+- Botões "Organizar" e "Desfazer" com texto; caminhos longos de pasta aparecem inteiros, quebrando a linha.
+
 ### Corrigido
 - Ao mover para outro disco ou pendrive, o arquivo original só é apagado depois que a cópia está gravada de fato. Uma queda de energia ou um pendrive removido logo depois não perde mais o arquivo.
 - Quando o registro para desfazer não pode ser salvo (disco cheio, sem permissão), o botão "Desfazer" fica desabilitado, em vez de desfazer a organização anterior por engano. Isso vale também depois de reabrir o app.

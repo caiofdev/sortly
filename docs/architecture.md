@@ -10,7 +10,7 @@ O Wails usa o WebView nativo do sistema (WebView2 no Windows, WKWebView no macOS
 
 ```mermaid
 flowchart LR
-  subgraph Frontend["Frontend — React 18 + Tailwind (WebView nativo)"]
+  subgraph Frontend["Frontend — React 18 + design system Sortly (WebView nativo)"]
     UI[Componentes<br/>e i18n] --> VS[useViewState]
   end
   VS -- "bindings: ação → ViewState" --> App
@@ -92,13 +92,15 @@ ViewState {
 
 ## 4. Frontend
 
-A interface é a mesma da versão 1.0, e o frontend não tem regra de negócio ([ADR 0005](adr/0005-estado-da-tela-no-backend.md)):
+A interface segue o design system "Sortly" (sidebar preta, amarelo `#F5E600`, fonte pixel; [ADR 0006](adr/0006-design-system-no-lugar-do-tailwind.md)), e o frontend não tem regra de negócio ([ADR 0005](adr/0005-estado-da-tela-no-backend.md)):
 
 | Módulo | Responsabilidade |
 |---|---|
 | `hooks/useViewState.js` | Único módulo que importa os bindings e o runtime do Wails. Espelho do `ViewState`: estado inicial, evento `sortly:state`, arquivos soltos (`DropPaths`) e as ações; fora do Wails, fica no estado inicial |
 | `i18n/` | Textos PT/EN; `notifications.js` transforma notificações estruturadas em frases no idioma atual |
-| `views/`, `components/` | Apresentação, painéis abertos ou fechados e destaque ao arrastar |
+| `views/` | Shell (`OrganizerView`: sidebar, cabeçalho e a página aberta) e as páginas Organizar e Configurações |
+| `components/` | Peças do design system: Sidebar, PageHead, Dropzone, PathField, botões, Switch, notificações e ícones |
+| `styles/` | `tokens.css` (temas), `components.css` (classes `st-*` do design system, sem edição) e `app.css` (fonte embutida e ajustes) |
 
 A estrutura de pastas do repositório está em [development.md](development.md#3-estrutura-do-repositório).
 

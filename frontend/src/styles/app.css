@@ -1,0 +1,125 @@
+/* Pixelify Sans embutida: o app abre offline e a fonte é a mesma nos três
+   WebViews. Pesos do design system: 400 a 700 (ADR 0006, #74). */
+@import '@fontsource/pixelify-sans/latin-400.css';
+@import '@fontsource/pixelify-sans/latin-ext-400.css';
+@import '@fontsource/pixelify-sans/latin-500.css';
+@import '@fontsource/pixelify-sans/latin-ext-500.css';
+@import '@fontsource/pixelify-sans/latin-600.css';
+@import '@fontsource/pixelify-sans/latin-ext-600.css';
+@import '@fontsource/pixelify-sans/latin-700.css';
+@import '@fontsource/pixelify-sans/latin-ext-700.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+.st-app {
+  min-height: 100%;
+}
+
+/* Botões e links herdam a fonte pixel; o navegador usaria a do sistema (#74). */
+button {
+  font-family: inherit;
+}
+
+/* O hover do primário desabilitado não pode clarear, senão parece clicável (#74). */
+.st-btn--primary[disabled]:hover {
+  background: var(--brand);
+}
+
+.st-btn--danger[disabled]:hover {
+  background: transparent;
+}
+
+.st-btn--busy svg {
+  animation: st-spin 1s steps(8, end) infinite;
+}
+
+@keyframes st-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .st-btn--busy svg {
+    animation: none;
+  }
+}
+
+/* Linhas da página Configurações, como no protótipo (#74). */
+.st-settings {
+  padding: var(--space-2) var(--space-6);
+}
+
+.st-settings__row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-4);
+  padding: 18px 0;
+  border-bottom: 1px solid var(--line-100);
+}
+
+.st-settings__row:last-child {
+  border-bottom: 0;
+}
+
+.st-settings__title {
+  margin: 0;
+  font: 600 14px/20px var(--font-sans);
+  color: var(--ink-100);
+}
+
+.st-settings__hint {
+  margin: 2px 0 0;
+  font: 400 13px/18px var(--font-sans);
+  color: var(--ink-200);
+}
+
+.st-switch[disabled] {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.st-sidebar__nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.st-sidebar__foot .st-seg {
+  align-self: flex-start;
+}
+
+.st-notif__empty {
+  margin: 0;
+  padding: var(--space-4);
+  font: 400 13px/18px var(--font-sans);
+  color: var(--ink-200);
+}
+
+.st-notif__list {
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+/* Sem position: o painel st-notif ancora no st-pagehead e pode ter 360px;
+   ancorado no sino, o max-width: 100% o deixaria com 44px (#74). */
+.st-pagehead__actions {
+  flex: none;
+}
+
+.st-pagehead__actions .st-icon-btn--round {
+  width: 44px;
+  height: 44px;
+}

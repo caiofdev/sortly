@@ -7,7 +7,7 @@ describe('LanguageToggle', () => {
     ['pt-BR', 'true', 'false'],
     ['en', 'false', 'true']
   ])('com %s, informa qual idioma está ativo', (language, ptPressed, enPressed) => {
-    render(<LanguageToggle language={language} onChange={vi.fn()} />);
+    render(<LanguageToggle language={language} label="Idioma" onChange={vi.fn()} />);
     expect(screen.getByRole('button', { name: 'PT-BR' })).toHaveAttribute(
       'aria-pressed',
       ptPressed
@@ -15,16 +15,16 @@ describe('LanguageToggle', () => {
     expect(screen.getByRole('button', { name: 'EN' })).toHaveAttribute('aria-pressed', enPressed);
   });
 
-  // Regressão (#60): a bandeira repetia o rótulo ("PT-BR PT-BR" no leitor de tela).
-  it('a bandeira é decorativa e o nome do botão é só o rótulo', () => {
-    const { container } = render(<LanguageToggle language="pt-BR" onChange={vi.fn()} />);
-    container.querySelectorAll('img').forEach((img) => expect(img).toHaveAttribute('alt', ''));
+  // Regressão (#60): o leitor de tela lia "PT-BR PT-BR" com a bandeira.
+  it('o nome do botão é só o rótulo, dentro de um grupo com nome', () => {
+    render(<LanguageToggle language="pt-BR" label="Idioma" onChange={vi.fn()} />);
+    expect(screen.getByRole('group', { name: 'Idioma' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'PT-BR PT-BR' })).not.toBeInTheDocument();
   });
 
   it('clicar troca o idioma', () => {
     const onChange = vi.fn();
-    render(<LanguageToggle language="pt-BR" onChange={onChange} />);
+    render(<LanguageToggle language="pt-BR" label="Idioma" onChange={onChange} />);
     fireEvent.click(screen.getByRole('button', { name: 'EN' }));
     expect(onChange).toHaveBeenCalledWith('en');
   });
