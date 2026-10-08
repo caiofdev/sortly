@@ -36,4 +36,6 @@ Regras que já falharam neste projeto e que a revisão deve conferir sempre. Cad
 - Contagem de CC no JS estimada de cabeça errou (CC 8 anotada como 5); liste pela regra `complexity` do ESLint. — #60 (2026-10-06)
 - Mudar atributo de acessibilidade (`aria-pressed`) muda o padrão de UI Automation e quebra o roteiro de paridade: rode a paridade em toda mudança de componente. — #60 (2026-10-06)
 
+- Elemento fixo por cima da tela (toast, painel) que só some quando o usuário fecha não pode cobrir as ações principais: meça na janela padrão (980×700) e na mínima (820×600), com o máximo de itens empilhados. — #75 (2026-10-08)
+
 <!-- Acrescente aqui: - Regra generalizada. — PR/issue (AAAA-MM-DD) -->
