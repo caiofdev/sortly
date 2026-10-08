@@ -67,6 +67,7 @@ O frontend só renderiza ([ADR 0005](adr/0005-estado-da-tela-no-backend.md)). A 
 | `DropPaths(paths)` | Define a origem a partir do primeiro item solto (a pasta, ou a pasta do arquivo) |
 | `Organize()` | Organiza a origem no destino (vazio = a própria origem) com os critérios salvos. Sem origem: `SOURCE_REQUIRED` |
 | `Undo()` | Desfaz a última organização |
+| `MarkNotificationsRead()` | Apaga o ponto de não lidas do sino; a lista continua |
 | `ClearNotifications()` | Apaga o histórico de notificações |
 | `SetLanguage(language)` / `SetCriterion(key, enabled)` | Alteram as preferências (`backend/settings`) |
 
@@ -76,13 +77,15 @@ ViewState {
   sourceFolderPath, destinationFolderPath: string
   hasUndo: bool
   busy: "" | "organize" | "restore"          // ação em andamento
+  unread: bool                               // há notificação nova desde a última leitura
   settings: { language, criteria: [{ key, enabled, locked }] }
-  notifications: [{ id, kind, code, action, path?, organize?, undo?, at }]   // até 80, a mais recente primeiro
+  notifications: [{ id, kind: "success" | "info" | "error", code, action, path?, organize?, undo?, at }]   // até 80, a mais recente primeiro
 }
 ```
 
 - **Erros não rejeitam a promessa:** viram uma notificação `kind: "error"` com o código (`INVALID_SOURCE`, `NOTHING_TO_UNDO`, `DROPPED_MISSING`, `LAST_CRITERION`, `UNEXPECTED`…) e a ação que falhou. O detalhe vai para o log. O frontend traduz o código, ou usa o texto padrão da ação quando o código não tem tradução própria (ADR 0004).
 - **Notificações de sucesso** também são códigos com dados: `ORGANIZE_DONE` (com `organize`: movidos, falhas, ignorados…), `UNDO_DONE` (com `undo`) e `SOURCE_DROPPED` (com `path`).
+- **Status (`kind`):** o backend decide se o aviso é sucesso, neutro ou erro. Organizar ou desfazer com algum arquivo que falhou é `error`, e organizar sem nada movido é `info`. A interface usa o `kind` para o ponto do painel e a variante do toast; o toast de erro fica até o usuário fechar.
 - **Evento `sortly:state`:** emitido a cada mudança, com o estado inteiro. É por ele que a tela mostra "Organizando…" enquanto a chamada de `Organize` ainda não terminou.
 - **Estados fora de ordem:** evento e retorno do binding saem do lock antes de chegar à tela, então duas ações quase simultâneas podem entregá-los fora de ordem. O `useViewState` só troca o estado por um de `version` maior.
 - **Organizar e desfazer não rodam juntos:** uma chamada durante a outra devolve o estado sem fazer nada.
@@ -97,9 +100,9 @@ A interface segue o design system "Sortly" (sidebar preta, amarelo `#F5E600`, fo
 | Módulo | Responsabilidade |
 |---|---|
 | `hooks/useViewState.js` | Único módulo que importa os bindings e o runtime do Wails. Espelho do `ViewState`: estado inicial, evento `sortly:state`, arquivos soltos (`DropPaths`) e as ações; fora do Wails, fica no estado inicial |
-| `i18n/` | Textos PT/EN; `notifications.js` transforma notificações estruturadas em frases no idioma atual |
+| `i18n/` | Textos PT/EN; `notifications.js` transforma notificações estruturadas em título e texto no idioma atual |
 | `views/` | Shell (`OrganizerView`: sidebar, cabeçalho e a página aberta) e as páginas Organizar e Configurações |
-| `components/` | Peças do design system: Sidebar, PageHead, Dropzone, PathField, botões, Switch, notificações e ícones |
+| `components/` | Peças do design system: Sidebar, PageHead, Dropzone, PathField, botões, Switch, notificações, toasts e ícones |
 | `styles/` | `tokens.css` (temas), `components.css` (classes `st-*` do design system, sem edição) e `app.css` (fonte embutida e ajustes) |
 
 A estrutura de pastas do repositório está em [development.md](development.md#3-estrutura-do-repositório).
