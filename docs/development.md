@@ -61,7 +61,7 @@ sortly/
     fs/files/             # mover, reservar nome, pastas
     tests/                # testes de integração (só API pública)
   frontend/
-    src/                  # React + Tailwind; cada módulo com o seu .test.js(x) ao lado
+    src/                  # React + CSS do design system (styles/); cada módulo com o seu .test.js(x) ao lado
     tests/                # testes de integração (App inteiro com os bindings reais)
     vitest.setup.js       # configuração do Vitest (jest-dom e limpeza)
     wailsjs/              # bindings gerados pelo Wails (versionados)

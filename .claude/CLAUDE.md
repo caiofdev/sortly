@@ -1,6 +1,6 @@
 # Sortly — guia para o Claude
 
-App de desktop que organiza os arquivos de uma pasta em subpastas por critérios (extensão, data, tamanho, resolução, duração de mp4, páginas) e desfaz a última organização. Feito em **Wails v2**: backend em Go, frontend React 18 + Vite + Tailwind num WebView nativo. Repositório `caiofdev/sortly`, branch principal `main`.
+App de desktop que organiza os arquivos de uma pasta em subpastas por critérios (extensão, data, tamanho, resolução, duração de mp4, páginas) e desfaz a última organização. Feito em **Wails v2**: backend em Go, frontend React 18 + Vite num WebView nativo, com o CSS do design system "Sortly" (tokens e classes `st-*`, ADR 0006). Repositório `caiofdev/sortly`, branch principal `main`.
 
 Responda e escreva (código, comentários, docs, commits, PRs) em **português do Brasil**.
 
@@ -22,7 +22,7 @@ backend/            backend Go (pacotes por responsabilidade; teste sempre ao la
   apperr/           erros com código estável
   logging/          slog em arquivo
   tests/            testes de integração (só API pública, disco de verdade)
-frontend/src/       React só de apresentação: components/, views/, hooks/useViewState (único que importa wailsjs/), i18n/; teste ao lado de cada módulo
+frontend/src/       React só de apresentação: components/, views/ (páginas), hooks/useViewState (único que importa wailsjs/), i18n/, styles/ (tokens.css, components.css do design system, app.css); teste ao lado de cada módulo
 frontend/tests/     testes de integração do frontend (App inteiro)
 frontend/wailsjs/   bindings gerados pelo Wails (versionados; regenerados por wails dev/build)
 build/              ícones, manifesto Windows, Info.plist, NSIS (windows/installer), nfpm (linux)
@@ -70,7 +70,7 @@ cd frontend && npm run lint && npm run format:check && npm test   # ESLint (comp
 - Nomes das pastas criadas e o formato de `~/.sortly/last-operation.json` são os da versão 1.0 (um desfazer pendente da 1.0 funciona na 2.0). Especificação em `docs/organization-rules.md`.
 - O backend devolve **dados e códigos de erro**, nunca texto para o usuário; o i18n fica inteiro no frontend (ADR 0004).
 - A interface não muda visualmente sem pedido explícito.
-- Decisões registradas em `docs/adr/`: 0001 Electron → Wails, 0002 gateway no frontend (substituída), 0003 Strategy + registry nas regras, 0004 erros com código, 0005 estado da tela no backend.
+- Decisões registradas em `docs/adr/`: 0001 Electron → Wails, 0002 gateway no frontend (substituída), 0003 Strategy + registry nas regras, 0004 erros com código, 0005 estado da tela no backend, 0006 CSS do design system no lugar do Tailwind.
 
 ## Armadilhas do ambiente
 
