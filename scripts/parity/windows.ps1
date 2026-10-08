@@ -74,7 +74,9 @@ function Stop-App {
   $script:proc = $null
 }
 
-function Find-Element([string[]]$names, [int]$timeoutSeconds = 20, $type = $null) {
+# -Last pega a última ocorrência do nome: "Organizar" é o item da sidebar e
+# também a ação da página, que vem depois na árvore (#74).
+function Find-Element([string[]]$names, [int]$timeoutSeconds = 20, $type = $null, [switch]$Last) {
   $deadline = (Get-Date).AddSeconds($timeoutSeconds)
   while ((Get-Date) -lt $deadline) {
     $script:proc.Refresh()
@@ -83,8 +85,8 @@ function Find-Element([string[]]$names, [int]$timeoutSeconds = 20, $type = $null
       foreach ($name in $names) {
         $condition = New-Object Windows.Automation.PropertyCondition ($UIA::NameProperty), $name
         if ($type) { $condition = New-Object Windows.Automation.AndCondition $condition, (New-Object Windows.Automation.PropertyCondition ($UIA::ControlTypeProperty), $type) }
-        $element = $window.FindFirst([Windows.Automation.TreeScope]::Descendants, $condition)
-        if ($element) { return $element }
+        $found = @($window.FindAll([Windows.Automation.TreeScope]::Descendants, $condition))
+        if ($found.Count -gt 0) { if ($Last) { return $found[-1] } else { return $found[0] } }
       }
     }
     Start-Sleep -Milliseconds 250
@@ -92,35 +94,48 @@ function Find-Element([string[]]$names, [int]$timeoutSeconds = 20, $type = $null
   throw "Elemento '$($names -join "' / '")' não encontrado"
 }
 
-function Click([string[]]$name) {
-  $element = Find-Element $name -type ([Windows.Automation.ControlType]::Button)
-  $pattern = $null
-  # Botões com aria-pressed (idioma) são de alternância: expõem Toggle, não Invoke.
-  if ($element.TryGetCurrentPattern([Windows.Automation.InvokePattern]::Pattern, [ref]$pattern)) {
-    $pattern.Invoke()
-  } else {
-    $element.GetCurrentPattern([Windows.Automation.TogglePattern]::Pattern).Toggle()
+# Trocar de página recria os elementos: um elemento achado no meio da troca
+# deixa de expor os padrões, então a busca é refeita até o clique dar certo (#74).
+function Click([string[]]$name, [switch]$Last) {
+  for ($try = 0; $try -lt 10; $try++) {
+    $element = Find-Element $name -type ([Windows.Automation.ControlType]::Button) -Last:$Last
+    $pattern = $null
+    # Botões com aria-pressed (idioma) são de alternância: expõem Toggle, não Invoke (#60).
+    if ($element.TryGetCurrentPattern([Windows.Automation.InvokePattern]::Pattern, [ref]$pattern)) { $pattern.Invoke(); return }
+    if ($element.TryGetCurrentPattern([Windows.Automation.TogglePattern]::Pattern, [ref]$pattern)) { $pattern.Toggle(); return }
+    # O sino tem aria-expanded: expõe ExpandCollapse, também sem Invoke (#74).
+    if ($element.TryGetCurrentPattern([Windows.Automation.ExpandCollapsePattern]::Pattern, [ref]$pattern)) {
+      if ($pattern.Current.ExpandCollapseState -eq 'Expanded') { $pattern.Collapse() } else { $pattern.Expand() }
+      return
+    }
+    Start-Sleep -Milliseconds 300
   }
+  throw "Botão '$($name -join "' / '")' não aceita clique"
 }
 
 function Toggle-State([string[]]$name) {
   (Find-Element $name -type ([Windows.Automation.ControlType]::Button)).GetCurrentPattern([Windows.Automation.TogglePattern]::Pattern).Current.ToggleState
 }
 
-function Is-Enabled([string[]]$name) { (Find-Element $name -type ([Windows.Automation.ControlType]::Button)).Current.IsEnabled }
+function Is-Enabled([string[]]$name, [switch]$Last) { (Find-Element $name -type ([Windows.Automation.ControlType]::Button) -Last:$Last).Current.IsEnabled }
+
+# Os critérios são switches (role="switch") na página Configurações (#74).
+function Criterion([string]$label) {
+  (Find-Element $label -type ([Windows.Automation.ControlType]::Button)).GetCurrentPattern([Windows.Automation.TogglePattern]::Pattern)
+}
 
 function Set-Criteria([string[]]$on) {
-  Click 'Configurações de organização'
+  Click 'Configurações'
   foreach ($label in 'Duração (.mp4)', 'Páginas', 'Resolução', 'Data', 'Tamanho (MB)', 'Extensão do arquivo') {
-    $toggle = (Find-Element $label -type ([Windows.Automation.ControlType]::CheckBox)).GetCurrentPattern([Windows.Automation.TogglePattern]::Pattern)
+    $toggle = Criterion $label
     $want = $on -contains $label
-    if (($toggle.Current.ToggleState -eq 'On') -ne $want -and $want) { $toggle.Toggle() }
+    if (($toggle.Current.ToggleState -eq 'On') -ne $want -and $want) { $toggle.Toggle(); Start-Sleep -Milliseconds 200 }
   }
   foreach ($label in 'Duração (.mp4)', 'Páginas', 'Resolução', 'Data', 'Tamanho (MB)', 'Extensão do arquivo') {
-    $toggle = (Find-Element $label -type ([Windows.Automation.ControlType]::CheckBox)).GetCurrentPattern([Windows.Automation.TogglePattern]::Pattern)
-    if ($toggle.Current.ToggleState -eq 'On' -and $on -notcontains $label) { $toggle.Toggle() }
+    $toggle = Criterion $label
+    if ($toggle.Current.ToggleState -eq 'On' -and $on -notcontains $label) { $toggle.Toggle(); Start-Sleep -Milliseconds 200 }
   }
-  Click 'Configurações de organização'
+  Click 'Organizar'
 }
 
 # Último aviso mostrado na central de notificações.
@@ -152,7 +167,7 @@ try {
   Set-Record $src $dst
   Start-App
   Set-Criteria @('Duração (.mp4)', 'Páginas', 'Resolução', 'Data', 'Tamanho (MB)', 'Extensão do arquivo')
-  Click 'Organizar arquivos'
+  Click 'Organizar' -Last
   $moved = Wait-Until { (Tree $src).Count -eq 3 }   # ficam LEIAME, .gitignore (sem extensão) e subpasta\dentro.txt
   $organized = Tree $dst
   Check 'WIN_CRIT_ALL' ($moved -and $organized -contains 'pdf\date-2026-03-05\size-1mb\pages-3\3-pages-classic-xref.pdf') 'pdf/date-*/size-*/pages-3'
@@ -164,24 +179,24 @@ try {
   Stop-App
 
   Start-App
-  $canUndo = Is-Enabled 'Desfazer ultima separação'
-  Click 'Desfazer ultima separação'
+  $canUndo = Is-Enabled 'Desfazer'
+  Click 'Desfazer'
   $restored = Wait-Until { (Compare-Object $before (Tree $src)) -eq $null }
   Check 'WIN_UNDO_RESTART' ($canUndo -and $restored) 'reaberto: desfazer ativo e árvore original restaurada'
   Check 'WIN_UNDO' ($restored -and -not (Test-Path $dst) -or @(Get-ChildItem $dst -Recurse -File -ErrorAction SilentlyContinue).Count -eq 0) 'pastas criadas removidas do destino'
 
   # --- 2) Último critério não pode ser desmarcado ---
   Set-Criteria @('Extensão do arquivo')
-  Click 'Configurações de organização'
-  $last = Find-Element 'Extensão do arquivo' -type ([Windows.Automation.ControlType]::CheckBox)
-  Check 'WIN_CRIT_LAST' (-not $last.Current.IsEnabled) 'checkbox do último critério desabilitado'
-  Click 'Configurações de organização'
+  Click 'Configurações'
+  $last = Find-Element 'Extensão do arquivo' -type ([Windows.Automation.ControlType]::Button)
+  Check 'WIN_CRIT_LAST' (-not $last.Current.IsEnabled) 'switch do último critério desabilitado'
+  Click 'Organizar'
 
   # --- 3) Conflito de nome (B4) e arquivo bloqueado (B1) ---
   New-Item -ItemType Directory -Force "$dst\txt" | Out-Null; Set-Content "$dst\txt\nota.txt" 'já existia'
   $lock = [IO.File]::Open("$src\3x2.png", 'Open', 'Read', 'None')
   try {
-    Click 'Organizar arquivos'
+    Click 'Organizar' -Last
     $done = Wait-Until { (Tree $src).Count -eq 4 }   # LEIAME, .gitignore, subpasta\dentro.txt e o png bloqueado
     $notice = Last-Notice
   } finally { $lock.Close() }
@@ -189,14 +204,14 @@ try {
   Check 'WIN_B1' ($done -and $notice -match 'Falhas ao mover: 1') $notice
 
   # --- 4) Organizar sem nada para mover mantém o desfazer (B2) ---
-  Click 'Organizar arquivos'; Start-Sleep -Seconds 2   # só sobra o png (já liberado), que agora é movido
-  Click 'Organizar arquivos'; Start-Sleep -Seconds 2   # nada para mover
-  $keep = Is-Enabled 'Desfazer ultima separação'
+  Click 'Organizar' -Last; Start-Sleep -Seconds 2   # só sobra o png (já liberado), que agora é movido
+  Click 'Organizar' -Last; Start-Sleep -Seconds 2   # nada para mover
+  $keep = Is-Enabled 'Desfazer'
   Check 'WIN_B2' $keep 'botão de desfazer continua ativo após organizar sem movimentos'
 
   # --- 5) Arquivo apagado antes de desfazer ---
   Remove-Item "$dst\png\3x2.png" -ErrorAction SilentlyContinue
-  Click 'Desfazer ultima separação'; Start-Sleep -Seconds 2
+  Click 'Desfazer'; Start-Sleep -Seconds 2
   $notice = Last-Notice
   Check 'WIN_UNDO_MISSING' ($notice -match 'Não encontrados: 1') $notice
 
@@ -206,7 +221,7 @@ try {
   Set-Record $b8 $b8
   Start-App
   Set-Criteria @('Resolução')
-  Click 'Organizar arquivos'; Start-Sleep -Seconds 3
+  Click 'Organizar' -Last; Start-Sleep -Seconds 3
   $after = Tree $b8
   $renamed = @($after | Where-Object { $_ -match ' \(1\)' })
   Check 'WIN_B8' ($renamed.Count -eq 0 -and ($after -contains '3x2\3x2.png')) "renomeados: $($renamed.Count)"
@@ -218,10 +233,10 @@ try {
   Click 'EN'; Start-Sleep -Milliseconds 500
   Stop-App
   Start-App
-  $en = $null -ne (Find-Element 'Organize files' 10)
-  Click 'Settings', 'Organization settings'
-  $resOn = (Find-Element 'Resolution' -type ([Windows.Automation.ControlType]::CheckBox)).GetCurrentPattern([Windows.Automation.TogglePattern]::Pattern).Current.ToggleState -eq 'On'
-  Click 'Organization settings'
+  $en = $null -ne (Find-Element 'Organize folder' 10)
+  Click 'Settings'
+  $resOn = (Criterion 'Resolution').Current.ToggleState -eq 'On'
+  Click 'Organize'
   Check 'WIN_LANG' $en 'botões em inglês após trocar o idioma'
   Check 'WIN_PREFS' ($en -and $resOn) 'idioma e critério "Resolution" mantidos após reabrir'
   # As preferências ficam em ~/.sortly/settings.json, fora do WebView (#44):
@@ -233,18 +248,18 @@ try {
   }
   New-Item -ItemType Directory -Force "$home_\AppData\Roaming", "$home_\AppData\Local\Temp" | Out-Null
   Start-App
-  $enAgain = $null -ne (Find-Element 'Organize files' 10)
-  Click 'Settings', 'Organization settings'
-  $resAgain = (Find-Element 'Resolution' -type ([Windows.Automation.ControlType]::CheckBox)).GetCurrentPattern([Windows.Automation.TogglePattern]::Pattern).Current.ToggleState -eq 'On'
-  Click 'Organization settings'
+  $enAgain = $null -ne (Find-Element 'Organize folder' 10)
+  Click 'Settings'
+  $resAgain = (Criterion 'Resolution').Current.ToggleState -eq 'On'
+  Click 'Organize'
   Check 'WIN_PREFS_WEBVIEW' ($enAgain -and $resAgain) 'idioma e critério mantidos após apagar os dados do WebView'
   # Limpar as notificações devolve uma lista vazia; a tela precisa continuar lá (#45).
   Click 'Notifications'; Start-Sleep -Milliseconds 500
   Click 'Clear'; Start-Sleep -Milliseconds 500
   Click 'Notifications'; Start-Sleep -Milliseconds 500
-  Check 'WIN_CLEAR' ($null -ne (Find-Element 'Organize files' 5)) 'tela continua após limpar as notificações'
+  Check 'WIN_CLEAR' ($null -ne (Find-Element 'Organize folder' 5)) 'tela continua após limpar as notificações'
   Rename-Item $b8 "$work\b8-renomeada"
-  Click 'Organize files'; Start-Sleep -Seconds 2
+  Click 'Organize' -Last; Start-Sleep -Seconds 2
   $notice = Last-Notice
   Check 'WIN_B6' ($notice -eq 'Invalid folder.') $notice
 }
