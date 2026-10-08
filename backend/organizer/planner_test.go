@@ -22,8 +22,8 @@ func TestPlanScenarios(t *testing.T) {
 		files []string
 		dirs  []string
 		opts  criteria.Options
-		dst   string // "" = destino igual à origem
-		want  Plan   // Source/Destination preenchidos no teste; Moves relativos
+		dst   string // "" = destino igual à origem (#8)
+		want  Plan   // Source/Destination preenchidos no teste; Moves relativos (#8)
 	}{
 		{name: "pasta vazia", opts: criteria.Options{ByExtension: true}, want: Plan{}},
 		{name: "só subpastas", dirs: []string{"a", "b"}, opts: criteria.Options{ByExtension: true}, want: Plan{IgnoredFolders: 2}},
@@ -54,7 +54,7 @@ func TestPlanScenarios(t *testing.T) {
 			}},
 		},
 		{
-			name:  "destino = origem e nenhuma subpasta gerada: arquivo fica onde está (B8)",
+			name:  "destino = origem e nenhuma subpasta gerada: arquivo fica onde está (#8)",
 			files: []string{"nota.txt", "foto.png"},
 			opts:  criteria.Options{ByResolution: true},
 			want: Plan{ProcessedFiles: 2, UnchangedFiles: 1, Moves: []Move{
@@ -97,7 +97,7 @@ func TestPlanScenarios(t *testing.T) {
 }
 
 // Regressão (#58): no macOS (APFS) e no Windows, o destino escrito com outra
-// caixa é a própria origem; o arquivo fica onde está, sem virar "nota (1).txt" (B8).
+// caixa é a própria origem; o arquivo fica onde está, sem virar "nota (1).txt".
 func TestPlanDestinationDifferingOnlyInCase(t *testing.T) {
 	if runtime.GOOS != "windows" && runtime.GOOS != "darwin" {
 		t.Skip("no Linux, caixa diferente é outra pasta")
@@ -126,7 +126,8 @@ func TestPlanSpecialEntries(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// O atalho é ignorado sem contar; o arquivo que sumiu conta como processado, mas não é movido.
+	// O atalho é ignorado sem contar; o arquivo que sumiu conta como processado, mas não é
+	// movido (#8).
 	if got.ProcessedFiles != 1 || len(got.Moves) != 0 || got.IgnoredFolders != 0 {
 		t.Fatalf("Plan = %+v", got)
 	}

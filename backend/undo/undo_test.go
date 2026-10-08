@@ -45,7 +45,7 @@ func TestUndoNothingToUndo(t *testing.T) {
 
 func TestUndoLoadError(t *testing.T) {
 	st := newStore(t)
-	mkdir(t, st.Path()) // o caminho do registro é uma pasta: erro de leitura
+	mkdir(t, st.Path()) // o caminho do registro é uma pasta: erro de leitura (#9)
 	_, err := NewService(st, nil).Undo(context.Background())
 	if err == nil || errors.Is(err, ErrNothingToUndo) || apperr.CodeOf(err) != apperr.CodeUnexpected {
 		t.Fatalf("err = %v, want erro inesperado", err)
@@ -65,7 +65,7 @@ func TestUndoRestoresAndCleans(t *testing.T) {
 		t.Fatalf("Undo = (%+v, %v)", got, err)
 	}
 	assertTree(t, src, "a.pdf", "b.pdf")
-	assertTree(t, dst) // pastas criadas removidas; a raiz do destino fica (mesmo vazia)
+	assertTree(t, dst) // pastas criadas removidas; a raiz do destino fica, mesmo vazia (#9)
 	assertNoRecord(t, st)
 }
 
@@ -73,7 +73,7 @@ func TestUndoSkipsMissing(t *testing.T) {
 	src, dst := t.TempDir(), t.TempDir()
 	a := move(t, src, dst, "a.txt", "txt")
 	b := move(t, src, dst, "b.txt", "txt")
-	if err := os.Remove(b.To); err != nil { // usuário apagou um dos arquivos organizados
+	if err := os.Remove(b.To); err != nil { // usuário apagou um dos arquivos organizados (#9)
 		t.Fatal(err)
 	}
 	st := withRecord(t, src, dst, a, b)
@@ -83,7 +83,7 @@ func TestUndoSkipsMissing(t *testing.T) {
 	if err != nil || got != (Result{RestoredFiles: 1, SkippedMissing: 1}) {
 		t.Fatalf("Undo = (%+v, %v)", got, err)
 	}
-	assertNoRecord(t, st) // o arquivo pulado não fica pendente
+	assertNoRecord(t, st) // o arquivo pulado não fica pendente (#9)
 }
 
 func TestUndoRenamesWhenOccupied(t *testing.T) {
@@ -104,20 +104,20 @@ func TestUndoRenamesWhenOccupied(t *testing.T) {
 func TestUndoPreservesNonEmptyFolder(t *testing.T) {
 	src, dst := t.TempDir(), t.TempDir()
 	a := move(t, src, dst, "a.txt", "txt/date-2026-03-05")
-	writeFile(t, filepath.Join(dst, "txt", "do-usuario.txt"), "x") // 1 arquivo do usuário
+	writeFile(t, filepath.Join(dst, "txt", "do-usuario.txt"), "x") // 1 arquivo do usuário (#9)
 	st := withRecord(t, src, dst, a)
 
 	if _, err := NewService(st, nil).Undo(context.Background()); err != nil {
 		t.Fatal(err)
 	}
-	assertTree(t, dst, "txt/do-usuario.txt") // date-* (vazia) removida; txt (1 arquivo) preservada
+	assertTree(t, dst, "txt/do-usuario.txt") // date-* (vazia) removida; txt (1 arquivo) preservada (#9)
 }
 
 // Regressão (#57): pasta que já existia no destino não é removida pelo
 // desfazer, mesmo vazia; as criadas pela organização são.
 func TestUndoKeepsFoldersThatAlreadyExisted(t *testing.T) {
 	src, dst := t.TempDir(), t.TempDir()
-	mkdir(t, filepath.Join(dst, "pdf")) // vazia, do usuário
+	mkdir(t, filepath.Join(dst, "pdf")) // vazia, do usuário (#57)
 	a := move(t, src, dst, "a.pdf", "pdf/pages-1")
 	st := newStore(t)
 	saveRecord(t, st, store.Operation{SourceFolderPath: src, DestinationFolderPath: dst, MovedItems: []store.MovedItem{a},
@@ -150,8 +150,8 @@ func TestUndoLegacyRecordWithoutCreatedFolders(t *testing.T) {
 	src, dst := t.TempDir(), t.TempDir()
 	a := move(t, src, dst, "a.txt", "txt/size-1mb")
 	st := newStore(t)
-	// Sem o campo createdFolders no arquivo, como nos registros antigos: o
-	// store sempre grava a lista, então o JSON é escrito à mão.
+	// Sem o campo createdFolders, como nos registros antigos: o store sempre grava
+	// a lista, então o JSON é escrito à mão (#57).
 	legacy, err := json.Marshal(map[string]any{
 		"sourceFolderPath": src, "destinationFolderPath": dst,
 		"movedItems": []map[string]string{{"from": a.From, "to": a.To}},
@@ -226,7 +226,7 @@ func TestUndoIgnoresItemsOutsideRecordedFolders(t *testing.T) {
 			base := t.TempDir()
 			src, dst, outside := filepath.Join(base, "dados"), filepath.Join(base, "destino"), filepath.Join(base, "fora")
 			item := store.MovedItem{From: tt.from(src, dst, outside), To: tt.to(src, dst, outside)}
-			// Todas as pastas existem: sem a validação, o movimento daria certo.
+			// Todas as pastas existem: sem a validação, o movimento daria certo (#54).
 			for _, dir := range []string{src, src + "2", outside, filepath.Dir(item.To)} {
 				mkdir(t, dir)
 			}
@@ -383,7 +383,7 @@ func TestUndoPartialFailure(t *testing.T) {
 		t.Fatalf("registro deveria guardar só o item que falhou: %+v", op)
 	}
 
-	// Um novo desfazer, sem falha, termina o trabalho.
+	// Um novo desfazer, sem falha, termina o trabalho (#9).
 	got, err = NewService(st, nil).Undo(context.Background())
 	if err != nil || got != (Result{RestoredFiles: 1}) {
 		t.Fatalf("2º Undo = (%+v, %v)", got, err)
@@ -405,7 +405,7 @@ func TestUndoCanceled(t *testing.T) {
 		t.Fatalf("Undo = (%+v, %v)", got, err)
 	}
 	op, _ := st.Load()
-	if len(op.MovedItems) != 1 || op.MovedItems[0] != a { // ordem inversa: b voltou, a ficou pendente
+	if len(op.MovedItems) != 1 || op.MovedItems[0] != a { // ordem inversa: b voltou, a ficou pendente (#9)
 		t.Fatalf("registro = %+v, want só o item não tentado", op)
 	}
 }
@@ -477,7 +477,7 @@ func TestDeepestFirst(t *testing.T) {
 
 // --- apoio ---
 
-// fakeMover move de verdade, mas pode falhar num arquivo ou cancelar depois de N movimentos.
+// Move de verdade, mas pode falhar num arquivo ou cancelar depois de N movimentos (#9).
 type fakeMover struct {
 	plan        organizer.Plan
 	failOn      string
@@ -515,7 +515,7 @@ func newStore(t *testing.T) *store.FileStore {
 	return store.New(filepath.Join(t.TempDir(), "last-operation.json"), nil)
 }
 
-// move cria src/name e o move para dst/sub/name, como a organização faria.
+// Cria src/name e o move para dst/sub/name, como a organização faria (#9).
 func move(t *testing.T, src, dst, name, sub string) store.MovedItem {
 	t.Helper()
 	from := filepath.Join(src, name)
@@ -528,8 +528,8 @@ func move(t *testing.T, src, dst, name, sub string) store.MovedItem {
 	return store.MovedItem{From: from, To: to}
 }
 
-// withRecord grava o registro como a organização faria quando todas as
-// pastas abaixo de dst foram criadas por ela.
+// Como a organização gravaria quando todas as pastas abaixo de dst foram criadas por ela
+// (#57).
 func withRecord(t *testing.T, src, dst string, items ...store.MovedItem) *store.FileStore {
 	t.Helper()
 	st := newStore(t)
@@ -567,7 +567,7 @@ func assertContent(t *testing.T, path, want string) {
 	}
 }
 
-// assertTree compara os arquivos sob root (caminhos relativos com "/").
+// Caminhos relativos com "/" (#9).
 func assertTree(t *testing.T, root string, want ...string) {
 	t.Helper()
 	var got []string

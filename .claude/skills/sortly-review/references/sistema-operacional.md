@@ -30,7 +30,8 @@ O Sortly move arquivos do usuário: um erro aqui é perda de dados. Leia com ate
 
 - [ ] Symlinks e junctions: `os.Stat` segue o link, `os.Lstat` não. Organizar um link move o link, não o alvo? Desfazer segue o link para fora da pasta?
 - [ ] Ignorar diretórios, dispositivos, pipes e sockets na varredura (só arquivos regulares).
-- [ ] Permissões de criação: pastas `0o755`, arquivos de dados do app `0o600` (o registro contém caminhos do usuário).
+- [ ] Permissões: dados do app e log (contêm caminhos do usuário) só do dono, `0o700`/`0o600`; pastas criadas na área do usuário (organização) `0o755`. O modo do `MkdirAll`/`OpenFile` só vale na criação: arquivo que já existe precisa de `Chmod`.
+- [ ] `os.SameFile` (com `Lstat`) reconhece o mesmo arquivo por outro caminho; comparação só por texto falha em volume que foge do padrão da plataforma.
 - [ ] Arquivo sem permissão de leitura/escrita: falha só daquele arquivo, os demais continuam, e o resultado informa (B1).
 
 ## Windows

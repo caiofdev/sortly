@@ -36,6 +36,13 @@ jobs:
           version: v2.14.0
           args: --build-tags=${{ env.LINUX_BUILD_TAGS }}
 
+      - name: Sem switch/case (regra do projeto)
+        run: |
+          if grep -rnE '^\s*switch\b' --include='*.go' backend scripts main.go; then
+            echo "::error::Use mapa de lookup, if com retorno antecipado ou Strategy em vez de switch."
+            exit 1
+          fi
+
       - name: Complexidade × casos de teste
         run: |
           echo "## Complexidade ciclomática × casos de teste" >> "$GITHUB_STEP_SUMMARY"

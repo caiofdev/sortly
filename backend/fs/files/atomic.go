@@ -8,12 +8,11 @@ import (
 	"github.com/caiofdev/sortly/backend/fs/paths"
 )
 
-// WriteAtomic grava data em path sem nunca deixar um arquivo pela metade:
-// escreve um temporário na mesma pasta (o rename só é atômico dentro do mesmo
-// volume), força a gravação em disco e o renomeia por cima do atual. Cria a
-// pasta se preciso, só para o dono, como o temporário (os.CreateTemp usa
-// 0o600): os dados do app trazem caminhos de arquivos do usuário. Em qualquer
-// falha, o arquivo anterior fica intacto.
+// O temporário fica na mesma pasta porque o rename só é atômico dentro do mesmo
+// volume, e o Sync antes do rename garante que um crash nunca deixe o arquivo
+// pela metade: em qualquer falha, o anterior fica intacto. A pasta é criada só
+// para o dono, como o temporário (os.CreateTemp usa 0o600), porque os dados do
+// app trazem caminhos de arquivos do usuário (#6, #59).
 func WriteAtomic(path string, data []byte) error {
 	dir := paths.Native(filepath.Dir(path))
 	if err := os.MkdirAll(dir, 0o700); err != nil {

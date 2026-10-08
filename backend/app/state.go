@@ -8,14 +8,13 @@ import (
 	"github.com/caiofdev/sortly/backend/undo"
 )
 
-// StateEvent é o evento emitido a cada mudança de estado. Durante organizar e
-// desfazer, é por ele que a interface sabe que a ação começou.
+// Durante organizar e desfazer, é por este evento que a interface sabe que a ação começou
+// (#45).
 const StateEvent = "sortly:state"
 
-// MaxNotifications limita o histórico de notificações; as mais antigas saem.
 const MaxNotifications = 80
 
-// Tipos de notificação; definem a cor do aviso na interface.
+// Definem a cor do aviso na interface (#45).
 const (
 	KindInfo     = "info"
 	KindOrganize = "organize"
@@ -23,8 +22,7 @@ const (
 	KindError    = "error"
 )
 
-// Códigos de notificação que não são erros do backend. A interface traduz
-// cada código; os de erro são os de apperr (ADR 0004).
+// Códigos que não são erros; os de erro vêm de apperr (ADR 0004, #45).
 const (
 	CodeRecovered      = "RECOVERED_LAST_ORGANIZATION"
 	CodeSourceDropped  = "SOURCE_DROPPED"
@@ -33,8 +31,7 @@ const (
 	CodeSourceRequired = "SOURCE_REQUIRED"
 )
 
-// Ações que geram notificações. Num erro sem tradução própria, a interface
-// usa o texto padrão da ação.
+// Num erro sem tradução própria, a interface usa o texto padrão da ação (#45).
 const (
 	ActionStartup           = "startup"
 	ActionSelectSource      = "selectSource"
@@ -45,14 +42,13 @@ const (
 	ActionSettings          = "settings"
 )
 
-// Ações em andamento (ViewState.Busy).
+// Valores de ViewState.Busy (#45).
 const (
 	BusyOrganize = "organize"
 	BusyRestore  = "restore"
 )
 
-// Notification é um aviso estruturado: a interface monta o texto no idioma
-// atual a partir do código e dos dados.
+// A interface monta o texto no idioma atual a partir do código e dos dados (ADR 0004, #45).
 type Notification struct {
 	ID       int               `json:"id"`
 	Kind     string            `json:"kind"`
@@ -64,11 +60,9 @@ type Notification struct {
 	At       time.Time         `json:"at"`
 }
 
-// ViewState é tudo o que a tela mostra.
-//
-// Version cresce a cada estado entregue. O estado sai do lock antes de ser emitido e
-// devolvido, então duas ações quase simultâneas podem entregá-lo fora de
-// ordem; a interface descarta o que tiver versão menor que a que já mostra.
+// Version cresce a cada estado entregue. O estado sai do lock antes de ser
+// emitido e devolvido, então duas ações quase simultâneas podem entregá-lo fora
+// de ordem; a interface descarta o que tiver versão menor que a que já mostra (#55).
 type ViewState struct {
 	Version               uint64         `json:"version"`
 	SourceFolderPath      string         `json:"sourceFolderPath"`
@@ -79,7 +73,7 @@ type ViewState struct {
 	Notifications         []Notification `json:"notifications"`
 }
 
-// push acrescenta a notificação no topo e descarta as que passam do limite.
+// A mais recente fica no topo; as que passam de MaxNotifications saem (#45).
 func (s *ViewState) push(n Notification) {
 	s.Notifications = append([]Notification{n}, s.Notifications...)
 	if len(s.Notifications) > MaxNotifications {

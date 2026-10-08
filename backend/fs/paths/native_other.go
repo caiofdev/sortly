@@ -2,5 +2,5 @@
 
 package paths
 
-// Native não muda nada fora do Windows.
+// Fora do Windows não há formato estendido (#8).
 func Native(p string) string { return p }

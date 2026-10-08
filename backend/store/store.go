@@ -1,7 +1,6 @@
 // Package store guarda o registro da última organização, usado pelo desfazer.
-//
-// O formato do arquivo é o mesmo da versão 1.0, para que um
-// desfazer pendente continue funcionando depois da atualização.
+// O formato é o mesmo da versão 1.0, para que um desfazer pendente continue
+// funcionando depois da atualização (#6).
 package store
 
 import (
@@ -17,39 +16,35 @@ import (
 	"github.com/caiofdev/sortly/backend/fs/files"
 )
 
-// ErrCorrupted indica que o arquivo existe, mas não é um registro válido.
-// Para o usuário, equivale a "nada para desfazer".
+// O arquivo existe, mas não é um registro válido; para o usuário, equivale a "nada para
+// desfazer" (#6).
 var ErrCorrupted = errors.New("store: registro da última operação corrompido")
 
-// MovedItem é um arquivo movido pela organização.
 type MovedItem struct {
 	From string `json:"from"`
 	To   string `json:"to"`
 }
 
-// Operation é o registro da última organização. A ordem dos campos é a mesma
-// do JSON gravado pela versão 1.0.
+// A ordem dos campos é a mesma do JSON gravado pela versão 1.0 (#6).
 type Operation struct {
 	SourceFolderPath      string      `json:"sourceFolderPath"`
 	DestinationFolderPath string      `json:"destinationFolderPath"`
 	MovedItems            []MovedItem `json:"movedItems"`
-	// Ausente em registros antigos; nesse caso fica nil.
+	// Ausente em registros antigos; nesse caso fica nil (#6, #57).
 	CreatedFolders []string `json:"createdFolders"`
 }
 
-// CanUndo informa se há arquivos movidos para desfazer.
 func (o *Operation) CanUndo() bool {
 	return o != nil && len(o.MovedItems) > 0
 }
 
-// FileStore grava o registro num arquivo JSON. As interfaces que o consomem
-// ficam nos pacotes de organização e desfazer.
+// As interfaces que o consomem ficam nos pacotes de organização e desfazer (#6).
 type FileStore struct {
 	path string
 	log  *slog.Logger
 }
 
-// DefaultPath devolve ~/.sortly/last-operation.json, o mesmo caminho da versão 1.0.
+// O mesmo caminho da versão 1.0 (#6).
 func DefaultPath() (string, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
@@ -58,7 +53,7 @@ func DefaultPath() (string, error) {
 	return filepath.Join(home, ".sortly", "last-operation.json"), nil
 }
 
-// New cria um FileStore no caminho indicado. Com log nil, nada é registrado.
+// Com log nil, nada é registrado (#6).
 func New(path string, log *slog.Logger) *FileStore {
 	if log == nil {
 		log = slog.New(slog.DiscardHandler)
@@ -66,13 +61,12 @@ func New(path string, log *slog.Logger) *FileStore {
 	return &FileStore{path: path, log: log}
 }
 
-// Path devolve o caminho do arquivo.
 func (s *FileStore) Path() string {
 	return s.path
 }
 
-// Load lê o registro. Sem arquivo (ou com o JSON null), devolve (nil, nil).
-// Arquivo vazio ou inválido devolve ErrCorrupted.
+// Sem arquivo (ou com o JSON null), devolve (nil, nil); arquivo vazio ou inválido,
+// ErrCorrupted (#6).
 func (s *FileStore) Load() (*Operation, error) {
 	data, err := os.ReadFile(s.path)
 	if err != nil {
@@ -90,8 +84,8 @@ func (s *FileStore) Load() (*Operation, error) {
 	return op, nil
 }
 
-// Save grava o registro com files.WriteAtomic: um crash no meio da gravação
-// deixa o registro anterior intacto, nunca um JSON pela metade.
+// Com files.WriteAtomic, um crash no meio da gravação deixa o registro anterior
+// intacto, nunca um JSON pela metade (#6).
 func (s *FileStore) Save(op Operation) error {
 	data, err := encode(op)
 	if err != nil {
@@ -103,7 +97,7 @@ func (s *FileStore) Save(op Operation) error {
 	return nil
 }
 
-// Clear apaga o registro. Não ter registro não é erro.
+// Não ter registro não é erro (#6).
 func (s *FileStore) Clear() error {
 	if err := os.Remove(s.path); err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return s.fail("apagar", err)
@@ -116,9 +110,8 @@ func (s *FileStore) fail(action string, err error) error {
 	return fmt.Errorf("store: %s %s: %w", action, s.path, err)
 }
 
-// encode gera o mesmo JSON do JSON.stringify da versão 1.0: compacto,
-// sem escapar &, < e > (o encoding/json escapa por padrão) e com listas
-// vazias como [] em vez de null.
+// O mesmo JSON do JSON.stringify da versão 1.0: compacto, sem escapar &, < e >
+// (o encoding/json escapa por padrão) e com listas vazias como [] em vez de null (#6).
 func encode(op Operation) ([]byte, error) {
 	if op.MovedItems == nil {
 		op.MovedItems = []MovedItem{}

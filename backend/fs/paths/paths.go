@@ -7,23 +7,22 @@ import (
 	"strings"
 )
 
-// caseInsensitiveOS são as plataformas cujo sistema de arquivos padrão não
-// diferencia maiúsculas: NTFS no Windows e APFS no macOS. Lá, "C:\Fotos" e
-// "c:\fotos" (ou "~/Downloads" e "~/downloads") são o mesmo caminho.
+// Sistemas de arquivos padrão que não diferenciam maiúsculas: NTFS no Windows e
+// APFS no macOS. Lá, "C:\Fotos" e "c:\fotos" (ou "~/Downloads" e "~/downloads")
+// são o mesmo caminho (#58).
 var caseInsensitiveOS = map[string]bool{"windows": true, "darwin": true}
 
 var caseInsensitive = caseInsensitiveOS[runtime.GOOS]
 
-// Equal informa se dois caminhos apontam para o mesmo lugar: iguais depois de
-// absolutos e limpos (sem diferenciar maiúsculas no Windows e no macOS) ou,
-// quando os dois existem, o mesmo arquivo no disco. A segunda forma cobre
-// volumes que fogem do padrão da plataforma, como um pendrive FAT no Linux.
+// Iguais depois de absolutos e limpos (sem diferenciar maiúsculas no Windows e
+// no macOS) ou, quando os dois existem, o mesmo arquivo no disco. A segunda forma
+// cobre volumes fora do padrão da plataforma, como um pendrive FAT no Linux (#5, #58).
 func Equal(a, b string) bool {
 	return equal(a, b, caseInsensitive) || sameFile(a, b)
 }
 
-// IsInside informa se child é igual a root ou está dentro dele, sem
-// diferenciar maiúsculas no Windows e no macOS. "/a/bc" não está dentro de "/a/b".
+// child igual a root também conta como dentro; "/a/bc" não está dentro de
+// "/a/b". Sem diferenciar maiúsculas no Windows e no macOS (#5, #58).
 func IsInside(child, root string) bool {
 	return isInside(child, root, caseInsensitive)
 }
@@ -37,15 +36,14 @@ func isInside(child, root string, fold bool) bool {
 	if c == r {
 		return true
 	}
-	// Raízes como "C:\" ou "/" já terminam com separador.
+	// Raízes como "C:\" ou "/" já terminam com separador (#5).
 	if !strings.HasSuffix(r, string(filepath.Separator)) {
 		r += string(filepath.Separator)
 	}
 	return strings.HasPrefix(c, r)
 }
 
-// sameFile usa Lstat para não seguir atalhos: um link e o seu alvo não são o
-// mesmo lugar.
+// Lstat para não seguir atalhos: um link e o seu alvo não são o mesmo lugar (#58).
 func sameFile(a, b string) bool {
 	ia, err := os.Lstat(Native(a))
 	if err != nil {

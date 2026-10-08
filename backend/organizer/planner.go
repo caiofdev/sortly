@@ -12,14 +12,12 @@ import (
 	"github.com/caiofdev/sortly/backend/organizer/criteria"
 )
 
-// Move é um arquivo a mover. To é o destino desejado; o nome final pode
-// ganhar um sufixo " (n)" se já estiver ocupado.
+// To é o destino desejado; o nome final ganha " (n)" se estiver ocupado (#8).
 type Move struct {
 	From string
 	To   string
 }
 
-// Plan é o resultado do planejamento: o que mover e o que foi ignorado.
 type Plan struct {
 	Source                  string
 	Destination             string
@@ -27,25 +25,23 @@ type Plan struct {
 	ProcessedFiles          int
 	IgnoredWithoutExtension int
 	IgnoredFolders          int
-	// UnchangedFiles: arquivos que já estão no lugar certo (destino = origem e
-	// nenhum critério gerou subpasta). Não são movidos nem renomeados.
+	// Arquivos que já estão no lugar certo (destino = origem e nenhum critério
+	// gerou subpasta): não são movidos nem renomeados (#8).
 	UnchangedFiles int
 }
 
-// Planner decide para onde cada arquivo vai, sem alterar nada no disco.
+// Não altera nada no disco (#8).
 type Planner struct {
 	rules   []criteria.Rule
 	readDir func(string) ([]fs.DirEntry, error)
 }
 
-// NewPlanner cria o planejador com o registry de regras dado (veja criteria.New).
 func NewPlanner(rules []criteria.Rule) *Planner {
 	return &Planner{rules: rules, readDir: os.ReadDir}
 }
 
-// Plan lê só o nível superior de src e calcula os movimentos para dst.
-// Subpastas são ignoradas e contadas; itens que não são arquivo regular
-// (como atalhos simbólicos) são ignorados sem contar.
+// Lê só o nível superior de src. Subpastas são ignoradas e contadas; itens que
+// não são arquivo regular (como atalhos simbólicos) são ignorados sem contar (#8).
 func (p *Planner) Plan(ctx context.Context, src, dst string, opts criteria.Options) (Plan, error) {
 	entries, err := p.readDir(src)
 	if err != nil {
@@ -87,7 +83,7 @@ func (plan *Plan) add(ctx context.Context, entry fs.DirEntry, rules []criteria.R
 
 	info, err := entry.Info()
 	if err != nil {
-		// Sumiu entre a listagem e a leitura: segue com os demais.
+		// Sumiu entre a listagem e a leitura: segue com os demais (#8).
 		return nil
 	}
 	file := criteria.NewFile(plan.Source, info)

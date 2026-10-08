@@ -29,8 +29,8 @@ function DragDropPanel({ isLoading, labels, onSelectSourceFolder }) {
 
   const handleDrop = (event) => {
     event.preventDefault();
-    // O caminho não vem no evento do navegador: o Wails o entrega por
-    // gateway.subscribeFileDrop. Aqui só desliga o destaque.
+    // O caminho não vem no evento do navegador: o Wails o entrega pelo
+    // OnFileDrop assinado no useViewState. Aqui só desliga o destaque.
     depth.current = 0;
     setIsDragging(false);
   };

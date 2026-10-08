@@ -9,15 +9,15 @@ import (
 	"testing"
 )
 
-// electronUnknown marca fixtures em que a versão 1.0 (music-metadata)
-// devolvia "duration-unknown" e a versão Go encontra a duração (melhoria).
+// Fixtures em que a versão 1.0 (music-metadata) devolvia "duration-unknown"
+// e o Go encontra a duração (#7).
 const electronUnknown = true
 
 func TestDurationFixtures(t *testing.T) {
 	cases := []struct {
 		file        string
-		want        float64 // 0 = sem duração (ErrNoMetadata)
-		improvement bool    // versão 1.0: duration-unknown
+		want        float64 // 0 = sem duração (ErrNoMetadata) (#7)
+		improvement bool    // versão 1.0: duration-unknown (#7)
 		why         string
 	}{
 		{"audio-0.4s.mp4", 0.4, false, ""},

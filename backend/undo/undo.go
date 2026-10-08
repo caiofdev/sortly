@@ -1,8 +1,7 @@
 // Package undo desfaz a última organização: devolve cada arquivo ao lugar de
-// origem, na ordem inversa, e remove as pastas que ficaram vazias.
-//
-// Cada item do registro é um movimento (Command); desfazer é executar os
-// movimentos inversos com o mesmo Executor da organização.
+// origem, na ordem inversa, e remove as pastas criadas que ficaram vazias. Cada
+// item do registro é um movimento (Command); desfazer é executar os movimentos
+// inversos com o mesmo Executor da organização (#9).
 package undo
 
 import (
@@ -21,10 +20,9 @@ import (
 	"github.com/caiofdev/sortly/backend/store"
 )
 
-// ErrNothingToUndo indica que não há organização para desfazer (ADR 0004).
 var ErrNothingToUndo = apperr.New("NOTHING_TO_UNDO", "undo: nenhuma organização para desfazer")
 
-// Result resume o desfazer. Não traz mensagem pronta (o frontend monta o texto).
+// Sem mensagem pronta: o frontend monta o texto (ADR 0004, #9).
 type Result struct {
 	RestoredFiles    int  `json:"restoredFiles"`
 	RenamedOnRestore int  `json:"renamedOnRestore"`
@@ -33,19 +31,17 @@ type Result struct {
 	CanUndo          bool `json:"canUndo"`
 }
 
-// RecordStore guarda o registro da última organização. É satisfeito por *store.FileStore.
 type RecordStore interface {
 	Load() (*store.Operation, error)
 	Save(store.Operation) error
 	Clear() error
 }
 
-// Mover executa movimentos sem sobrescrever. É satisfeito por *organizer.Executor.
+// Precisa mover sem sobrescrever, como o *organizer.Executor (#9).
 type Mover interface {
 	Apply(ctx context.Context, plan organizer.Plan) (organizer.Outcome, error)
 }
 
-// Service desfaz a última organização.
 type Service struct {
 	store     RecordStore
 	mover     Mover
@@ -54,7 +50,7 @@ type Service struct {
 	log       *slog.Logger
 }
 
-// NewService cria o serviço. Com log nil, nada é registrado.
+// Com log nil, nada é registrado (#9).
 func NewService(st RecordStore, log *slog.Logger) *Service {
 	if log == nil {
 		log = slog.New(slog.DiscardHandler)
@@ -68,12 +64,10 @@ func NewService(st RecordStore, log *slog.Logger) *Service {
 	}
 }
 
-// Undo devolve os arquivos da última organização ao lugar de origem.
-//
 // Arquivos que não estão mais no destino são pulados (SkippedMissing). Se o
 // lugar original estiver ocupado, o arquivo volta com " (n)" no nome
-// (RenamedOnRestore). Arquivos que falharem continuam no registro, para que
-// um novo desfazer tente de novo (CanUndo fica verdadeiro).
+// (RenamedOnRestore). Arquivos que falharem continuam no registro, para que um
+// novo desfazer tente de novo (CanUndo fica verdadeiro) (#9).
 func (s *Service) Undo(ctx context.Context) (Result, error) {
 	op, err := s.load()
 	if err != nil {
@@ -94,8 +88,7 @@ func (s *Service) Undo(ctx context.Context) (Result, error) {
 	return result, applyErr
 }
 
-// load devolve o registro ou ErrNothingToUndo. Um registro corrompido conta
-// como "nada para desfazer", como na versão 1.0.
+// Um registro corrompido conta como "nada para desfazer", como na versão 1.0 (#9).
 func (s *Service) load() (*store.Operation, error) {
 	op, err := s.store.Load()
 	if err != nil && !errors.Is(err, store.ErrCorrupted) {
@@ -107,9 +100,9 @@ func (s *Service) load() (*store.Operation, error) {
 	return op, nil
 }
 
-// inversePlan monta os movimentos inversos, do último para o primeiro, e
-// conta os arquivos que não estão mais onde a organização os deixou ou que
-// estão fora das pastas do registro.
+// Do último movimento para o primeiro. Conta como pulados os arquivos que não
+// estão mais onde a organização os deixou e os que estão fora das pastas do
+// registro (#9, #54).
 func (s *Service) inversePlan(op *store.Operation) (organizer.Plan, int) {
 	var plan organizer.Plan
 	skipped := 0
@@ -124,9 +117,9 @@ func (s *Service) inversePlan(op *store.Operation) (organizer.Plan, int) {
 	return plan, skipped
 }
 
-// restorable informa se o item pode voltar. Um registro editado ou corrompido
-// com caminhos fora das pastas registradas faria o desfazer mover arquivos para
-// qualquer lugar; esses itens são pulados e vão para o log.
+// Um registro editado ou corrompido com caminhos fora das pastas registradas
+// faria o desfazer mover arquivos para qualquer lugar; esses itens são pulados
+// e vão para o log (#54).
 func (s *Service) restorable(op *store.Operation, item store.MovedItem) bool {
 	if !withinRecordedFolders(op, item) {
 		s.log.Warn("item do registro fora das pastas registradas; ignorado",
@@ -136,8 +129,8 @@ func (s *Service) restorable(op *store.Operation, item store.MovedItem) bool {
 	return s.exists(item.To)
 }
 
-// withinRecordedFolders exige from dentro da origem e to dentro do destino
-// (destino vazio é a própria origem), sem ser a própria pasta.
+// from dentro da origem e to dentro do destino (destino vazio é a própria
+// origem), sem ser a própria pasta (#54).
 func withinRecordedFolders(op *store.Operation, item store.MovedItem) bool {
 	return op.SourceFolderPath != "" &&
 		strictlyInside(item.From, op.SourceFolderPath) &&
@@ -148,7 +141,7 @@ func strictlyInside(path, root string) bool {
 	return paths.IsInside(path, root) && !paths.Equal(path, root)
 }
 
-// rootOf devolve a pasta onde a organização criou as subpastas.
+// Destino vazio no registro é a própria origem (#54).
 func rootOf(op *store.Operation) string {
 	if op.DestinationFolderPath == "" {
 		return op.SourceFolderPath
@@ -156,8 +149,8 @@ func rootOf(op *store.Operation) string {
 	return op.DestinationFolderPath
 }
 
-// countRenamed conta os arquivos que voltaram com outro nome porque o lugar
-// original estava ocupado: o destino final difere do pedido no plano inverso.
+// Voltou com outro nome quando o lugar original estava ocupado: o destino final
+// difere do pedido no plano inverso (#9).
 func countRenamed(plan organizer.Plan, out organizer.Outcome) int {
 	requested := make(map[string]string, len(plan.Moves))
 	for _, m := range plan.Moves {
@@ -172,8 +165,8 @@ func countRenamed(plan organizer.Plan, out organizer.Outcome) int {
 	return n
 }
 
-// remaining devolve os itens do registro original que não voltaram, nem foram
-// pulados: os que falharam ou não chegaram a ser tentados (contexto cancelado).
+// Os itens que não voltaram nem foram pulados: os que falharam ou não chegaram
+// a ser tentados, com o contexto cancelado (#9).
 func remaining(op *store.Operation, plan organizer.Plan, out organizer.Outcome) []store.MovedItem {
 	restored := make(map[string]bool, len(out.MovedItems))
 	for _, moved := range out.MovedItems {
@@ -193,9 +186,8 @@ func remaining(op *store.Operation, plan organizer.Plan, out organizer.Outcome) 
 	return left
 }
 
-// updateRecord apaga o registro quando tudo foi desfeito, ou o regrava só com
-// o que falhou. Falhas aqui são só registradas no log: na pior hipótese o
-// registro antigo fica, e um novo desfazer pula o que já voltou.
+// Falhas aqui só vão para o log: na pior hipótese o registro antigo fica, e um
+// novo desfazer pula o que já voltou (#9).
 func (s *Service) updateRecord(op *store.Operation, left []store.MovedItem) bool {
 	if len(left) == 0 {
 		if err := s.store.Clear(); err != nil {
@@ -211,11 +203,10 @@ func (s *Service) updateRecord(op *store.Operation, left []store.MovedItem) bool
 	return true
 }
 
-// cleanup remove as pastas criadas pela organização que ficaram vazias, da
-// mais funda para a mais rasa. Pastas que já existiam não estão na lista e
-// ficam. Registros antigos, sem createdFolders, não dizem o que foi
-// criado: sobe-se de cada pasta de arquivo até a raiz. Nada fora da raiz é
-// tocado, e pastas com conteúdo nunca são removidas.
+// Só as pastas criadas pela organização, se ficaram vazias, da mais funda para a
+// mais rasa; pastas que já existiam não estão na lista. Registros antigos, sem
+// createdFolders, não dizem o que foi criado: sobe-se de cada pasta de arquivo
+// até a raiz. Nada fora da raiz é tocado (#57).
 func (s *Service) cleanup(op *store.Operation) {
 	root := rootOf(op)
 	if root == "" {
@@ -234,24 +225,21 @@ func (s *Service) cleanup(op *store.Operation) {
 	}
 }
 
-// deepestFirst ordena as pastas para que cada filha venha antes da mãe: o
-// caminho da filha é sempre mais longo que o da mãe.
+// Cada filha vem antes da mãe: o caminho da filha é sempre mais longo (#57).
 func deepestFirst(dirs []string) []string {
 	sorted := slices.Clone(dirs)
 	slices.SortStableFunc(sorted, func(a, b string) int { return len(b) - len(a) })
 	return sorted
 }
 
-// removeEmptyAncestors sobe de start até root (exclusive). A comparação ignora
-// maiúsculas no Windows e no macOS, então a raiz nunca é removida por
-// diferença de caixa.
+// Para em root, sem removê-la. A comparação ignora maiúsculas no Windows e no
+// macOS, então a raiz nunca é removida por diferença de caixa (#9, #58).
 func (s *Service) removeEmptyAncestors(start, root string) {
 	for dir := start; paths.IsInside(dir, root) && !paths.Equal(dir, root); dir = filepath.Dir(dir) {
 		s.removeDir(dir)
 	}
 }
 
-// itemFolders devolve as pastas onde os arquivos foram parar, sem repetir.
 func itemFolders(op *store.Operation) []string {
 	seen := map[string]bool{}
 	var dirs []string

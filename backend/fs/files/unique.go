@@ -11,17 +11,15 @@ import (
 	"github.com/caiofdev/sortly/backend/fs/paths"
 )
 
-// ErrNoAvailableName indica que todas as tentativas de nome estavam ocupadas.
 var ErrNoAvailableName = errors.New("files: nenhum nome disponível para o destino")
 
-// maxAttempts limita a busca por nome livre: o próprio nome mais
-// "nome (1)" ... "nome (9999)". É variável para os testes de limite.
+// O próprio nome mais "nome (1)" ... "nome (9999)". É variável para os testes de limite
+// (#5).
 var maxAttempts = 10000
 
-// Reserve escolhe o primeiro nome livre a partir de path ("nome.ext",
-// "nome (1).ext", "nome (2).ext", ...) e o reserva criando um arquivo vazio
-// de forma exclusiva (O_EXCL). Assim, dois movimentos simultâneos nunca
-// recebem o mesmo nome. O arquivo reservado deve ser substituído com Move.
+// A reserva cria um arquivo vazio com O_EXCL, então dois movimentos simultâneos
+// nunca recebem o mesmo nome ("nome.ext", "nome (1).ext", ...). O arquivo
+// reservado deve ser substituído com Move (#5).
 func Reserve(path string) (string, error) {
 	for n := range maxAttempts {
 		candidate := candidateName(path, n)
@@ -37,8 +35,8 @@ func Reserve(path string) (string, error) {
 	return "", fmt.Errorf("%w: %s", ErrNoAvailableName, path)
 }
 
-// candidateName devolve a n-ésima tentativa de nome: n = 0 é o próprio path.
-// A extensão segue Ext, então ".gitignore" vira ".gitignore (1)".
+// n = 0 é o próprio path. A extensão segue Ext, então ".gitignore" vira ".gitignore (1)"
+// (#5).
 func candidateName(path string, n int) string {
 	if n == 0 {
 		return path
@@ -49,9 +47,8 @@ func candidateName(path string, n int) string {
 	return filepath.Join(dir, fmt.Sprintf("%s (%d)%s", stem, n, ext))
 }
 
-// isOccupied trata como "nome ocupado" tanto o erro de arquivo existente quanto
-// os casos em que o sistema devolve outro erro, mas algo já existe no caminho
-// (no Windows, criar um arquivo com o nome de uma pasta retorna acesso negado).
+// No Windows, criar um arquivo com o nome de uma pasta devolve acesso negado,
+// não "já existe": qualquer erro com algo no caminho conta como ocupado (#5).
 func isOccupied(path string, err error) bool {
 	if errors.Is(err, fs.ErrExist) {
 		return true

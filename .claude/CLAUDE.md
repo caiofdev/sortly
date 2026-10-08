@@ -61,7 +61,8 @@ cd frontend && npm run lint && npm run format:check && npm test   # ESLint (comp
 - **Complexidade ciclomática ≤ 10** por função (Go e JS); a CI falha acima disso.
 - **Testes:** cada função com CC = N tem pelo menos N casos (confira com `go run ./scripts/cccases`); fronteiras testadas em limite − 1, limite e limite + 1; todo bug corrigido ganha teste de regressão. Go: testes em tabela, `t.TempDir()`, fakes das interfaces. Frontend: Vitest + React Testing Library.
 - **Go:** injeção de dependências por construtor; interfaces pequenas declaradas no pacote que as usa; erros com `%w` e códigos de `apperr`; `context.Context` em operações longas.
-- **Comentários:** explique o *porquê* de trechos difíceis e documente identificadores exportados (godoc de uma linha, cobrado pelo `revive`); não descreva o que o código já diz nem conte a história da migração. Testes não têm tabela de CC: use `go run ./scripts/cccases`.
+- **Sem `switch`/`case`** (Go e JS): use mapa de lookup, `if` com retorno antecipado, `if v, ok := x.(T); ok` ou Strategy.
+- **Comentários:** só o *porquê* de trechos difíceis (formato de arquivo, comportamento do SO, compatibilidade com a 1.0, ordem que importa). Nada de comentário que repete o nome ou a assinatura ("// Get devolve as preferências"), mesmo em identificador exportado: o `revive` cobra só o comentário de pacote. Todo comentário termina com a issue que motivou o trecho, entre parênteses: `(#52)`, `(ADR 0004, #8)`; o de regressão começa com `Regressão (#N):`. Não conte a história da migração. Testes não têm tabela de CC: use `go run ./scripts/cccases` (no JS, a regra `complexity` do ESLint).
 - **Frontend só renderiza (ADR 0005):** o estado da tela mora em `backend/app` (`ViewState`); cada binding devolve o estado completo e erros viram notificações. Nada de regra, validação ou estado de negócio no JS. Toda lista enviada ao frontend é array no JSON, nunca `null`.
 
 ## Invariantes (não quebre sem uma ADR nova)
@@ -75,6 +76,7 @@ cd frontend && npm run lint && npm run format:check && npm test   # ESLint (comp
 
 - A máquina de desenvolvimento é Windows. Os scripts `.ps1` rodam no Windows PowerShell 5.1 e precisam de **UTF-8 com BOM** por causa dos acentos.
 - No Linux, Wails e `go vet`/`go test` do pacote `app` precisam da tag `webkit2_41`.
+- Testes com build tag `!windows` não rodam na máquina: rode `GOOS=linux golangci-lint run` e compile com `GOOS=linux go test -c` para executar no WSL (Ubuntu), copiando o binário para `/tmp` (permissões Unix não funcionam em `/mnt/c`).
 - `.go`, `.sh` e `go.mod` usam LF (`.gitattributes`); o resto pode vir com CRLF do checkout.
 - O loader do WebView2 no Wails ignora `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS`; para automatizar a interface no Windows use UI Automation (veja `scripts/parity/windows.ps1`).
 - Para rodar o app sem tocar nos dados reais, aponte `USERPROFILE`, `APPDATA` e `LOCALAPPDATA` para uma pasta temporária.

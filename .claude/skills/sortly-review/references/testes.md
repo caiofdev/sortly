@@ -7,7 +7,7 @@ CC = 1 + `if` + `for` + `range` + `case` não-default + `&&` + `||` (definição
 - [ ] Nenhuma função passa de CC 10 (lint).
 - [ ] Toda função **nova ou alterada** tem casos ≥ CC (`go run ./scripts/cccases`). Os casos precisam percorrer **caminhos diferentes** — dez entradas que passam pelo mesmo `if` contam como uma para esse caminho.
 - [ ] Para cada `if`, existe um caso que entra e um que não entra; para cada `&&`/`||`, um caso em que cada operando decide o resultado (cobertura de condição, não só de decisão).
-- [ ] `switch`: um caso por `case` e um pelo `default` (ou a ausência dele).
+- [ ] Mapa de lookup (o projeto não usa `switch`): um caso por chave que muda o resultado e um para a chave ausente; teste que as chaves do mapa batem com a lista pública (ex.: `criteria.Keys`).
 - [ ] Laço: zero, uma e várias iterações.
 - [ ] Caminho de erro de cada chamada que pode falhar (use fakes que falham: `failOn`, `cancelAfter`).
 
@@ -41,7 +41,8 @@ Para cada fronteira: **limite − 1, limite, limite + 1**. Fronteiras do Sortly:
 - [ ] Determinístico: sem depender de hora atual, fuso, locale, ordem de mapa, ordem de `ReadDir` em outros SOs, rede, `sleep`.
 - [ ] Hermético: `t.TempDir()`, nada em `~/.sortly` ou pastas reais; variáveis de ambiente com `t.Setenv`.
 - [ ] `t.Helper()` em helpers; `t.Fatal` só quando continuar não faz sentido.
-- [ ] Teste específico de SO com build tag ou `runtime.GOOS` + `t.Skip` explicando por quê.
+- [ ] Teste específico de SO com build tag ou `runtime.GOOS` + `t.Skip` explicando por quê. Arquivo `!windows` não compila na máquina Windows: rode `GOOS=linux golangci-lint run` e `GOOS=linux go test -c` e, se houver WSL, execute o binário lá.
+- [ ] Fixture de formato antigo (registro da 1.0, preferências) é escrita **crua** no teste, não pelo código que normaliza: o `store` grava `createdFolders: []` mesmo com nil, então salvar pelo store não simula um arquivo sem o campo.
 - [ ] Fakes simples e explícitos em vez de mocks com expectativas frágeis.
 - [ ] Golden files para formatos que precisam ser idênticos (registro JSON da 1.0).
 - [ ] Bug corrigido → teste de regressão que falha no código antigo.

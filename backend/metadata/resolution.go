@@ -8,7 +8,7 @@ import (
 	"io"
 	"os"
 
-	// Decodificadores registrados em image.DecodeConfig.
+	// Decodificadores registrados em image.DecodeConfig (#7).
 	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
@@ -16,12 +16,11 @@ import (
 	_ "golang.org/x/image/webp"
 )
 
-// bmpHeaderSize cobre a assinatura, o cabeçalho do arquivo e largura/altura do DIB.
+// Assinatura, cabeçalho do arquivo e largura/altura do DIB (#7).
 const bmpHeaderSize = 26
 
-// Resolution devolve as dimensões da imagem lendo apenas o cabeçalho.
-// O formato é detectado pelo conteúdo, não pela extensão (como o image-size):
-// um ".png" com conteúdo JPEG é lido como JPEG.
+// Lê só o cabeçalho, e o formato vem do conteúdo, não da extensão (como o
+// image-size): um ".png" com conteúdo JPEG é lido como JPEG (#7).
 func Resolution(path string) (Size, error) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -51,9 +50,9 @@ func decodeSize(r *bufio.Reader) (Size, error) {
 	return Size{Width: cfg.Width, Height: cfg.Height}, nil
 }
 
-// bmpSize lê largura e altura direto do cabeçalho, como o image-size: a altura
-// negativa (imagem de cima para baixo) vale o valor absoluto. Não depende de o
-// BMP usar uma compressão suportada por um decodificador completo.
+// Como o image-size: a altura negativa (imagem de cima para baixo) vale o valor
+// absoluto. Não depende de o BMP usar uma compressão suportada por um
+// decodificador completo (#7).
 func bmpSize(r io.Reader) (Size, error) {
 	header := make([]byte, bmpHeaderSize)
 	if _, err := io.ReadFull(r, header); err != nil {

@@ -9,11 +9,11 @@ import (
 	"testing"
 )
 
-// Os valores esperados são os do image-size usado na versão 1.0.
+// Os valores esperados são os do image-size usado na versão 1.0 (#7).
 func TestResolutionFixtures(t *testing.T) {
 	cases := []struct {
 		file string
-		want Size // zero = "unknown" na versão 1.0
+		want Size // zero = "unknown" na versão 1.0 (#7)
 	}{
 		{"1x1.png", Size{1, 1}},
 		{"1x1-lossless.webp", Size{1, 1}},

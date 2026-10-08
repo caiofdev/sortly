@@ -20,21 +20,26 @@ func tableRows(body *ast.BlockStmt) int {
 	literals := map[string]*ast.CompositeLit{}
 	rows := 0
 	ast.Inspect(body, func(n ast.Node) bool {
-		switch x := n.(type) {
-		case *ast.AssignStmt:
+		if x, ok := n.(*ast.AssignStmt); ok {
 			recordLiterals(literals, x.Lhs, x.Rhs)
-		case *ast.ValueSpec:
-			for i, name := range x.Names {
-				if i < len(x.Values) {
-					recordLiterals(literals, []ast.Expr{name}, x.Values[i:i+1])
-				}
-			}
-		case *ast.RangeStmt:
+		}
+		if x, ok := n.(*ast.ValueSpec); ok {
+			recordSpec(literals, x)
+		}
+		if x, ok := n.(*ast.RangeStmt); ok {
 			rows += rangedRows(literals, x.X)
 		}
 		return true
 	})
 	return rows
+}
+
+func recordSpec(literals map[string]*ast.CompositeLit, spec *ast.ValueSpec) {
+	for i, name := range spec.Names {
+		if i < len(spec.Values) {
+			recordLiterals(literals, []ast.Expr{name}, spec.Values[i:i+1])
+		}
+	}
 }
 
 func recordLiterals(literals map[string]*ast.CompositeLit, lhs, rhs []ast.Expr) {
@@ -50,13 +55,15 @@ func recordLiterals(literals map[string]*ast.CompositeLit, lhs, rhs []ast.Expr) 
 }
 
 func rangedRows(literals map[string]*ast.CompositeLit, x ast.Expr) int {
-	switch v := x.(type) {
-	case *ast.CompositeLit:
-		return len(v.Elts)
-	case *ast.Ident:
-		if lit, ok := literals[v.Name]; ok {
-			return len(lit.Elts)
-		}
+	if lit, ok := x.(*ast.CompositeLit); ok {
+		return len(lit.Elts)
+	}
+	id, ok := x.(*ast.Ident)
+	if !ok {
+		return 0
+	}
+	if lit, ok := literals[id.Name]; ok {
+		return len(lit.Elts)
 	}
 	return 0
 }
@@ -66,18 +73,15 @@ func rangedRows(literals map[string]*ast.CompositeLit, x ast.Expr) int {
 func topLevelChecks(body *ast.BlockStmt) int {
 	n := 0
 	ast.Inspect(body, func(node ast.Node) bool {
-		switch x := node.(type) {
-		case *ast.ForStmt, *ast.RangeStmt:
+		if isLoop(node) {
 			return false
-		case *ast.CallExpr:
-			if isMethodCall(x, "Run") {
-				n++
-				return false
-			}
-		case *ast.IfStmt:
-			if callsAssert(x.Body) {
-				n++
-			}
+		}
+		if call, ok := node.(*ast.CallExpr); ok && isMethodCall(call, "Run") {
+			n++
+			return false
+		}
+		if stmt, ok := node.(*ast.IfStmt); ok && callsAssert(stmt.Body) {
+			n++
 		}
 		return true
 	})

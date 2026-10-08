@@ -84,12 +84,12 @@ func TestOrganizeNothingMovedKeepsPreviousUndo(t *testing.T) {
 	}
 	before, _ := os.ReadFile(st.Path())
 
-	// Segunda vez: só pastas na origem, nada a mover.
+	// Segunda vez: só pastas na origem, nada a mover (#8).
 	got, err := svc.Organize(context.Background(), Request{SourceFolderPath: src, Options: criteria.Default})
 
 	after, _ := os.ReadFile(st.Path())
 	if err != nil || got.MovedFiles != 0 || !got.CanUndo || string(before) != string(after) {
-		t.Fatalf("Organize = (%+v, %v); registro mudou: %v (B2)", got, err, string(before) != string(after))
+		t.Fatalf("Organize = (%+v, %v); registro mudou: %v (#8)", got, err, string(before) != string(after))
 	}
 }
 
@@ -121,7 +121,7 @@ func TestOrganizePartialFailureIsRecorded(t *testing.T) {
 
 	op, _ := st.Load()
 	if err != nil || got.MovedFiles != 1 || got.FailedFiles != 1 || !got.CanUndo || len(op.MovedItems) != 1 {
-		t.Fatalf("Organize = (%+v, %v), registro = %+v (B1)", got, err, op)
+		t.Fatalf("Organize = (%+v, %v), registro = %+v (#8)", got, err, op)
 	}
 }
 
@@ -172,7 +172,7 @@ func TestOrganizeErrorsHaveCodes(t *testing.T) {
 	svc, _ := newTestService(t)
 	_, err := svc.Organize(context.Background(), Request{})
 	if apperr.CodeOf(err) != "INVALID_SOURCE" {
-		t.Fatalf("CodeOf = %q, want INVALID_SOURCE (B6)", apperr.CodeOf(err))
+		t.Fatalf("CodeOf = %q, want INVALID_SOURCE (#8)", apperr.CodeOf(err))
 	}
 }
 
@@ -200,7 +200,7 @@ func TestResultJSONHasNoMessage(t *testing.T) {
 	want := []string{"canUndo", "destinationFolderPath", "failedFiles", "ignoredFolders",
 		"ignoredWithoutExtension", "movedFiles", "processedFiles", "sourceFolderPath", "unchangedFiles"}
 	if !reflect.DeepEqual(keys, want) {
-		t.Fatalf("campos = %v, want %v (B7: sem \"message\")", keys, want)
+		t.Fatalf("campos = %v, want %v (#8: sem \"message\")", keys, want)
 	}
 }
 
@@ -217,7 +217,7 @@ func newTestService(t *testing.T) (*Service, *store.FileStore) {
 	return NewService(Deps{Metadata: metadata.Reader{}, Store: st, Location: testLoc}), st
 }
 
-// assertTree compara a árvore de arquivos (pastas terminam em "/").
+// Pastas terminam em "/" (#8).
 func assertTree(t *testing.T, root string, want []string) {
 	t.Helper()
 	got := listTree(t, root)
