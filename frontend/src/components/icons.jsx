@@ -63,3 +63,28 @@ export const DropFolderIcon = () => (
     <path d="M12 10v6M9 13l3-3 3 3" />
   </Icon>
 );
+
+// Ícones do toast, com traço 2.5 como no protótipo (#75).
+export const CheckIcon = () => (
+  <Icon strokeWidth={2.5}>
+    <path d="M5 12l5 5L20 7" />
+  </Icon>
+);
+
+export const InfoIcon = () => (
+  <Icon strokeWidth={2.5}>
+    <path d="M12 11v6M12 7h.01" />
+  </Icon>
+);
+
+export const AlertIcon = () => (
+  <Icon strokeWidth={2.5}>
+    <path d="M12 7v6M12 17h.01" />
+  </Icon>
+);
+
+export const CloseIcon = () => (
+  <Icon>
+    <path d="M6 6l12 12M18 6L6 18" />
+  </Icon>
+);

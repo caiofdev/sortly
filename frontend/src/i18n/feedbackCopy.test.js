@@ -17,12 +17,7 @@ const BACKEND_CODES = [
   'INVALID_LANGUAGE',
   'SETTINGS_NOT_SAVED'
 ];
-const NOTICE_TEXTS = [
-  'sourceRequired',
-  'recoveredLastOrganization',
-  'droppedPathSuccess',
-  'unexpectedError'
-];
+const NOTICE_TEXTS = ['sourceRequired', 'recovered', 'unexpectedError'];
 
 describe('códigos de erro do backend (ADR 0004)', () => {
   it.each(NOTICE_TEXTS)('%s existe em PT e EN', (key) => {
@@ -43,33 +38,74 @@ describe('códigos de erro do backend (ADR 0004)', () => {
   });
 });
 
-describe('mensagens de sucesso', () => {
-  const base = {
+describe('avisos de organizar e desfazer (#75)', () => {
+  const result = (overrides = {}) => ({
     movedFiles: 3,
-    sourceFolderPath: 'C:\\origem',
     destinationFolderPath: 'C:\\destino',
-    processedFiles: 5,
-    ignoredWithoutExtension: 1,
-    ignoredFolders: 1
-  };
+    unchangedFiles: 0,
+    ignoredWithoutExtension: 0,
+    failedFiles: 0,
+    ...overrides
+  });
 
-  it('sem falhas nem inalterados: mesma mensagem da versão anterior', () => {
-    expect(pt.organizeSuccess({ ...base, failedFiles: 0, unchangedFiles: 0 })).toBe(
-      'Organização concluida: 3 arquivo(s) movido(s). Origem: C:\\origem. Destino: C:\\destino. Processados: 5. Ignorados sem extensão: 1. Pastas ignoradas: 1.'
+  it.each([
+    [result(), 'Pronto! 3 arquivos organizados', 'Done! 3 files organized'],
+    [result({ movedFiles: 1 }), 'Pronto! 1 arquivo organizado', 'Done! 1 file organized'],
+    [result({ movedFiles: 0 }), 'Nenhum arquivo para organizar', 'No files to organize'],
+    [
+      result({ movedFiles: 2, failedFiles: 1 }),
+      '2 arquivos organizados, 1 com falha',
+      '2 files organized, 1 failed'
+    ]
+  ])('título de %o', (r, ptTitle, enTitle) => {
+    expect(pt.organizeDone(r).title).toBe(ptTitle);
+    expect(en.organizeDone(r).title).toBe(enTitle);
+  });
+
+  it('o texto só traz os detalhes maiores que zero', () => {
+    expect(pt.organizeDone(result()).text).toBe('Na pasta C:\\destino.');
+    expect(pt.organizeDone(result({ movedFiles: 0 })).text).toBe('');
+  });
+
+  it('com todos os detalhes, em PT e EN', () => {
+    const r = result({ unchangedFiles: 2, ignoredWithoutExtension: 1, failedFiles: 1 });
+    expect(pt.organizeDone(r).text).toBe(
+      'Na pasta C:\\destino. 2 já estavam no lugar. 1 sem extensão ficou na origem. 1 não pôde ser movido.'
+    );
+    expect(en.organizeDone(r).text).toBe(
+      'In C:\\destino. 2 were already in place. 1 file without extension stayed in the source. 1 file could not be moved.'
     );
   });
 
-  it('com 1 falha e 1 inalterado: acrescenta os trechos', () => {
-    const result = { ...base, failedFiles: 1, unchangedFiles: 1 };
-    expect(pt.organizeSuccess(result)).toMatch(/Já estavam no lugar: 1\. Falhas ao mover: 1\.$/);
-    expect(en.organizeSuccess(result)).toMatch(/Already in place: 1\. Failed to move: 1\.$/);
+  const undone = (overrides = {}) => ({
+    restoredFiles: 2,
+    renamedOnRestore: 0,
+    skippedMissing: 0,
+    failedFiles: 0,
+    ...overrides
   });
 
-  it('desfazer com e sem falhas', () => {
-    const result = { restoredFiles: 2, renamedOnRestore: 0, skippedMissing: 0, failedFiles: 0 };
-    expect(pt.undoSuccess(result)).toBe(
-      'Desfazer concluido: 2 arquivo(s) restaurado(s). Renomeados na restauração: 0. Não encontrados: 0.'
+  it.each([
+    [undone(), 'Organização desfeita', 'Organizing undone'],
+    [undone({ failedFiles: 1 }), 'Organização desfeita, 1 com falha', 'Organizing undone, 1 failed']
+  ])('título do desfazer %o', (r, ptTitle, enTitle) => {
+    expect(pt.undoDone(r).title).toBe(ptTitle);
+    expect(en.undoDone(r).title).toBe(enTitle);
+  });
+
+  it('texto do desfazer: sem detalhes e com todos', () => {
+    expect(pt.undoDone(undone({ restoredFiles: 1 })).text).toBe('1 arquivo voltou para a origem.');
+    const r = undone({ renamedOnRestore: 1, skippedMissing: 2, failedFiles: 1 });
+    expect(pt.undoDone(r).text).toBe(
+      '2 arquivos voltaram para a origem. 1 foi renomeado para não sobrescrever outro. 2 não foram encontrados. Desfaça de novo para tentar restaurar o resto.'
     );
-    expect(en.undoSuccess({ ...result, failedFiles: 1 })).toMatch(/Failed to restore: 1\.$/);
+    expect(en.undoDone(r).text).toBe(
+      '2 files are back in the source folder. 1 was renamed to avoid overwriting another. 2 were not found. Undo again to try restoring the rest.'
+    );
+  });
+
+  it('origem solta mostra o caminho como texto', () => {
+    expect(pt.sourceDropped('C:\\solta')).toEqual({ title: 'Origem definida', text: 'C:\\solta' });
+    expect(en.sourceDropped('C:\\solta').title).toBe('Source set');
   });
 });

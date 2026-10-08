@@ -2,6 +2,7 @@ import { useState } from 'react';
 import NotificationsCenter from '../components/NotificationsCenter';
 import PageHead from '../components/PageHead';
 import Sidebar from '../components/Sidebar';
+import ToastStack from '../components/ToastStack';
 import { getCopy } from '../i18n/language';
 import organizerCopy from '../i18n/organizerCopy';
 import OrganizePage from './OrganizePage';
@@ -23,7 +24,9 @@ function OrganizerView({
   isLoading,
   loadingAction,
   notifications,
+  unread,
   onClearNotifications,
+  onMarkNotificationsRead,
   onLanguageChange,
   onCriterionChange,
   onSelectSourceFolder,
@@ -39,6 +42,17 @@ function OrganizerView({
 
   const navigate = (next) => {
     setPage(next);
+    setIsNotificationsOpen(false);
+  };
+
+  // Abrir o painel já conta como ler, como no protótipo (#75).
+  const toggleNotifications = () => {
+    if (!isNotificationsOpen) onMarkNotificationsRead();
+    setIsNotificationsOpen(!isNotificationsOpen);
+  };
+
+  const markRead = () => {
+    onMarkNotificationsRead();
     setIsNotificationsOpen(false);
   };
 
@@ -58,8 +72,11 @@ function OrganizerView({
             <NotificationsCenter
               labels={text}
               notifications={notifications}
+              unread={unread}
               isOpen={isNotificationsOpen}
-              onToggle={() => setIsNotificationsOpen((open) => !open)}
+              onToggle={toggleNotifications}
+              onClose={() => setIsNotificationsOpen(false)}
+              onMarkRead={markRead}
               onClear={onClearNotifications}
             />
           </PageHead>
@@ -84,6 +101,8 @@ function OrganizerView({
           )}
         </div>
       </main>
+
+      <ToastStack notifications={notifications} closeLabel={text.toastClose} />
     </div>
   );
 }

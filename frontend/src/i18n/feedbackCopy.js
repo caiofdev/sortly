@@ -1,6 +1,22 @@
-// Partes opcionais da mensagem: só aparecem quando o valor é maior que zero,
-// para a mensagem continuar igual à da versão anterior no caso comum.
-const optional = (value, text) => (value > 0 ? ` ${text}: ${value}.` : '');
+// Avisos curtos, no tom do protótipo: o título vai no painel e no toast; o texto
+// traz os detalhes que só aparecem quando o valor é maior que zero (#75).
+const when = (value, text) => (value > 0 ? text : '');
+const sentences = (...parts) => parts.filter(Boolean).join(' ');
+const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+
+const organizeTitlePt = (r) => {
+  const organized = plural(r.movedFiles, 'arquivo organizado', 'arquivos organizados');
+  if (r.failedFiles > 0) return `${organized}, ${r.failedFiles} com falha`;
+  if (r.movedFiles === 0) return 'Nenhum arquivo para organizar';
+  return `Pronto! ${organized}`;
+};
+
+const organizeTitleEn = (r) => {
+  const organized = plural(r.movedFiles, 'file organized', 'files organized');
+  if (r.failedFiles > 0) return `${organized}, ${r.failedFiles} failed`;
+  if (r.movedFiles === 0) return 'No files to organize';
+  return `Done! ${organized}`;
+};
 
 const feedbackCopy = {
   'pt-BR': {
@@ -10,17 +26,46 @@ const feedbackCopy = {
     organizeUnexpectedError: 'Erro inesperado ao organizar os arquivos.',
     undoUnexpectedError: 'Erro inesperado ao desfazer a organização.',
     droppedPathUnexpectedError: 'Não foi possível usar o item arrastado.',
-    droppedPathSuccess: 'Origem definida por arrastar e soltar.',
     settingsSaveError: 'Não foi possível salvar a preferência.',
     unexpectedError: 'Erro inesperado.',
-    recoveredLastOrganization: 'Última organização recuperada. Você pode desfazer essa alteração.',
-    organizeSuccess: (result) =>
-      `Organização concluida: ${result.movedFiles} arquivo(s) movido(s). Origem: ${result.sourceFolderPath}. Destino: ${result.destinationFolderPath}. Processados: ${result.processedFiles}. Ignorados sem extensão: ${result.ignoredWithoutExtension}. Pastas ignoradas: ${result.ignoredFolders}.` +
-      optional(result.unchangedFiles, 'Já estavam no lugar') +
-      optional(result.failedFiles, 'Falhas ao mover'),
-    undoSuccess: (result) =>
-      `Desfazer concluido: ${result.restoredFiles} arquivo(s) restaurado(s). Renomeados na restauração: ${result.renamedOnRestore}. Não encontrados: ${result.skippedMissing}.` +
-      optional(result.failedFiles, 'Falhas ao restaurar'),
+    recovered: {
+      title: 'Última organização recuperada',
+      text: 'Você pode desfazer essa alteração.'
+    },
+    sourceDropped: (path) => ({ title: 'Origem definida', text: path }),
+    organizeDone: (r) => ({
+      title: organizeTitlePt(r),
+      text: sentences(
+        when(r.movedFiles, `Na pasta ${r.destinationFolderPath}.`),
+        when(r.unchangedFiles, `${plural(r.unchangedFiles, 'já estava', 'já estavam')} no lugar.`),
+        when(
+          r.ignoredWithoutExtension,
+          `${plural(r.ignoredWithoutExtension, 'sem extensão ficou', 'sem extensão ficaram')} na origem.`
+        ),
+        when(
+          r.failedFiles,
+          `${plural(r.failedFiles, 'não pôde ser movido', 'não puderam ser movidos')}.`
+        )
+      )
+    }),
+    undoDone: (r) => ({
+      title:
+        r.failedFiles > 0
+          ? `Organização desfeita, ${r.failedFiles} com falha`
+          : 'Organização desfeita',
+      text: sentences(
+        `${plural(r.restoredFiles, 'arquivo voltou', 'arquivos voltaram')} para a origem.`,
+        when(
+          r.renamedOnRestore,
+          `${plural(r.renamedOnRestore, 'foi renomeado', 'foram renomeados')} para não sobrescrever outro.`
+        ),
+        when(
+          r.skippedMissing,
+          `${plural(r.skippedMissing, 'não foi encontrado', 'não foram encontrados')}.`
+        ),
+        when(r.failedFiles, 'Desfaça de novo para tentar restaurar o resto.')
+      )
+    }),
     // Textos dos códigos de erro do backend (ADR 0004). Em português, são os
     // mesmos da versão 1.0.
     errors: {
@@ -46,17 +91,37 @@ const feedbackCopy = {
     organizeUnexpectedError: 'Unexpected error while organizing files.',
     undoUnexpectedError: 'Unexpected error while undoing organization.',
     droppedPathUnexpectedError: 'Could not use the dropped item.',
-    droppedPathSuccess: 'Source folder set from drag and drop.',
     settingsSaveError: 'Could not save the preference.',
     unexpectedError: 'Unexpected error.',
-    recoveredLastOrganization: 'Last organization recovered. You can undo this change.',
-    organizeSuccess: (result) =>
-      `Organization complete: ${result.movedFiles} file(s) moved. Source: ${result.sourceFolderPath}. Destination: ${result.destinationFolderPath}. Processed: ${result.processedFiles}. Ignored without extension: ${result.ignoredWithoutExtension}. Ignored folders: ${result.ignoredFolders}.` +
-      optional(result.unchangedFiles, 'Already in place') +
-      optional(result.failedFiles, 'Failed to move'),
-    undoSuccess: (result) =>
-      `Undo complete: ${result.restoredFiles} file(s) restored. Renamed on restore: ${result.renamedOnRestore}. Missing: ${result.skippedMissing}.` +
-      optional(result.failedFiles, 'Failed to restore'),
+    recovered: {
+      title: 'Last organization recovered',
+      text: 'You can undo this change.'
+    },
+    sourceDropped: (path) => ({ title: 'Source set', text: path }),
+    organizeDone: (r) => ({
+      title: organizeTitleEn(r),
+      text: sentences(
+        when(r.movedFiles, `In ${r.destinationFolderPath}.`),
+        when(r.unchangedFiles, `${plural(r.unchangedFiles, 'was', 'were')} already in place.`),
+        when(
+          r.ignoredWithoutExtension,
+          `${plural(r.ignoredWithoutExtension, 'file without extension', 'files without extension')} stayed in the source.`
+        ),
+        when(r.failedFiles, `${plural(r.failedFiles, 'file', 'files')} could not be moved.`)
+      )
+    }),
+    undoDone: (r) => ({
+      title: r.failedFiles > 0 ? `Organizing undone, ${r.failedFiles} failed` : 'Organizing undone',
+      text: sentences(
+        `${plural(r.restoredFiles, 'file is', 'files are')} back in the source folder.`,
+        when(
+          r.renamedOnRestore,
+          `${plural(r.renamedOnRestore, 'was', 'were')} renamed to avoid overwriting another.`
+        ),
+        when(r.skippedMissing, `${plural(r.skippedMissing, 'was', 'were')} not found.`),
+        when(r.failedFiles, 'Undo again to try restoring the rest.')
+      )
+    }),
     errors: {
       INVALID_SOURCE: 'Invalid folder.',
       INVALID_DESTINATION: 'Invalid destination folder.',

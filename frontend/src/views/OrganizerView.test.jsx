@@ -8,7 +8,8 @@ const en = organizerCopy.en;
 
 function renderView(props = {}) {
   const noop = vi.fn();
-  return render(
+  const onMarkNotificationsRead = vi.fn();
+  const view = render(
     <OrganizerView
       language="pt-BR"
       criteria={[{ key: 'byExtension', enabled: true, locked: true }]}
@@ -18,7 +19,9 @@ function renderView(props = {}) {
       isLoading={false}
       loadingAction=""
       notifications={[]}
+      unread={false}
       onClearNotifications={noop}
+      onMarkNotificationsRead={onMarkNotificationsRead}
       onLanguageChange={noop}
       onCriterionChange={noop}
       onSelectSourceFolder={noop}
@@ -28,6 +31,7 @@ function renderView(props = {}) {
       {...props}
     />
   );
+  return { ...view, onMarkNotificationsRead };
 }
 
 const sidebar = () => screen.getByRole('navigation', { name: 'Sortly' });
@@ -59,5 +63,35 @@ describe('OrganizerView', () => {
     expect(screen.getByRole('dialog', { name: pt.notificationsTitle })).toBeInTheDocument();
     fireEvent.click(within(sidebar()).getByRole('button', { name: pt.navSettings }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('abrir o painel marca como lidas; fechar pelo sino não marca de novo', () => {
+    const { onMarkNotificationsRead } = renderView({ unread: true });
+    const bell = screen.getByRole('button', { name: pt.notificationsTitle });
+    fireEvent.click(bell);
+    fireEvent.click(bell);
+    expect(onMarkNotificationsRead).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('"Marcar como lidas" marca e fecha o painel; Esc só fecha', () => {
+    const { onMarkNotificationsRead } = renderView();
+    const bell = screen.getByRole('button', { name: pt.notificationsTitle });
+    fireEvent.click(bell);
+    fireEvent.click(screen.getByRole('button', { name: pt.notificationsMarkRead }));
+    expect(onMarkNotificationsRead).toHaveBeenCalledTimes(2);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+    fireEvent.click(bell);
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(onMarkNotificationsRead).toHaveBeenCalledTimes(3);
+  });
+
+  it('cada notificação também aparece como toast', () => {
+    renderView({
+      notifications: [{ id: 1, kind: 'error', title: 'Pasta inválida.', text: '', time: '09:07' }]
+    });
+    expect(screen.getByRole('alert')).toHaveTextContent('Pasta inválida.');
   });
 });

@@ -30,7 +30,9 @@ function App() {
       isLoading={Boolean(state.busy)}
       loadingAction={state.busy || null}
       notifications={notifications}
+      unread={state.unread}
       onClearNotifications={actions.clearNotifications}
+      onMarkNotificationsRead={actions.markNotificationsRead}
       onLanguageChange={actions.setLanguage}
       onCriterionChange={actions.setCriterion}
       onSelectSourceFolder={actions.selectSource}

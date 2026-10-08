@@ -20,6 +20,7 @@ const viewState = (overrides = {}) => ({
   destinationFolderPath: '',
   hasUndo: false,
   busy: '',
+  unread: false,
   settings: { language: 'pt-BR', criteria },
   notifications: [],
   ...overrides
@@ -60,29 +61,43 @@ describe('App', () => {
   });
 
   it('mostra caminhos, carregamento e notificações traduzidas do estado', async () => {
+    const recovered = {
+      id: 1,
+      kind: 'info',
+      code: 'RECOVERED_LAST_ORGANIZATION',
+      action: 'startup',
+      at: '2026-03-05T12:00:00Z'
+    };
     mockBackend(
       viewState({
         sourceFolderPath: 'C:\\origem',
         busy: 'organize',
-        notifications: [
-          {
-            id: 1,
-            kind: 'info',
-            code: 'RECOVERED_LAST_ORGANIZATION',
-            action: 'startup',
-            at: '2026-03-05T12:00:00Z'
-          }
-        ]
+        unread: true,
+        notifications: [recovered]
       })
     );
-    render(<App />);
+    window.go.app.App.MarkNotificationsRead = vi
+      .fn()
+      .mockResolvedValue(
+        viewState({ sourceFolderPath: 'C:\\origem', busy: 'organize', notifications: [recovered] })
+      );
+    const { container } = render(<App />);
 
     expect(await screen.findByText('C:\\origem')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Organizando…' })).toBeDisabled();
-    fireEvent.click(screen.getByRole('button', { name: 'Notificações' }));
-    expect(
-      screen.getByText('Última organização recuperada. Você pode desfazer essa alteração.')
-    ).toBeInTheDocument();
+    expect(container.querySelector('.st-toast')).toHaveTextContent(
+      'Última organização recuperadaVocê pode desfazer essa alteração.'
+    );
+    const bell = screen.getByRole('button', { name: 'Notificações' });
+    expect(bell).toHaveAccessibleDescription('Há avisos novos');
+
+    fireEvent.click(bell);
+    const panel = screen.getByRole('dialog', { name: 'Notificações' });
+    expect(within(panel).getByText('Última organização recuperada')).toBeInTheDocument();
+    await vi.waitFor(() =>
+      expect(container.querySelector('.st-icon-btn__dot')).not.toBeInTheDocument()
+    );
+    expect(window.go.app.App.MarkNotificationsRead).toHaveBeenCalledTimes(1);
   });
 
   it('ações chamam os bindings e mostram o estado devolvido', async () => {
