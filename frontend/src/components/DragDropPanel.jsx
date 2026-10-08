@@ -1,13 +1,14 @@
 import { useRef, useState } from 'react';
+import { DropFolderIcon } from './icons';
 
-// Marca o painel como área de drop do Wails (a propriedade é herdada pelos filhos).
+// Marca o painel como área de drop do Wails; a propriedade é herdada pelos filhos (#12).
 const DROP_TARGET_STYLE = { '--wails-drop-target': 'drop' };
 
 function DragDropPanel({ isLoading, labels, onSelectSourceFolder }) {
   const [isDragging, setIsDragging] = useState(false);
   // Entrar num elemento interno dispara dragleave no painel; contar entradas e
   // saídas evita o destaque piscar. O relatedTarget resolveria no Chromium, mas
-  // o WebKit (macOS e Linux) costuma entregá-lo vazio.
+  // o WebKit (macOS e Linux) costuma entregá-lo vazio (#60).
   const depth = useRef(0);
 
   const handleDragEnter = (event) => {
@@ -30,7 +31,7 @@ function DragDropPanel({ isLoading, labels, onSelectSourceFolder }) {
   const handleDrop = (event) => {
     event.preventDefault();
     // O caminho não vem no evento do navegador: o Wails o entrega pelo
-    // OnFileDrop assinado no useViewState. Aqui só desliga o destaque.
+    // OnFileDrop assinado no useViewState. Aqui só desliga o destaque (#12).
     depth.current = 0;
     setIsDragging(false);
   };
@@ -42,19 +43,19 @@ function DragDropPanel({ isLoading, labels, onSelectSourceFolder }) {
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       style={DROP_TARGET_STYLE}
-      className={`rounded-2xl border-2 border-dashed px-6 py-10 text-center transition-colors ${
-        isDragging ? 'border-[#3B82F6] bg-[#3B82F6]/12' : 'border-white/20 bg-[#0F172A]/60'
-      } ${isLoading ? 'opacity-60' : ''}`}
+      className={isDragging ? 'st-drop st-drop--active' : 'st-drop'}
+      aria-busy={isLoading}
     >
-      <p className="text-lg font-semibold text-[#F8FAFC]">{labels.dropTitle}</p>
-      <p className="mt-2 text-sm text-[#94A3B8]">{labels.dropDescription}</p>
-
-      <p className="mt-2 text-sm text-[#94A3B8]">
+      <DropFolderIcon />
+      <p className="st-drop__title">{isDragging ? labels.dropActive : labels.dropTitle}</p>
+      <p className="st-drop__hint">{labels.dropDescription}</p>
+      <p className="st-drop__hint">
         {labels.dropSelectHintPrefix}{' '}
         <button
           type="button"
+          className="st-link"
           onClick={onSelectSourceFolder}
-          className="font-semibold text-[#3B82F6] underline underline-offset-2 transition-colors hover:text-[#60a5fa]"
+          disabled={isLoading}
         >
           {labels.dropSelectHintAction}
         </button>

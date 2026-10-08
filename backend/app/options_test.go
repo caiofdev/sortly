@@ -22,7 +22,7 @@ func TestOptionsWindow(t *testing.T) {
 		{"min width", opts.MinWidth, 820},
 		{"min height", opts.MinHeight, 600},
 		{"start state", opts.WindowStartState, options.Maximised},
-		{"background", *opts.BackgroundColour, options.RGBA{R: 15, G: 23, B: 42, A: 255}},
+		{"background", *opts.BackgroundColour, options.RGBA{R: 0, G: 0, B: 0, A: 255}},
 		{"menu", opts.Menu == nil, true},
 		{"frameless", opts.Frameless, false},
 		{"arrastar e soltar", opts.DragAndDrop.EnableFileDrop, true},
@@ -66,8 +66,8 @@ func TestOptionsDoesNotShareBackground(t *testing.T) {
 	first.BackgroundColour.R = 255
 
 	second := Options(New(Deps{}), fstest.MapFS{}, testIcon)
-	if second.BackgroundColour.R != 15 {
-		t.Fatalf("cor de fundo compartilhada entre instâncias: R = %d", second.BackgroundColour.R)
+	if *second.BackgroundColour != backgroundColour {
+		t.Fatalf("cor de fundo compartilhada entre instâncias: %+v", *second.BackgroundColour)
 	}
 }
 

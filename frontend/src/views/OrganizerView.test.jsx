@@ -1,16 +1,17 @@
 import { describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import organizerCopy from '../i18n/organizerCopy';
 import OrganizerView from './OrganizerView';
 
 const pt = organizerCopy['pt-BR'];
+const en = organizerCopy.en;
 
 function renderView(props = {}) {
   const noop = vi.fn();
   return render(
     <OrganizerView
       language="pt-BR"
-      criteria={[]}
+      criteria={[{ key: 'byExtension', enabled: true, locked: true }]}
       sourceFolderPath=""
       destinationFolderPath=""
       hasUndo={false}
@@ -29,33 +30,34 @@ function renderView(props = {}) {
   );
 }
 
+const sidebar = () => screen.getByRole('navigation', { name: 'Sortly' });
+
 describe('OrganizerView', () => {
-  it('sem pastas: textos de vazio e organizar desabilitado', () => {
+  it('abre na página Organizar', () => {
     renderView();
-    expect(screen.getByText(pt.sourceEmpty)).toBeInTheDocument();
-    expect(screen.getByText(pt.destinationEmpty)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: pt.organize })).toBeDisabled();
+    expect(screen.getByRole('heading', { name: pt.titleOrganize })).toBeInTheDocument();
+    expect(screen.getByText(pt.dropTitle)).toBeInTheDocument();
   });
 
-  it('com origem e destino: mostra os caminhos e habilita organizar', () => {
-    renderView({ sourceFolderPath: 'C:\\origem', destinationFolderPath: 'C:\\destino' });
-    expect(screen.getByText('C:\\origem')).toBeInTheDocument();
-    expect(screen.getByText('C:\\destino')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: pt.organize })).toBeEnabled();
+  it('a sidebar troca para Configurações e volta', () => {
+    renderView();
+    fireEvent.click(within(sidebar()).getByRole('button', { name: pt.navSettings }));
+    expect(screen.getByRole('heading', { name: pt.titleSettings })).toBeInTheDocument();
+    expect(screen.getByRole('switch', { name: pt.settingsByExtension })).toBeInTheDocument();
+    fireEvent.click(within(sidebar()).getByRole('button', { name: pt.navOrganize }));
+    expect(screen.getByRole('heading', { name: pt.titleOrganize })).toBeInTheDocument();
   });
 
   it('em inglês usa os textos em inglês', () => {
     renderView({ language: 'en' });
-    expect(screen.getByRole('button', { name: organizerCopy.en.organize })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: en.titleOrganize })).toBeInTheDocument();
   });
 
-  it('o sino abre o painel de notificações e o fundo o fecha', () => {
-    const { container } = renderView();
-    const panel = () => container.querySelector('aside').className;
-    expect(panel()).toContain('translate-x-full');
+  it('o sino abre o painel; trocar de página o fecha', () => {
+    renderView();
     fireEvent.click(screen.getByRole('button', { name: pt.notificationsTitle }));
-    expect(panel()).toContain('translate-x-0');
-    fireEvent.click(container.querySelector('aside').previousElementSibling);
-    expect(panel()).toContain('translate-x-full');
+    expect(screen.getByRole('dialog', { name: pt.notificationsTitle })).toBeInTheDocument();
+    fireEvent.click(within(sidebar()).getByRole('button', { name: pt.navSettings }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 });

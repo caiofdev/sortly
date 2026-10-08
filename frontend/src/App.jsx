@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import useViewState from './hooks/useViewState';
 import { toNotificationItems } from './i18n/notifications';
 import OrganizerView from './views/OrganizerView';
@@ -10,6 +10,11 @@ function App() {
     () => toNotificationItems(state.notifications, language),
     [state.notifications, language]
   );
+
+  // Leitores de tela escolhem a pronúncia pelo lang do documento (#74).
+  useEffect(() => {
+    document.documentElement.lang = language;
+  }, [language]);
 
   if (!ready) {
     return null;

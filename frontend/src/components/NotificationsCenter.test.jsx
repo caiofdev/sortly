@@ -1,19 +1,14 @@
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import organizerCopy from '../i18n/organizerCopy';
-import NotificationsCenter, { getItemTone } from './NotificationsCenter';
+import NotificationsCenter, { dotClass } from './NotificationsCenter';
 
 const labels = organizerCopy['pt-BR'];
-const items = (n) =>
-  Array.from({ length: n }, (_, i) => ({
-    id: i,
-    type: 'info',
-    message: `aviso ${i}`,
-    time: '09:07'
-  }));
+const items = (types) =>
+  types.map((type, i) => ({ id: i, type, message: `aviso ${i}`, time: '09:07' }));
 
 function renderCenter(props = {}) {
-  const handlers = { onToggle: vi.fn(), onClose: vi.fn(), onClear: vi.fn() };
+  const handlers = { onToggle: vi.fn(), onClear: vi.fn() };
   const view = render(
     <NotificationsCenter
       labels={labels}
@@ -26,50 +21,52 @@ function renderCenter(props = {}) {
   return { ...view, ...handlers };
 }
 
-describe('getItemTone', () => {
+describe('dotClass', () => {
   it.each([
-    ['organize', '#22C55E'],
-    ['restore', 'rose-500'],
-    ['error', 'rose-500'],
-    ['info', '#3B82F6'],
-    ['qualquer', '#3B82F6']
-  ])('%s → tom com %s', (type, color) => {
-    expect(getItemTone(type)).toContain(color);
+    ['organize', 'st-notif__dot st-notif__dot--ok'],
+    ['error', 'st-notif__dot st-notif__dot--err'],
+    ['restore', 'st-notif__dot'],
+    ['info', 'st-notif__dot']
+  ])('%s → %s', (type, expected) => {
+    expect(dotClass(type)).toBe(expected);
   });
 });
 
 describe('NotificationsCenter', () => {
-  it('sem notificações: texto de vazio e sem contador', () => {
-    renderCenter();
+  it.each([
+    [false, 'false', 0],
+    [true, 'true', 1]
+  ])('aberto = %s: sino com aria-expanded %s e %i painel', (isOpen, expanded, panels) => {
+    renderCenter({ isOpen });
+    expect(screen.getByRole('button', { name: labels.notificationsTitle })).toHaveAttribute(
+      'aria-expanded',
+      expanded
+    );
+    expect(screen.queryAllByRole('dialog')).toHaveLength(panels);
+  });
+
+  it('sem notificações: texto de vazio', () => {
+    renderCenter({ isOpen: true });
     expect(screen.getByText(labels.notificationsEmpty)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: labels.notificationsTitle }).textContent).toBe('');
   });
 
-  it.each([
-    [1, '1'],
-    [99, '99'],
-    [100, '99+']
-  ])('%i notificação(ões): contador "%s"', (n, badge) => {
-    renderCenter({ notifications: items(n) });
-    expect(screen.getByRole('button', { name: labels.notificationsTitle }).textContent).toBe(badge);
-    expect(screen.getAllByText(/^aviso /)).toHaveLength(n);
+  it('lista cada aviso com o ponto do seu status e a hora', () => {
+    const { container } = renderCenter({
+      isOpen: true,
+      notifications: items(['organize', 'error', 'info'])
+    });
+    expect(screen.queryByText(labels.notificationsEmpty)).not.toBeInTheDocument();
+    expect(screen.getAllByText(/^aviso /)).toHaveLength(3);
+    expect(container.querySelectorAll('.st-notif__dot--ok')).toHaveLength(1);
+    expect(container.querySelectorAll('.st-notif__dot--err')).toHaveLength(1);
+    expect(screen.getAllByText('09:07')).toHaveLength(3);
   });
 
-  it.each([
-    [true, 'translate-x-0'],
-    [false, 'translate-x-full']
-  ])('aberto = %s: painel com %s', (isOpen, translate) => {
-    const { container } = renderCenter({ isOpen });
-    expect(container.querySelector('aside').className).toContain(translate);
-  });
-
-  it('sino alterna, fundo fecha e "limpar" limpa', () => {
-    const { container, onToggle, onClose, onClear } = renderCenter({ isOpen: true });
+  it('o sino alterna e "Limpar" limpa', () => {
+    const { onToggle, onClear } = renderCenter({ isOpen: true });
     fireEvent.click(screen.getByRole('button', { name: labels.notificationsTitle }));
-    fireEvent.click(container.querySelector('aside').previousElementSibling);
     fireEvent.click(screen.getByRole('button', { name: labels.notificationsClear }));
     expect(onToggle).toHaveBeenCalled();
-    expect(onClose).toHaveBeenCalled();
     expect(onClear).toHaveBeenCalled();
   });
 });

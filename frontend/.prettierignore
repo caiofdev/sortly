@@ -3,3 +3,4 @@ wailsjs
 node_modules
 package-lock.json
 package.json.md5
+src/styles/components.css
