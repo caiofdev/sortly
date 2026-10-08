@@ -14,12 +14,12 @@ const StateEvent = "sortly:state"
 
 const MaxNotifications = 80
 
-// Definem a cor do aviso na interface (#45).
+// Status do aviso: o ponto no painel e a variante do toast; os de erro ficam
+// na tela até o usuário fechar (#75).
 const (
-	KindInfo     = "info"
-	KindOrganize = "organize"
-	KindRestore  = "restore"
-	KindError    = "error"
+	KindSuccess = "success"
+	KindInfo    = "info"
+	KindError   = "error"
 )
 
 // Códigos que não são erros; os de erro vêm de apperr (ADR 0004, #45).
@@ -69,12 +69,14 @@ type ViewState struct {
 	DestinationFolderPath string         `json:"destinationFolderPath"`
 	HasUndo               bool           `json:"hasUndo"`
 	Busy                  string         `json:"busy"`
+	Unread                bool           `json:"unread"`
 	Settings              settings.View  `json:"settings"`
 	Notifications         []Notification `json:"notifications"`
 }
 
 // A mais recente fica no topo; as que passam de MaxNotifications saem (#45).
 func (s *ViewState) push(n Notification) {
+	s.Unread = true
 	s.Notifications = append([]Notification{n}, s.Notifications...)
 	if len(s.Notifications) > MaxNotifications {
 		s.Notifications = s.Notifications[:MaxNotifications]

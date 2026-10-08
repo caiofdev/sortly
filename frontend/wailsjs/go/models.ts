@@ -51,6 +51,7 @@ export namespace app {
 	    destinationFolderPath: string;
 	    hasUndo: boolean;
 	    busy: string;
+	    unread: boolean;
 	    settings: settings.View;
 	    notifications: Notification[];
 	
@@ -65,6 +66,7 @@ export namespace app {
 	        this.destinationFolderPath = source["destinationFolderPath"];
 	        this.hasUndo = source["hasUndo"];
 	        this.busy = source["busy"];
+	        this.unread = source["unread"];
 	        this.settings = this.convertValues(source["settings"], settings.View);
 	        this.notifications = this.convertValues(source["notifications"], Notification);
 	    }

@@ -14,6 +14,10 @@ export function GetState() {
   return window['go']['app']['App']['GetState']();
 }
 
+export function MarkNotificationsRead() {
+  return window['go']['app']['App']['MarkNotificationsRead']();
+}
+
 export function Organize() {
   return window['go']['app']['App']['Organize']();
 }

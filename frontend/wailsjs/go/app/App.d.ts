@@ -8,6 +8,8 @@ export function DropPaths(arg1:Array<string>):Promise<app.ViewState>;
 
 export function GetState():Promise<app.ViewState>;
 
+export function MarkNotificationsRead():Promise<app.ViewState>;
+
 export function Organize():Promise<app.ViewState>;
 
 export function SelectDestination():Promise<app.ViewState>;
