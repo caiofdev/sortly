@@ -42,6 +42,7 @@ const (
 	ActionUndo              = "undo"
 	ActionSettings          = "settings"
 	ActionPreview           = "preview"
+	ActionOpenDestination   = "openDestination"
 )
 
 // Valores de PreviewState.Status: a interface mostra "contando" enquanto a prévia
@@ -92,8 +93,11 @@ type ViewState struct {
 	Unread                bool               `json:"unread"`
 	Preview               PreviewState       `json:"preview"`
 	Progress              organizer.Progress `json:"progress"`
-	Settings              settings.View      `json:"settings"`
-	Notifications         []Notification     `json:"notifications"`
+	// Preenchido quando a organização move arquivos: a tela mostra o Concluído
+	// até Organizar outra pasta ou Desfazer (#79).
+	LastResult    *organizer.Result `json:"lastResult"`
+	Settings      settings.View     `json:"settings"`
+	Notifications []Notification    `json:"notifications"`
 }
 
 // A mais recente fica no topo; as que passam de MaxNotifications saem (#45).

@@ -22,6 +22,10 @@ export function MarkNotificationsRead() {
   return window['go']['app']['App']['MarkNotificationsRead']();
 }
 
+export function OpenDestination() {
+  return window['go']['app']['App']['OpenDestination']();
+}
+
 export function Organize() {
   return window['go']['app']['App']['Organize']();
 }
@@ -44,6 +48,10 @@ export function SetLanguage(arg1) {
 
 export function SetTheme(arg1) {
   return window['go']['app']['App']['SetTheme'](arg1);
+}
+
+export function StartOver() {
+  return window['go']['app']['App']['StartOver']();
 }
 
 export function Undo() {

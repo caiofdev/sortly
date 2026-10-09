@@ -35,6 +35,9 @@ type Result struct {
 	IgnoredFolders          int    `json:"ignoredFolders"`
 	CanUndo                 bool   `json:"canUndo"`
 	Canceled                bool   `json:"canceled"`
+	// Só o que foi movido de fato, para a tela Concluído (#79).
+	Folders    []FolderCount `json:"folders"`
+	OtherFiles int           `json:"otherFiles"`
 }
 
 type RecordStore interface {
@@ -83,7 +86,7 @@ func (s *Service) OrganizeReporting(ctx context.Context, req Request, report Rep
 	plan, err := s.planner.Plan(ctx, src, dst, opts)
 	if err != nil {
 		canceled := errors.Is(err, context.Canceled)
-		return Result{SourceFolderPath: src, DestinationFolderPath: dst, Canceled: canceled}, err
+		return Result{SourceFolderPath: src, DestinationFolderPath: dst, Canceled: canceled, Folders: []FolderCount{}}, err
 	}
 
 	out, applyErr := s.executor.ApplyReporting(ctx, plan, report)
@@ -101,7 +104,16 @@ func (s *Service) OrganizeReporting(ctx context.Context, req Request, report Rep
 		CanUndo:                 s.canUndo(out, saveErr),
 		Canceled:                errors.Is(applyErr, context.Canceled),
 	}
+	result.Folders, result.OtherFiles = movedFolders(dst, out.MovedItems)
 	return result, errors.Join(applyErr, saveErr)
+}
+
+func movedFolders(dst string, moved []store.MovedItem) ([]FolderCount, int) {
+	targets := make([]string, 0, len(moved))
+	for _, item := range moved {
+		targets = append(targets, item.To)
+	}
+	return countFolders(dst, targets)
 }
 
 // Só grava se algo foi movido: uma organização sem movimentos preserva o desfazer da

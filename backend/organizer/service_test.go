@@ -63,8 +63,9 @@ func TestOrganizeEndToEnd(t *testing.T) {
 	want := Result{
 		SourceFolderPath: src, DestinationFolderPath: src,
 		ProcessedFiles: 3, MovedFiles: 2, IgnoredWithoutExtension: 1, IgnoredFolders: 1, CanUndo: true,
+		Folders: []FolderCount{{"pdf", 1}, {"txt", 1}},
 	}
-	if got != want {
+	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("Organize =\n%+v\nwant\n%+v", got, want)
 	}
 	assertTree(t, src, []string{"LEIAME", "pdf/a.pdf", "subpasta/", "txt/b.txt"})
@@ -197,8 +198,8 @@ func TestResultJSONHasNoMessage(t *testing.T) {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
-	want := []string{"canUndo", "canceled", "destinationFolderPath", "failedFiles", "ignoredFolders",
-		"ignoredWithoutExtension", "movedFiles", "processedFiles", "sourceFolderPath", "unchangedFiles"}
+	want := []string{"canUndo", "canceled", "destinationFolderPath", "failedFiles", "folders", "ignoredFolders",
+		"ignoredWithoutExtension", "movedFiles", "otherFiles", "processedFiles", "sourceFolderPath", "unchangedFiles"}
 	if !reflect.DeepEqual(keys, want) {
 		t.Fatalf("campos = %v, want %v (#8: sem \"message\")", keys, want)
 	}
@@ -282,8 +283,8 @@ func TestOrganizeCanceled(t *testing.T) {
 
 		got, err := svc.Organize(ctx, Request{SourceFolderPath: src, Options: criteria.Default})
 
-		want := Result{SourceFolderPath: src, DestinationFolderPath: src, Canceled: true}
-		if !errors.Is(err, context.Canceled) || got != want {
+		want := Result{SourceFolderPath: src, DestinationFolderPath: src, Canceled: true, Folders: []FolderCount{}}
+		if !errors.Is(err, context.Canceled) || !reflect.DeepEqual(got, want) {
 			t.Fatalf("Organize = (%+v, %v), want %+v", got, err, want)
 		}
 		assertTree(t, src, []string{"a.txt"})

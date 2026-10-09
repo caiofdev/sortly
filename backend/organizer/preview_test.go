@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/caiofdev/sortly/backend/organizer/criteria"
+	"github.com/caiofdev/sortly/backend/store"
 )
 
 func planWith(dst string, files int, folders map[string]int) Plan {
@@ -119,6 +120,32 @@ func TestPreviewErrors(t *testing.T) {
 			}
 			if _, err := svc.Preview(tt.ctx, tt.req); !errors.Is(err, tt.want) {
 				t.Fatalf("err = %v, want %v", err, tt.want)
+			}
+		})
+	}
+}
+
+func TestMovedFolders(t *testing.T) {
+	dst := filepath.Join("C:", "destino")
+	moved := []store.MovedItem{
+		{From: "a", To: filepath.Join(dst, "txt", "nota (1).txt")},
+		{From: "b", To: filepath.Join(dst, "txt", "b.txt")},
+		{From: "c", To: filepath.Join(dst, "pdf", "date-2026-03-05", "c.pdf")},
+	}
+	tests := []struct {
+		name       string
+		moved      []store.MovedItem
+		want       []FolderCount
+		wantOthers int
+	}{
+		{"nada movido", nil, []FolderCount{}, 0},
+		{"pelo nome final e pela pasta de 1º nível", moved, []FolderCount{{"txt", 2}, {"pdf", 1}}, 0},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, others := movedFolders(dst, tt.moved)
+			if !reflect.DeepEqual(got, tt.want) || others != tt.wantOthers {
+				t.Fatalf("movedFolders = (%+v, %d), want (%+v, %d)", got, others, tt.want, tt.wantOthers)
 			}
 		})
 	}
