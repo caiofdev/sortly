@@ -236,15 +236,18 @@ try {
   $on = [Windows.Automation.ToggleState]::On
   $off = [Windows.Automation.ToggleState]::Off
   Check 'WIN_A11Y_LANG' ((Toggle-State 'PT-BR') -eq $on -and (Toggle-State 'EN') -eq $off) 'leitor de tela: botão "PT-BR" marcado, "EN" não (aria-pressed)'
+  Click 'Configurações'; Click 'Claro'; Start-Sleep -Milliseconds 500; Click 'Organizar'
   Click 'EN'; Start-Sleep -Milliseconds 500
   Stop-App
   Start-App
   $en = $null -ne (Find-Element 'Organize folder' 10)
   Click 'Settings'
   $resOn = (Criterion 'Resolution').Current.ToggleState -eq 'On'
+  $light = (Toggle-State 'Light') -eq $on -and (Toggle-State 'Dark') -eq $off
   Click 'Organize'
   Check 'WIN_LANG' $en 'botões em inglês após trocar o idioma'
   Check 'WIN_PREFS' ($en -and $resOn) 'idioma e critério "Resolution" mantidos após reabrir'
+  Check 'WIN_THEME' $light 'tema claro mantido após reabrir'
   # As preferências ficam em ~/.sortly/settings.json, fora do WebView (#44):
   # apagar AppData (dados do WebView2 e localStorage) não pode perdê-las.
   Stop-App
