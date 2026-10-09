@@ -9,6 +9,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
+	"github.com/caiofdev/sortly/backend/history"
 	"github.com/caiofdev/sortly/backend/metadata"
 	"github.com/caiofdev/sortly/backend/organizer"
 	"github.com/caiofdev/sortly/backend/settings"
@@ -16,8 +17,8 @@ import (
 	"github.com/caiofdev/sortly/backend/undo"
 )
 
-// Registro em ~/.sortly/last-operation.json e preferências em
-// ~/.sortly/settings.json, a mesma pasta da versão 1.0 (#10, #44).
+// Registro em ~/.sortly/last-operation.json, preferências em settings.json e
+// histórico em history.json, na mesma pasta da versão 1.0 (#10, #44, #80).
 func NewDefault(log *slog.Logger) (*App, error) {
 	recordPath, err := store.DefaultPath()
 	if err != nil {
@@ -25,12 +26,14 @@ func NewDefault(log *slog.Logger) (*App, error) {
 	}
 	records := store.New(recordPath, log)
 	settingsPath := filepath.Join(filepath.Dir(recordPath), "settings.json")
+	historyPath := filepath.Join(filepath.Dir(recordPath), "history.json")
 
 	return New(Deps{
 		Organizer: organizer.NewService(organizer.Deps{Metadata: metadata.Reader{}, Store: records, Logger: log}),
 		Undoer:    undo.NewService(records, log),
 		Records:   records,
 		Settings:  settings.New(settingsPath, log),
+		History:   history.New(historyPath, log),
 		PickDir:   nativeDirectoryPicker,
 		Emit:      emitState,
 		Paint:     paintBackground,

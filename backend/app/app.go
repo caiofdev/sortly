@@ -15,6 +15,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options"
 
 	"github.com/caiofdev/sortly/backend/apperr"
+	"github.com/caiofdev/sortly/backend/history"
 	"github.com/caiofdev/sortly/backend/organizer"
 	"github.com/caiofdev/sortly/backend/settings"
 	"github.com/caiofdev/sortly/backend/store"
@@ -37,6 +38,12 @@ type Undoer interface {
 
 type RecordReader interface {
 	Load() (*store.Operation, error)
+}
+
+type HistoryStore interface {
+	List() []history.Entry
+	Add(e history.Entry) error
+	MarkLastUndone() error
 }
 
 type SettingsStore interface {
@@ -64,6 +71,7 @@ type Deps struct {
 	Undoer     Undoer
 	Records    RecordReader
 	Settings   SettingsStore
+	History    HistoryStore
 	PickDir    DirectoryPicker
 	Emit       Emitter
 	Paint      BackgroundPainter
@@ -283,6 +291,7 @@ func (a *App) applyOrganize(s *ViewState, result organizer.Result, err error) {
 	if err == nil || result.MovedFiles > 0 {
 		s.HasUndo = result.CanUndo
 	}
+	a.addHistory(result)
 	// Cancelar não é falha; o aviso diz quantos arquivos já foram movidos. Se o
 	// registro não foi salvo, a falha vale mais (#53, #78).
 	if result.Canceled && !errors.Is(err, organizer.ErrRecordNotSaved) {
@@ -299,6 +308,29 @@ func (a *App) applyOrganize(s *ViewState, result organizer.Result, err error) {
 	a.notify(s, Notification{Kind: organizeKind(result), Code: CodeOrganizeDone, Action: ActionOrganize, Organize: &result})
 	if result.MovedFiles > 0 {
 		s.LastResult = &result
+	}
+}
+
+// Só organizações que moveram arquivos entram, como no registro do desfazer: assim
+// a mais recente do histórico é sempre a que o desfazer desfaz. O histórico é
+// secundário; uma falha ao gravá-lo vai só para o log (ADR 0007, #80).
+func (a *App) addHistory(result organizer.Result) {
+	if result.MovedFiles == 0 {
+		return
+	}
+	status := history.StatusDone
+	if result.Canceled {
+		status = history.StatusCanceled
+	}
+	err := a.deps.History.Add(history.Entry{
+		At:                    a.deps.Now(),
+		SourceFolderPath:      result.SourceFolderPath,
+		DestinationFolderPath: result.DestinationFolderPath,
+		MovedFiles:            result.MovedFiles,
+		Status:                status,
+	})
+	if err != nil {
+		a.log.Warn("histórico não salvo", "err", err)
 	}
 }
 
@@ -343,6 +375,9 @@ func (a *App) Undo() ViewState {
 		a.log.Info("desfazer concluído", "restaurados", result.RestoredFiles, "falhas", result.FailedFiles)
 		s.HasUndo = result.CanUndo
 		s.LastResult = nil
+		if err := a.deps.History.MarkLastUndone(); err != nil {
+			a.log.Warn("histórico não atualizado após desfazer", "err", err)
+		}
 		a.notify(s, Notification{Kind: undoKind(result), Code: CodeUndoDone, Action: ActionUndo, Undo: &result})
 	})
 }
@@ -415,6 +450,7 @@ func (a *App) update(change func(*ViewState)) ViewState {
 	}
 	// Sob o lock, para que uma versão maior nunca traga preferências mais antigas (#55).
 	snapshot.Settings = a.deps.Settings.Get().View()
+	snapshot.History = a.deps.History.List()
 	ctx, started := a.ctx, a.started
 	tasks := a.pending
 	a.pending = nil

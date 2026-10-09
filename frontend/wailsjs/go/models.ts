@@ -91,6 +91,7 @@ export namespace app {
 	    preview: PreviewState;
 	    progress: organizer.Progress;
 	    lastResult?: organizer.Result;
+	    history: history.Entry[];
 	    settings: settings.View;
 	    notifications: Notification[];
 	
@@ -109,8 +110,53 @@ export namespace app {
 	        this.preview = this.convertValues(source["preview"], PreviewState);
 	        this.progress = this.convertValues(source["progress"], organizer.Progress);
 	        this.lastResult = this.convertValues(source["lastResult"], organizer.Result);
+	        this.history = this.convertValues(source["history"], history.Entry);
 	        this.settings = this.convertValues(source["settings"], settings.View);
 	        this.notifications = this.convertValues(source["notifications"], Notification);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+
+}
+
+export namespace history {
+	
+	export class Entry {
+	    // Go type: time
+	    at: any;
+	    sourceFolderPath: string;
+	    destinationFolderPath: string;
+	    movedFiles: number;
+	    status: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Entry(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.at = this.convertValues(source["at"], null);
+	        this.sourceFolderPath = source["sourceFolderPath"];
+	        this.destinationFolderPath = source["destinationFolderPath"];
+	        this.movedFiles = source["movedFiles"];
+	        this.status = source["status"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
