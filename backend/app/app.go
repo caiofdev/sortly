@@ -52,6 +52,7 @@ type SettingsStore interface {
 	SetCriterion(key string, enabled bool) (settings.Settings, error)
 	SetTheme(theme string) (settings.Settings, error)
 	SetDuplicates(policy string) (settings.Settings, error)
+	SetIncludeSubfolders(on bool) (settings.Settings, error)
 }
 
 // Devolve "" quando o usuário cancela o seletor (#10).
@@ -204,6 +205,7 @@ func (a *App) Organize() ViewState {
 		DestinationFolderPath: current.DestinationFolderPath,
 		Options:               prefs.Options,
 		Duplicates:            prefs.Duplicates,
+		IncludeSubfolders:     prefs.IncludeSubfolders,
 	}
 	if req.DestinationFolderPath == "" {
 		req.DestinationFolderPath = req.SourceFolderPath
@@ -412,6 +414,18 @@ func (a *App) SetCriterion(key string, enabled bool) ViewState {
 	})
 }
 
+// A prévia muda: com subpastas, conta os arquivos de todos os níveis (#83).
+func (a *App) SetIncludeSubfolders(on bool) ViewState {
+	_, err := a.deps.Settings.SetIncludeSubfolders(on)
+	return a.update(func(s *ViewState) {
+		if err != nil {
+			a.fail(s, ActionSettings, err)
+			return
+		}
+		a.startPreview(s)
+	})
+}
+
 func (a *App) SetDuplicates(policy string) ViewState {
 	_, err := a.deps.Settings.SetDuplicates(policy)
 	return a.afterSettings(err)
@@ -505,10 +519,12 @@ func (a *App) startPreview(s *ViewState) {
 	a.cancelPreview = cancel
 	seq := a.previewSeq
 	s.Preview = noPreview(PreviewLoading)
+	prefs := a.deps.Settings.Get()
 	req := organizer.Request{
 		SourceFolderPath:      s.SourceFolderPath,
 		DestinationFolderPath: s.DestinationFolderPath,
-		Options:               a.deps.Settings.Get().Options,
+		Options:               prefs.Options,
+		IncludeSubfolders:     prefs.IncludeSubfolders,
 	}
 	a.pending = append(a.pending, func() {
 		p, err := a.runPreview(ctx, req)

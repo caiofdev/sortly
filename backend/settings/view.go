@@ -12,10 +12,11 @@ type Criterion struct {
 // Os critérios vêm na ordem dos checkboxes, já com a regra do último critério aplicada
 // (#44).
 type View struct {
-	Language   string      `json:"language"`
-	Theme      string      `json:"theme"`
-	Duplicates string      `json:"duplicates"`
-	Criteria   []Criterion `json:"criteria"`
+	Language          string      `json:"language"`
+	Theme             string      `json:"theme"`
+	Duplicates        string      `json:"duplicates"`
+	IncludeSubfolders bool        `json:"includeSubfolders"`
+	Criteria          []Criterion `json:"criteria"`
 }
 
 func (st Settings) View() View {
@@ -25,5 +26,5 @@ func (st Settings) View() View {
 		on, _ := st.Options.Get(key)
 		list = append(list, Criterion{Key: key, Enabled: on, Locked: on && lastOne})
 	}
-	return View{Language: st.Language, Theme: st.Theme, Duplicates: st.Duplicates, Criteria: list}
+	return View{Language: st.Language, Theme: st.Theme, Duplicates: st.Duplicates, IncludeSubfolders: st.IncludeSubfolders, Criteria: list}
 }

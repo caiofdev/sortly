@@ -299,6 +299,7 @@ export namespace settings {
 	    language: string;
 	    theme: string;
 	    duplicates: string;
+	    includeSubfolders: boolean;
 	    criteria: Criterion[];
 	
 	    static createFrom(source: any = {}) {
@@ -310,6 +311,7 @@ export namespace settings {
 	        this.language = source["language"];
 	        this.theme = source["theme"];
 	        this.duplicates = source["duplicates"];
+	        this.includeSubfolders = source["includeSubfolders"];
 	        this.criteria = this.convertValues(source["criteria"], Criterion);
 	    }
 	

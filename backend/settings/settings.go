@@ -40,10 +40,11 @@ var (
 )
 
 type Settings struct {
-	Language   string
-	Theme      string
-	Duplicates string
-	Options    criteria.Options
+	Language          string
+	Theme             string
+	Duplicates        string
+	IncludeSubfolders bool
+	Options           criteria.Options
 }
 
 func Default() Settings {
@@ -98,6 +99,14 @@ func (s *Service) SetDuplicates(policy string) (Settings, error) {
 			return st, fmt.Errorf("%w: %q", ErrInvalidDuplicates, policy)
 		}
 		st.Duplicates = policy
+		return st, nil
+	})
+}
+
+// Desligado por padrão: a 1.0 lia só o nível superior da origem (#83).
+func (s *Service) SetIncludeSubfolders(on bool) (Settings, error) {
+	return s.update(func(st Settings) (Settings, error) {
+		st.IncludeSubfolders = on
 		return st, nil
 	})
 }
@@ -159,6 +168,7 @@ type fileFormat struct {
 	Language            string          `json:"language"`
 	Theme               string          `json:"theme"`
 	Duplicates          string          `json:"duplicates"`
+	IncludeSubfolders   bool            `json:"includeSubfolders"`
 	OrganizationOptions map[string]bool `json:"organizationOptions"`
 }
 
@@ -181,6 +191,7 @@ func (s *Service) decode(data []byte) Settings {
 	if organizer.ValidDuplicates(f.Duplicates) {
 		st.Duplicates = f.Duplicates
 	}
+	st.IncludeSubfolders = f.IncludeSubfolders
 	var opts criteria.Options
 	for key, on := range f.OrganizationOptions {
 		opts, _ = opts.With(key, on)
@@ -192,7 +203,8 @@ func (s *Service) decode(data []byte) Settings {
 }
 
 func (s *Service) save(st Settings) error {
-	f := fileFormat{Language: st.Language, Theme: st.Theme, Duplicates: st.Duplicates, OrganizationOptions: map[string]bool{}}
+	f := fileFormat{Language: st.Language, Theme: st.Theme, Duplicates: st.Duplicates,
+		IncludeSubfolders: st.IncludeSubfolders, OrganizationOptions: map[string]bool{}}
 	for _, key := range criteria.Keys {
 		f.OrganizationOptions[key], _ = st.Options.Get(key)
 	}

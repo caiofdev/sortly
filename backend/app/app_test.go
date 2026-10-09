@@ -143,6 +143,14 @@ func (f *fakeSettings) SetDuplicates(policy string) (settings.Settings, error) {
 	return f.current, nil
 }
 
+func (f *fakeSettings) SetIncludeSubfolders(on bool) (settings.Settings, error) {
+	if f.err != nil {
+		return f.current, f.err
+	}
+	f.current.IncludeSubfolders = on
+	return f.current, nil
+}
+
 func (f *fakeSettings) SetCriterion(key string, enabled bool) (settings.Settings, error) {
 	if f.err != nil {
 		return f.current, f.err
@@ -1037,6 +1045,24 @@ func TestSetCriterion(t *testing.T) {
 
 	failing, _ := newTestApp(Deps{Settings: &fakeSettings{current: settings.Default(), err: settings.ErrLastCriterion}})
 	if got := last(failing.SetCriterion("byExtension", false)); got.Code != "LAST_CRITERION" {
+		t.Fatalf("aviso = %+v", got)
+	}
+}
+
+func TestSetIncludeSubfolders(t *testing.T) {
+	org := &fakeOrganizer{result: organizer.Result{MovedFiles: 1, CanUndo: true}}
+	a, _ := newTestApp(Deps{Organizer: org})
+	a.state.SourceFolderPath = "origem"
+
+	got := a.SetIncludeSubfolders(true)
+	a.Organize()
+
+	if !got.Settings.IncludeSubfolders || org.previewCalls() < 1 || !org.previewReqs[0].IncludeSubfolders || !org.got.IncludeSubfolders {
+		t.Fatalf("estado = %+v, prévia = %+v, organizar = %+v", got.Settings, org.previewReqs, org.got)
+	}
+
+	failing, _ := newTestApp(Deps{Settings: &fakeSettings{current: settings.Default(), err: settings.ErrNotSaved}})
+	if got := last(failing.SetIncludeSubfolders(true)); got.Code != "SETTINGS_NOT_SAVED" {
 		t.Fatalf("aviso = %+v", got)
 	}
 }
