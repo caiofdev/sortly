@@ -5,7 +5,7 @@ import OrganizerView from './views/OrganizerView';
 
 function App() {
   const { state, ready, actions } = useViewState();
-  const { language, criteria } = state.settings;
+  const { language, theme, criteria } = state.settings;
   const notifications = useMemo(
     () => toNotificationItems(state.notifications, language),
     [state.notifications, language]
@@ -16,6 +16,11 @@ function App() {
     document.documentElement.lang = language;
   }, [language]);
 
+  // No <html>, para os tokens do tema valerem também fora do #root (ADR 0006, #76).
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+  }, [theme]);
+
   if (!ready) {
     return null;
   }
@@ -23,6 +28,7 @@ function App() {
   return (
     <OrganizerView
       language={language}
+      theme={theme}
       criteria={criteria}
       sourceFolderPath={state.sourceFolderPath}
       destinationFolderPath={state.destinationFolderPath}
@@ -34,6 +40,7 @@ function App() {
       onClearNotifications={actions.clearNotifications}
       onMarkNotificationsRead={actions.markNotificationsRead}
       onLanguageChange={actions.setLanguage}
+      onThemeChange={actions.setTheme}
       onCriterionChange={actions.setCriterion}
       onSelectSourceFolder={actions.selectSource}
       onSelectDestinationFolder={actions.selectDestination}

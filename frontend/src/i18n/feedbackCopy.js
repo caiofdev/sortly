@@ -79,6 +79,7 @@ const feedbackCopy = {
       LAST_CRITERION: 'Mantenha pelo menos um critério marcado.',
       UNKNOWN_CRITERION: 'Critério de organização desconhecido.',
       INVALID_LANGUAGE: 'Idioma não suportado.',
+      INVALID_THEME: 'Tema não suportado.',
       SETTINGS_NOT_SAVED: 'Não foi possível salvar a preferência.'
     }
   },
@@ -132,6 +133,7 @@ const feedbackCopy = {
       LAST_CRITERION: 'Keep at least one criterion selected.',
       UNKNOWN_CRITERION: 'Unknown organization criterion.',
       INVALID_LANGUAGE: 'Unsupported language.',
+      INVALID_THEME: 'Unsupported theme.',
       SETTINGS_NOT_SAVED: 'Could not save the preference.'
     }
   }

@@ -17,6 +17,7 @@ const HEADINGS = {
 
 function OrganizerView({
   language,
+  theme,
   criteria,
   sourceFolderPath,
   destinationFolderPath,
@@ -28,6 +29,7 @@ function OrganizerView({
   onClearNotifications,
   onMarkNotificationsRead,
   onLanguageChange,
+  onThemeChange,
   onCriterionChange,
   onSelectSourceFolder,
   onSelectDestinationFolder,
@@ -97,7 +99,13 @@ function OrganizerView({
           )}
 
           {page === 'settings' && (
-            <SettingsPage labels={text} criteria={criteria} onCriterionChange={onCriterionChange} />
+            <SettingsPage
+              labels={text}
+              theme={theme}
+              criteria={criteria}
+              onThemeChange={onThemeChange}
+              onCriterionChange={onCriterionChange}
+            />
           )}
         </div>
       </main>

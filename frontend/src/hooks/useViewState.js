@@ -12,7 +12,7 @@ export const INITIAL_STATE = Object.freeze({
   hasUndo: false,
   busy: '',
   unread: false,
-  settings: { language: DEFAULT_LANGUAGE, criteria: [] },
+  settings: { language: DEFAULT_LANGUAGE, theme: 'dark', criteria: [] },
   notifications: []
 });
 
@@ -69,6 +69,7 @@ function useViewState() {
       clearNotifications: () => run(Backend.ClearNotifications),
       markNotificationsRead: () => run(Backend.MarkNotificationsRead),
       setLanguage: (language) => run(() => Backend.SetLanguage(language)),
+      setTheme: (theme) => run(() => Backend.SetTheme(theme)),
       setCriterion: (key, enabled) => run(() => Backend.SetCriterion(key, enabled))
     }),
     [run]
