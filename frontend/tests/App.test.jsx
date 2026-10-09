@@ -120,7 +120,7 @@ describe('App', () => {
   it('mostra a prévia da origem que vem do backend', async () => {
     mockBackend(
       viewState({
-        sourceFolderPath: 'C:\origem',
+        sourceFolderPath: 'C:\\origem',
         preview: {
           status: 'ready',
           totalFiles: 3,
