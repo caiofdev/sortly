@@ -14,6 +14,7 @@ Mantido por Caio Reis & Claude.
 - Botões "Organizar" e "Desfazer" com texto; caminhos longos de pasta aparecem inteiros, quebrando a linha.
 - Avisos no canto da tela ao organizar, ao desfazer e quando algo dá errado. Os de sucesso somem sozinhos em 4 segundos; os de erro ficam até você fechar.
 - O sino mostra um ponto amarelo quando há aviso novo. O painel tem "Marcar como lidas" e fecha com Esc.
+- Tema claro nas Configurações, com a barra lateral branca. O tema escolhido fica salvo, e a janela já abre na cor dele.
 
 ### Corrigido
 - Ao mover para outro disco ou pendrive, o arquivo original só é apagado depois que a cópia está gravada de fato. Uma queda de energia ou um pendrive removido logo depois não perde mais o arquivo.

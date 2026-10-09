@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"path/filepath"
 
+	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
 	"github.com/caiofdev/sortly/backend/metadata"
@@ -32,6 +33,7 @@ func NewDefault(log *slog.Logger) (*App, error) {
 		Settings:  settings.New(settingsPath, log),
 		PickDir:   nativeDirectoryPicker,
 		Emit:      emitState,
+		Paint:     paintBackground,
 		Logger:    log,
 	}), nil
 }
@@ -43,4 +45,8 @@ func nativeDirectoryPicker(ctx context.Context, title string) (string, error) {
 
 func emitState(ctx context.Context, state ViewState) {
 	runtime.EventsEmit(ctx, StateEvent, state)
+}
+
+func paintBackground(ctx context.Context, c options.RGBA) {
+	runtime.WindowSetBackgroundColour(ctx, c.R, c.G, c.B, c.A)
 }

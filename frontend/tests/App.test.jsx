@@ -21,7 +21,7 @@ const viewState = (overrides = {}) => ({
   hasUndo: false,
   busy: '',
   unread: false,
-  settings: { language: 'pt-BR', criteria },
+  settings: { language: 'pt-BR', theme: 'dark', criteria },
   notifications: [],
   ...overrides
 });
@@ -49,6 +49,22 @@ describe('App', () => {
     expect(await screen.findByRole('heading', { name: 'Organizar pasta' })).toBeInTheDocument();
     expect(screen.getByText('Arraste e solte uma pasta ou arquivo aqui')).toBeInTheDocument();
     expect(document.documentElement.lang).toBe('pt-BR');
+    expect(document.documentElement.dataset.theme).toBe('dark');
+  });
+
+  it('o tema das preferências vai para o <html>, e Configurações o troca', async () => {
+    const light = viewState({ settings: { language: 'pt-BR', theme: 'light', criteria } });
+    const dark = viewState({ settings: { language: 'pt-BR', theme: 'dark', criteria } });
+    mockBackend(light, { SetTheme: vi.fn().mockResolvedValue(dark) });
+    render(<App />);
+
+    await screen.findByRole('heading', { name: 'Organizar pasta' });
+    expect(document.documentElement.dataset.theme).toBe('light');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Configurações' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Escuro' }));
+    await vi.waitFor(() => expect(document.documentElement.dataset.theme).toBe('dark'));
+    expect(window.go.app.App.SetTheme).toHaveBeenCalledWith('dark');
   });
 
   it('usa o idioma das preferências, sem passar pelo português', async () => {

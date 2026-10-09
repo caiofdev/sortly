@@ -213,3 +213,24 @@ button {
   outline: none;
   box-shadow: var(--shadow-focus);
 }
+
+/* O components.css fixa as cores da sidebar para o fundo preto; no tema claro
+   ela é branca e usa as tintas do tema (#76). */
+[data-theme='light'] .st-sidebar,
+[data-theme='light'] .st-sidebar__brand span {
+  color: var(--ink-100);
+}
+
+[data-theme='light'] .st-nav {
+  color: var(--ink-200);
+}
+
+[data-theme='light'] .st-nav:hover,
+[data-theme='light'] .st-nav[aria-current='page'] {
+  background: var(--bg-200);
+  color: var(--ink-100);
+}
+
+[data-theme='light'] .st-nav:focus-visible {
+  box-shadow: var(--shadow-focus);
+}

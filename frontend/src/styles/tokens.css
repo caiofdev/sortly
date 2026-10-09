@@ -36,6 +36,10 @@
   --bg-300: #e9e9e2;
   --line-100: #e2e2da;
   --line-200: #8f8f88;
+  /* O design system deixa a sidebar preta nos dois temas; no claro ela segue o
+     branco das superfícies, a pedido do Caio (#76). */
+  --sidebar-bg: #ffffff;
+  --sidebar-line: #e2e2da;
   --ink-100: #1e1e1e;
   --ink-200: #5e5e5a;
   --ink-300: #6b6b66;

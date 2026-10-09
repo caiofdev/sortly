@@ -7,6 +7,8 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 	"github.com/wailsapp/wails/v2/pkg/options/linux"
 	"github.com/wailsapp/wails/v2/pkg/options/windows"
+
+	"github.com/caiofdev/sortly/backend/settings"
 )
 
 const (
@@ -24,14 +26,25 @@ const (
 	DropTargetValue    = "drop"
 )
 
-// Preto, o fundo do design system (bg-000), enquanto a interface carrega (#74).
-var backgroundColour = options.RGBA{R: 0, G: 0, B: 0, A: 255}
+// O bg-000 de cada tema: a janela abre e troca de tema sem piscar outra cor
+// enquanto a interface carrega (#74, #76).
+var themeBackgrounds = map[string]options.RGBA{
+	"dark":  {R: 0, G: 0, B: 0, A: 255},
+	"light": {R: 0xf7, G: 0xf7, B: 0xf2, A: 255},
+}
+
+func backgroundFor(theme string) options.RGBA {
+	if bg, ok := themeBackgrounds[theme]; ok {
+		return bg
+	}
+	return themeBackgrounds[settings.DefaultTheme]
+}
 
 // A janela abre maximizada e sem menu. icon é o PNG do app (build/appicon.png),
 // usado só no Linux: no Windows e no macOS o ícone vem do executável e do
 // pacote .app (#13).
 func Options(a *App, assets fs.FS, icon []byte) *options.App {
-	bg := backgroundColour
+	bg := backgroundFor(a.deps.Settings.Get().Theme)
 
 	return &options.App{
 		Title:            appTitle,

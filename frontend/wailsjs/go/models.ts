@@ -145,6 +145,7 @@ export namespace settings {
 	}
 	export class View {
 	    language: string;
+	    theme: string;
 	    criteria: Criterion[];
 	
 	    static createFrom(source: any = {}) {
@@ -154,6 +155,7 @@ export namespace settings {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.language = source["language"];
+	        this.theme = source["theme"];
 	        this.criteria = this.convertValues(source["criteria"], Criterion);
 	    }
 	

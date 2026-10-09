@@ -13,6 +13,7 @@ vi.mock('../../wailsjs/go/app/App', () => ({
   Undo: vi.fn(),
   ClearNotifications: vi.fn(),
   MarkNotificationsRead: vi.fn(),
+  SetTheme: vi.fn(),
   SetLanguage: vi.fn(),
   SetCriterion: vi.fn()
 }));
@@ -93,6 +94,7 @@ describe('useViewState', () => {
     ['clearNotifications', 'ClearNotifications', [], { notifications: [] }],
     ['markNotificationsRead', 'MarkNotificationsRead', [], { unread: false }],
     ['setLanguage', 'SetLanguage', ['en'], { settings: { language: 'en', criteria: [] } }],
+    ['setTheme', 'SetTheme', ['light'], { settings: { theme: 'light', criteria: [] } }],
     ['setCriterion', 'SetCriterion', ['byDate', true], { busy: '' }]
   ])('%s chama %s e mostra o estado devolvido', async (action, binding, args, expected) => {
     const { result } = await setup();

@@ -9,6 +9,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/wailsapp/wails/v2/pkg/options"
+
 	"github.com/caiofdev/sortly/backend/apperr"
 	"github.com/caiofdev/sortly/backend/organizer"
 	"github.com/caiofdev/sortly/backend/settings"
@@ -37,6 +39,7 @@ type SettingsStore interface {
 	Get() settings.Settings
 	SetLanguage(lang string) (settings.Settings, error)
 	SetCriterion(key string, enabled bool) (settings.Settings, error)
+	SetTheme(theme string) (settings.Settings, error)
 }
 
 // Devolve "" quando o usuário cancela o seletor (#10).
@@ -44,7 +47,9 @@ type DirectoryPicker func(ctx context.Context, title string) (string, error)
 
 type Emitter func(ctx context.Context, state ViewState)
 
-// Logger, Emit e Now são opcionais (#10).
+type BackgroundPainter func(ctx context.Context, colour options.RGBA)
+
+// Logger, Emit, Paint e Now são opcionais (#10).
 type Deps struct {
 	Organizer Organizer
 	Undoer    Undoer
@@ -52,6 +57,7 @@ type Deps struct {
 	Settings  SettingsStore
 	PickDir   DirectoryPicker
 	Emit      Emitter
+	Paint     BackgroundPainter
 	Now       func() time.Time
 	Logger    *slog.Logger
 }
@@ -244,6 +250,24 @@ func (a *App) SetLanguage(lang string) ViewState {
 func (a *App) SetCriterion(key string, enabled bool) ViewState {
 	_, err := a.deps.Settings.SetCriterion(key, enabled)
 	return a.afterSettings(err)
+}
+
+func (a *App) SetTheme(theme string) ViewState {
+	st, err := a.deps.Settings.SetTheme(theme)
+	if err == nil {
+		a.paint(st.Theme)
+	}
+	return a.afterSettings(err)
+}
+
+// Sem o runtime do Wails (antes do startup), não há janela para pintar (#76).
+func (a *App) paint(theme string) {
+	a.mu.Lock()
+	ctx, started := a.ctx, a.started
+	a.mu.Unlock()
+	if started && a.deps.Paint != nil {
+		a.deps.Paint(ctx, backgroundFor(theme))
+	}
 }
 
 func (a *App) afterSettings(err error) ViewState {

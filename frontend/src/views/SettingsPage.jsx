@@ -1,12 +1,31 @@
+import SegmentedControl from '../components/SegmentedControl';
 import Switch from '../components/Switch';
 
 // Rótulo e dica de cada critério: byDuration → settingsByDuration e
 // settingsHintByDuration. A ordem e a trava do último ligado vêm do backend (#44).
 const suffix = (key) => `${key[0].toUpperCase()}${key.slice(1)}`;
 
-function SettingsPage({ labels, criteria, onCriterionChange }) {
+function SettingsPage({ labels, theme, criteria, onThemeChange, onCriterionChange }) {
+  const themes = [
+    { value: 'dark', label: labels.themeDark },
+    { value: 'light', label: labels.themeLight }
+  ];
+
   return (
-    <section className="st-card st-settings" aria-label={labels.settingsCriteriaTitle}>
+    <div className="st-card st-settings">
+      <div className="st-settings__row">
+        <div>
+          <p className="st-settings__title">{labels.settingsTheme}</p>
+          <p className="st-settings__hint">{labels.settingsHintTheme}</p>
+        </div>
+        <SegmentedControl
+          label={labels.settingsTheme}
+          options={themes}
+          value={theme}
+          onChange={onThemeChange}
+        />
+      </div>
+
       {criteria.map((item) => {
         const title = labels[`settings${suffix(item.key)}`];
         return (
@@ -28,7 +47,7 @@ function SettingsPage({ labels, criteria, onCriterionChange }) {
           </div>
         );
       })}
-    </section>
+    </div>
   );
 }
 

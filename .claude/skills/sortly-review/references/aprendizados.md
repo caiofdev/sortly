@@ -38,4 +38,6 @@ Regras que já falharam neste projeto e que a revisão deve conferir sempre. Cad
 
 - Elemento fixo por cima da tela (toast, painel) que só some quando o usuário fecha não pode cobrir as ações principais: meça na janela padrão (980×700) e na mínima (820×600), com o máximo de itens empilhados. — #75 (2026-10-08)
 
+- Atributo do <html> que muda a aparência (data-theme) vai em useLayoutEffect: com useEffect, a primeira tela pinta com os tokens errados por um quadro. — #76 (2026-10-09)
+
 <!-- Acrescente aqui: - Regra generalizada. — PR/issue (AAAA-MM-DD) -->

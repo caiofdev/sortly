@@ -15,6 +15,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/wailsapp/wails/v2/pkg/options"
+
 	"github.com/caiofdev/sortly/backend/apperr"
 	"github.com/caiofdev/sortly/backend/organizer"
 	"github.com/caiofdev/sortly/backend/organizer/criteria"
@@ -68,6 +70,14 @@ func (f *fakeSettings) SetLanguage(lang string) (settings.Settings, error) {
 		return f.current, f.err
 	}
 	f.current.Language = lang
+	return f.current, nil
+}
+
+func (f *fakeSettings) SetTheme(theme string) (settings.Settings, error) {
+	if f.err != nil {
+		return f.current, f.err
+	}
+	f.current.Theme = theme
 	return f.current, nil
 }
 
@@ -490,6 +500,44 @@ func TestSetCriterion(t *testing.T) {
 	failing, _ := newTestApp(Deps{Settings: &fakeSettings{current: settings.Default(), err: settings.ErrLastCriterion}})
 	if got := last(failing.SetCriterion("byExtension", false)); got.Code != "LAST_CRITERION" {
 		t.Fatalf("aviso = %+v", got)
+	}
+}
+
+func TestSetTheme(t *testing.T) {
+	light := options.RGBA{R: 0xf7, G: 0xf7, B: 0xf2, A: 255}
+	tests := []struct {
+		name    string
+		started bool
+		err     error
+		want    []options.RGBA
+	}{
+		{"depois do startup, a janela troca de cor", true, nil, []options.RGBA{light}},
+		{"antes do startup, não há janela", false, nil, nil},
+		{"tema recusado não pinta", true, settings.ErrInvalidTheme, nil},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var painted []options.RGBA
+			a, _ := newTestApp(Deps{
+				Settings: &fakeSettings{current: settings.Default(), err: tt.err},
+				Paint:    func(_ context.Context, c options.RGBA) { painted = append(painted, c) },
+			})
+			if tt.started {
+				a.startup(context.Background())
+			}
+
+			got := a.SetTheme("light")
+
+			if !reflect.DeepEqual(painted, tt.want) {
+				t.Fatalf("pintou %v, want %v", painted, tt.want)
+			}
+			if tt.err == nil && got.Settings.Theme != "light" {
+				t.Fatalf("tema = %q", got.Settings.Theme)
+			}
+			if tt.err != nil && last(got).Code != "INVALID_THEME" {
+				t.Fatalf("aviso = %+v", last(got))
+			}
+		})
 	}
 }
 

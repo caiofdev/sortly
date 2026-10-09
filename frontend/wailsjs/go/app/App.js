@@ -38,6 +38,10 @@ export function SetLanguage(arg1) {
   return window['go']['app']['App']['SetLanguage'](arg1);
 }
 
+export function SetTheme(arg1) {
+  return window['go']['app']['App']['SetTheme'](arg1);
+}
+
 export function Undo() {
   return window['go']['app']['App']['Undo']();
 }
