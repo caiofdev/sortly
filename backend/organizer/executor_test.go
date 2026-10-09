@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -199,5 +200,39 @@ func assertFile(t *testing.T, path, want string) {
 	got, err := os.ReadFile(path)
 	if err != nil || string(got) != want {
 		t.Fatalf("%s = (%q, %v), want %q", path, got, err, want)
+	}
+}
+
+func TestApplyReportingProgress(t *testing.T) {
+	src, dst := t.TempDir(), t.TempDir()
+	writeAt(t, filepath.Join(src, "a.pdf"), "a", testTime)
+	writeAt(t, filepath.Join(src, "b.txt"), "b", testTime)
+	plan := Plan{Destination: dst, Moves: []Move{
+		{filepath.Join(src, "a.pdf"), filepath.Join(dst, "pdf", "date-2026-03-05", "a.pdf")},
+		{filepath.Join(src, "b.txt"), filepath.Join(dst, "b.txt")},
+	}}
+	var got []Progress
+
+	if _, err := NewExecutor(nil).ApplyReporting(context.Background(), plan, func(p Progress) { got = append(got, p) }); err != nil {
+		t.Fatal(err)
+	}
+
+	want := []Progress{
+		{Done: 0, Total: 2, File: "a.pdf", Folder: filepath.Join("pdf", "date-2026-03-05")},
+		{Done: 1, Total: 2, File: "b.txt", Folder: ""},
+		{Done: 2, Total: 2},
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("progresso =\n%+v\nwant\n%+v", got, want)
+	}
+}
+
+func TestApplyReportingEmptyPlan(t *testing.T) {
+	var got []Progress
+	if _, err := NewExecutor(nil).ApplyReporting(context.Background(), Plan{}, func(p Progress) { got = append(got, p) }); err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(got, []Progress{{}}) {
+		t.Fatalf("sem movimentos, só o fim (0 de 0): %+v", got)
 	}
 }

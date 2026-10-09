@@ -33,6 +33,9 @@ type fakeOrganizer struct {
 	got    organizer.Request
 	calls  int
 	during func()
+	// Roda no lugar do executor: recebe o contexto (para Cancelar) e o callback de
+	// progresso (#78).
+	run func(ctx context.Context, report organizer.Reporter)
 
 	preview     func(ctx context.Context) (organizer.Preview, error)
 	previewMu   sync.Mutex
@@ -55,11 +58,14 @@ func (f *fakeOrganizer) previewCalls() int {
 	return len(f.previewReqs)
 }
 
-func (f *fakeOrganizer) Organize(_ context.Context, req organizer.Request) (organizer.Result, error) {
+func (f *fakeOrganizer) OrganizeReporting(ctx context.Context, req organizer.Request, report organizer.Reporter) (organizer.Result, error) {
 	f.got = req
 	f.calls++
 	if f.during != nil {
 		f.during()
+	}
+	if f.run != nil {
+		f.run(ctx, report)
 	}
 	return f.result, f.err
 }
@@ -351,6 +357,94 @@ func TestOrganizeEmitsBusyWhileRunning(t *testing.T) {
 	}
 }
 
+func TestOrganizeReportsProgressThrottled(t *testing.T) {
+	clock := testNow
+	var progress []organizer.Progress
+	org := &fakeOrganizer{result: organizer.Result{MovedFiles: 3, CanUndo: true}}
+	org.run = func(_ context.Context, report organizer.Reporter) {
+		steps := []struct {
+			after time.Duration
+			p     organizer.Progress
+		}{
+			{0, organizer.Progress{Done: 0, Total: 3, File: "a.pdf", Folder: "pdf"}},
+			{49 * time.Millisecond, organizer.Progress{Done: 1, Total: 3, File: "b.pdf", Folder: "pdf"}},
+			{50 * time.Millisecond, organizer.Progress{Done: 2, Total: 3, File: "c.txt", Folder: "txt"}},
+			{time.Millisecond, organizer.Progress{Done: 3, Total: 3}},
+		}
+		for _, s := range steps {
+			clock = clock.Add(s.after)
+			report(s.p)
+		}
+	}
+	a, _ := newTestApp(Deps{Organizer: org, Emit: func(_ context.Context, s ViewState) {
+		if s.Busy == BusyOrganize && s.Progress.Total > 0 {
+			progress = append(progress, s.Progress)
+		}
+	}})
+	a.deps.Now = func() time.Time { return clock }
+	a.startup(context.Background())
+	a.state.SourceFolderPath = `C:\origem`
+
+	got := a.Organize()
+
+	// 0 sai sempre; 1 chega 49 ms depois e é pulado; 2 chega 99 ms depois do
+	// último emitido; 3 é o fim e sai mesmo 1 ms depois.
+	var done []int
+	for _, p := range progress {
+		done = append(done, p.Done)
+	}
+	if !reflect.DeepEqual(done, []int{0, 2, 3}) || progress[0].File != "a.pdf" {
+		t.Fatalf("progresso emitido = %+v", progress)
+	}
+	if got.Progress != (organizer.Progress{}) {
+		t.Fatalf("depois de organizar, o progresso zera: %+v", got.Progress)
+	}
+}
+
+func TestCancel(t *testing.T) {
+	tests := []struct {
+		name     string
+		result   organizer.Result
+		err      error
+		wantCode string
+		wantKind string
+		wantUndo bool
+	}{
+		{"cancelar vira aviso com o que foi movido", organizer.Result{MovedFiles: 1, CanUndo: true, Canceled: true},
+			context.Canceled, CodeOrganizeCanceled, KindInfo, true},
+		{"registro não salvo vale mais que cancelar", organizer.Result{MovedFiles: 1, Canceled: true},
+			errors.Join(context.Canceled, organizer.ErrRecordNotSaved), "RECORD_NOT_SAVED", KindError, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var a *App
+			org := &fakeOrganizer{result: tt.result, err: tt.err}
+			org.run = func(ctx context.Context, _ organizer.Reporter) {
+				a.Cancel()
+				if ctx.Err() == nil {
+					t.Error("Cancel deveria cancelar o contexto da organização")
+				}
+			}
+			a, _ = newTestApp(Deps{Organizer: org})
+			a.state.SourceFolderPath = `C:\origem`
+
+			got := a.Organize()
+
+			n := last(got)
+			if n.Code != tt.wantCode || n.Kind != tt.wantKind || got.HasUndo != tt.wantUndo {
+				t.Fatalf("estado = %+v, aviso = %+v", got, n)
+			}
+		})
+	}
+}
+
+func TestCancelWithoutOrganizeDoesNothing(t *testing.T) {
+	a, _ := newTestApp(Deps{})
+	if got := a.Cancel(); got.Busy != "" || len(got.Notifications) != 0 {
+		t.Fatalf("estado = %+v", got)
+	}
+}
+
 func TestActionInProgressBlocksAnother(t *testing.T) {
 	org := &fakeOrganizer{}
 	a, _ := newTestApp(Deps{Organizer: org, Undoer: fakeUndoer{}})
@@ -455,7 +549,7 @@ func TestNotificationKind(t *testing.T) {
 }
 
 func TestPreviewTriggers(t *testing.T) {
-	dir := func(context.Context, string) (string, error) { return `C:origem`, nil }
+	dir := func(context.Context, string) (string, error) { return `C:\origem`, nil }
 	tests := []struct {
 		name   string
 		action func(a *App)
@@ -477,7 +571,7 @@ func TestPreviewTriggers(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			org := &fakeOrganizer{}
 			a, _ := newTestApp(Deps{Organizer: org, Undoer: fakeUndoer{}, PickDir: dir})
-			a.state.SourceFolderPath = `C:origem`
+			a.state.SourceFolderPath = `C:\origem`
 
 			tt.action(a)
 
@@ -492,7 +586,7 @@ func TestPreviewTriggers(t *testing.T) {
 func TestPreviewRunsInBackground(t *testing.T) {
 	org := &fakeOrganizer{}
 	a := New(Deps{Organizer: org, Records: fakeRecords{}, Settings: &fakeSettings{current: settings.Default()},
-		PickDir: func(context.Context, string) (string, error) { return `C:origem`, nil }})
+		PickDir: func(context.Context, string) (string, error) { return `C:\origem`, nil }})
 
 	a.SelectSource()
 
@@ -551,7 +645,7 @@ func TestPreviewOnlyNewestCounts(t *testing.T) {
 		return organizer.Preview{TotalFiles: calls, Folders: []organizer.FolderCount{}}, nil
 	}}
 	a, _ := newTestApp(Deps{Organizer: org, Background: func(task func()) { queued = append(queued, task) }})
-	a.state.SourceFolderPath = `C:origem`
+	a.state.SourceFolderPath = `C:\origem`
 
 	a.SetCriterion("byDate", true)
 	a.SetCriterion("bySize", true)
@@ -570,7 +664,7 @@ func TestPreviewStaleResultIsIgnored(t *testing.T) {
 		return organizer.Preview{TotalFiles: 99, Folders: []organizer.FolderCount{}}, nil
 	}}
 	a, _ := newTestApp(Deps{Organizer: org, Background: func(task func()) { queued = append(queued, task) }})
-	a.state.SourceFolderPath = `C:origem`
+	a.state.SourceFolderPath = `C:\origem`
 
 	a.SetCriterion("byDate", true)
 	a.Organize()
@@ -586,7 +680,7 @@ func TestPreviewError(t *testing.T) {
 		return organizer.Preview{}, fmt.Errorf("%w: sem permissão", organizer.ErrInvalidSource)
 	}}
 	a, _ := newTestApp(Deps{Organizer: org})
-	a.state.SourceFolderPath = `C:origem`
+	a.state.SourceFolderPath = `C:\origem`
 
 	if loading := a.SetCriterion("byDate", true); loading.Preview.Status != PreviewLoading {
 		t.Fatalf("o binding devolve o estado contando: %+v", loading.Preview)
@@ -602,7 +696,7 @@ func TestPreviewError(t *testing.T) {
 func TestPreviewPanicBecomesNotification(t *testing.T) {
 	org := &fakeOrganizer{preview: func(context.Context) (organizer.Preview, error) { panic("mp4 malformado") }}
 	a, logs := newTestApp(Deps{Organizer: org})
-	a.state.SourceFolderPath = `C:origem`
+	a.state.SourceFolderPath = `C:\origem`
 
 	a.SetCriterion("byDate", true)
 
@@ -617,7 +711,7 @@ func TestPreviewPanicBecomesNotification(t *testing.T) {
 
 func TestPreviewStartsAfterRecovery(t *testing.T) {
 	org := &fakeOrganizer{}
-	op := &store.Operation{SourceFolderPath: `C:origem`, MovedItems: []store.MovedItem{{From: "a", To: "b"}}}
+	op := &store.Operation{SourceFolderPath: `C:\origem`, MovedItems: []store.MovedItem{{From: "a", To: "b"}}}
 	a, _ := newTestApp(Deps{Organizer: org, Records: fakeRecords{op: op}})
 
 	a.GetState()
@@ -630,7 +724,7 @@ func TestPreviewStartsAfterRecovery(t *testing.T) {
 func TestOrganizeHidesPreviewWhileRunning(t *testing.T) {
 	org := &fakeOrganizer{result: organizer.Result{CanUndo: true}}
 	a, _ := newTestApp(Deps{Organizer: org})
-	a.state.SourceFolderPath = `C:origem`
+	a.state.SourceFolderPath = `C:\origem`
 	org.during = func() {
 		if p := a.GetState().Preview; p.Status != PreviewNone {
 			t.Errorf("durante a organização, a prévia deveria sumir: %+v", p)

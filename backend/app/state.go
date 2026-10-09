@@ -24,11 +24,12 @@ const (
 
 // Códigos que não são erros; os de erro vêm de apperr (ADR 0004, #45).
 const (
-	CodeRecovered      = "RECOVERED_LAST_ORGANIZATION"
-	CodeSourceDropped  = "SOURCE_DROPPED"
-	CodeOrganizeDone   = "ORGANIZE_DONE"
-	CodeUndoDone       = "UNDO_DONE"
-	CodeSourceRequired = "SOURCE_REQUIRED"
+	CodeRecovered        = "RECOVERED_LAST_ORGANIZATION"
+	CodeSourceDropped    = "SOURCE_DROPPED"
+	CodeOrganizeDone     = "ORGANIZE_DONE"
+	CodeOrganizeCanceled = "ORGANIZE_CANCELED"
+	CodeUndoDone         = "UNDO_DONE"
+	CodeSourceRequired   = "SOURCE_REQUIRED"
 )
 
 // Num erro sem tradução própria, a interface usa o texto padrão da ação (#45).
@@ -83,15 +84,16 @@ type Notification struct {
 // emitido e devolvido, então duas ações quase simultâneas podem entregá-lo fora
 // de ordem; a interface descarta o que tiver versão menor que a que já mostra (#55).
 type ViewState struct {
-	Version               uint64         `json:"version"`
-	SourceFolderPath      string         `json:"sourceFolderPath"`
-	DestinationFolderPath string         `json:"destinationFolderPath"`
-	HasUndo               bool           `json:"hasUndo"`
-	Busy                  string         `json:"busy"`
-	Unread                bool           `json:"unread"`
-	Preview               PreviewState   `json:"preview"`
-	Settings              settings.View  `json:"settings"`
-	Notifications         []Notification `json:"notifications"`
+	Version               uint64             `json:"version"`
+	SourceFolderPath      string             `json:"sourceFolderPath"`
+	DestinationFolderPath string             `json:"destinationFolderPath"`
+	HasUndo               bool               `json:"hasUndo"`
+	Busy                  string             `json:"busy"`
+	Unread                bool               `json:"unread"`
+	Preview               PreviewState       `json:"preview"`
+	Progress              organizer.Progress `json:"progress"`
+	Settings              settings.View      `json:"settings"`
+	Notifications         []Notification     `json:"notifications"`
 }
 
 // A mais recente fica no topo; as que passam de MaxNotifications saem (#45).
