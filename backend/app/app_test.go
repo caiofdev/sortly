@@ -598,6 +598,23 @@ func TestPreviewError(t *testing.T) {
 	}
 }
 
+// Regressão (#77): um panic ao ler um arquivo na prévia derrubava o app inteiro.
+func TestPreviewPanicBecomesNotification(t *testing.T) {
+	org := &fakeOrganizer{preview: func(context.Context) (organizer.Preview, error) { panic("mp4 malformado") }}
+	a, logs := newTestApp(Deps{Organizer: org})
+	a.state.SourceFolderPath = `C:origem`
+
+	a.SetCriterion("byDate", true)
+
+	got := a.GetState()
+	if got.Preview.Status != PreviewNone || last(got).Code != apperr.CodeUnexpected || last(got).Action != ActionPreview {
+		t.Fatalf("estado = %+v, aviso = %+v", got.Preview, last(got))
+	}
+	if !strings.Contains(logs.String(), "mp4 malformado") {
+		t.Fatalf("o panic deveria ir para o log: %s", logs.String())
+	}
+}
+
 func TestPreviewStartsAfterRecovery(t *testing.T) {
 	org := &fakeOrganizer{}
 	op := &store.Operation{SourceFolderPath: `C:origem`, MovedItems: []store.MovedItem{{From: "a", To: "b"}}}

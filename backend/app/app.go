@@ -6,7 +6,9 @@ package app
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
+	"runtime/debug"
 	"sync"
 	"time"
 
@@ -377,9 +379,21 @@ func (a *App) startPreview(s *ViewState) {
 		Options:               a.deps.Settings.Get().Options,
 	}
 	a.pending = append(a.pending, func() {
-		p, err := a.deps.Organizer.Preview(ctx, req)
+		p, err := a.runPreview(ctx, req)
 		a.update(func(s *ViewState) { a.finishPreview(s, seq, p, err) })
 	})
+}
+
+// A prévia lê arquivos do usuário (mp4, pdf, docx) numa goroutine própria, onde
+// um panic encerraria o app: vira um erro inesperado e vai para o log (#77).
+func (a *App) runPreview(ctx context.Context, req organizer.Request) (p organizer.Preview, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			a.log.Error("panic na prévia", "origem", req.SourceFolderPath, "panic", r, "stack", string(debug.Stack()))
+			err = fmt.Errorf("app: prévia: %v", r)
+		}
+	}()
+	return a.deps.Organizer.Preview(ctx, req)
 }
 
 func (a *App) stopPreview(s *ViewState) {
