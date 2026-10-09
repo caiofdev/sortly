@@ -283,6 +283,28 @@ try {
   $tree = Tree $typ
   Check 'WIN_CRIT_TYPE' ($typed -and $tree -contains 'images\3x2.png' -and $tree -contains 'documents\nota.txt' -and $tree -contains 'videos\video-only-59s.mp4') 'images, documents, videos e LEIAME em other'
 
+  # --- 6d) Duplicados: Ignorar deixa na origem; Substituir guarda o antigo e o desfazer devolve os dois (#82) ---
+  Stop-App
+  $dup = "$work\dup"; $dupDst = "$work\dup-destino"
+  New-Item -ItemType Directory -Force $dup, "$dupDst\txt" | Out-Null
+  Set-Content "$dup\nota.txt" 'nova'; Set-Content "$dupDst\txt\nota.txt" 'antiga'
+  Set-Record $dup $dupDst
+  Start-App
+  Set-Criteria @('Extensão do arquivo')
+  Click 'Configurações'; Click 'Ignorar'; Start-Sleep -Milliseconds 500; Click 'Organizar'
+  Click 'Organizar' -Last; Start-Sleep -Seconds 2
+  $skipped = ((Get-Content "$dup\nota.txt") -eq 'nova') -and ((Get-Content "$dupDst\txt\nota.txt") -eq 'antiga')
+  Check 'WIN_DUP_SKIP' $skipped 'Ignorar: nota.txt fica na origem e o existente continua no destino'
+  Click 'Configurações'; Click 'Substituir'; Start-Sleep -Milliseconds 500; Click 'Organizar'
+  Click 'Organizar' -Last; Start-Sleep -Seconds 2
+  $backupFile = @(Get-ChildItem "$home_\.sortly\substituidos" -Recurse -File -ErrorAction SilentlyContinue | Select-Object -First 1)
+  $replaced = ((Get-Content "$dupDst\txt\nota.txt") -eq 'nova') -and $backupFile.Count -eq 1 -and ((Get-Content $backupFile[0].FullName) -eq 'antiga')
+  Click 'Desfazer'
+  $restored = Wait-Until { (Test-Path "$dup\nota.txt") -and ((Get-Content "$dupDst\txt\nota.txt") -eq 'antiga') } 15
+  $cleaned = @(Get-ChildItem "$home_\.sortly\substituidos" -Recurse -File -ErrorAction SilentlyContinue).Count -eq 0
+  Check 'WIN_DUP_REPLACE' ($replaced -and $restored -and $cleaned) "substituído e guardado: $replaced; desfeito: $restored; backup apagado: $cleaned"
+  Click 'Configurações'; Click 'Renomear'; Start-Sleep -Milliseconds 500; Click 'Organizar'
+
   # O desfazer apagou o registro; o passo 7 reabre o app e precisa da origem do B8.
   Set-Criteria @('Resolução')
   Stop-App
