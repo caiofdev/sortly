@@ -42,4 +42,8 @@ Regras que já falharam neste projeto e que a revisão deve conferir sempre. Cad
 
 - Código que lê arquivos do usuário e passa a rodar numa goroutine própria (fora de um binding) precisa de recover: ali um panic encerra o app inteiro. — #77 (2026-10-09)
 
+- Desenho com posições fixas em px (FileFlow, 520px) precisa caber na janela mínima: confira 820×600 e reduza por inteiro (container query + zoom) em vez de deixar cortar. — #78 (2026-10-09)
+- Painel que substitui o botão focado (Organizar → Organizando) move o foco para a ação seguinte; senão o teclado cai no <body>. — #78 (2026-10-09)
+- No roteiro de paridade, espere pelo efeito no disco (arquivo saiu da pasta), não por um texto da tela, antes de agir no meio de uma operação. — #78 (2026-10-09)
+
 <!-- Acrescente aqui: - Regra generalizada. — PR/issue (AAAA-MM-DD) -->
