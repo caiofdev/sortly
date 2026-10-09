@@ -19,6 +19,7 @@ Mantido por Caio Reis & Claude.
 - Enquanto organiza, o app mostra os arquivos indo de uma pasta para a outra, quantos faltam e qual arquivo está sendo movido. Dá para cancelar no meio: o que já foi movido pode ser desfeito.
 - Ao terminar, uma tela de resumo mostra quantos arquivos foram organizados e em quais pastas, com os botões "Abrir pasta de destino", "Desfazer" e "Organizar outra pasta".
 - Página Histórico, com as últimas 50 organizações: quando, a pasta, quantos arquivos e se foi concluída, desfeita ou interrompida. O histórico fica salvo na pasta `.sortly` do usuário.
+- Opção "Incluir subpastas", desligada por padrão: organiza também os arquivos dentro das pastas da origem, nas mesmas pastas de critério. As subpastas que ficarem vazias são removidas, e o desfazer as recria.
 - Nas Configurações, dá para escolher o que fazer com arquivos duplicados no destino: renomear (como antes), ignorar (o arquivo fica na origem) ou substituir. O arquivo substituído fica guardado na pasta `.sortly` e volta ao lugar se você desfizer a organização.
 - Critério novo "Tipo", desligado por padrão: separa os arquivos em pastas por categoria (`images`, `documents`, `archives`, `installers`, `videos`, `audio` e `other`), antes dos outros critérios. A prévia e o resumo mostram os nomes traduzidos.
 

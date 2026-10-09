@@ -50,6 +50,8 @@ func TestGet(t *testing.T) {
 			Settings{Language: "en", Theme: DefaultTheme, Duplicates: "replace", Options: criteria.Options{ByDate: true}}},
 		{"política desconhecida", `{"language":"en","duplicates":"mesclar","organizationOptions":{"byDate":true}}`,
 			Settings{Language: "en", Theme: DefaultTheme, Duplicates: "rename", Options: criteria.Options{ByDate: true}}},
+		{"com subpastas", `{"language":"en","includeSubfolders":true,"organizationOptions":{"byDate":true}}`,
+			Settings{Language: "en", Theme: DefaultTheme, Duplicates: "rename", IncludeSubfolders: true, Options: criteria.Options{ByDate: true}}},
 		{"6 critérios", `{"language":"en","organizationOptions":{"byDuration":true,"byPages":true,"byResolution":true,"byDate":true,"bySize":true,"byExtension":true}}`,
 			Settings{Language: "en", Theme: DefaultTheme, Duplicates: "rename", Options: criteria.Options{ByDuration: true, ByPages: true, ByResolution: true, ByDate: true, BySize: true, ByExtension: true}}},
 	}
@@ -163,6 +165,20 @@ func TestSetDuplicates(t *testing.T) {
 	})
 }
 
+func TestSetIncludeSubfolders(t *testing.T) {
+	s := newService(t, "")
+	if Default().IncludeSubfolders {
+		t.Fatal("desligado por padrão, como na 1.0")
+	}
+	got, err := s.SetIncludeSubfolders(true)
+	if err != nil || !got.IncludeSubfolders {
+		t.Fatalf("SetIncludeSubfolders = (%+v, %v)", got, err)
+	}
+	if reread := New(s.path, nil).Get(); !reread.IncludeSubfolders {
+		t.Fatalf("relido do disco = %+v", reread)
+	}
+}
+
 func TestSetCriterion(t *testing.T) {
 	t.Run("liga um critério", func(t *testing.T) {
 		got, err := newService(t, "").SetCriterion("byDate", true)
@@ -235,7 +251,7 @@ func TestSavedFileFormat(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := `{"language":"pt-BR","theme":"dark","duplicates":"rename","organizationOptions":{"byDate":false,"byDuration":false,"byExtension":true,"byPages":false,"byResolution":false,"bySize":true,"byType":false}}`
+	want := `{"language":"pt-BR","theme":"dark","duplicates":"rename","includeSubfolders":false,"organizationOptions":{"byDate":false,"byDuration":false,"byExtension":true,"byPages":false,"byResolution":false,"bySize":true,"byType":false}}`
 	if string(data) != want {
 		t.Fatalf("arquivo =\n%s\nwant\n%s", data, want)
 	}

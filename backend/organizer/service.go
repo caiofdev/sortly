@@ -10,18 +10,23 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"path/filepath"
+	"sort"
 	"time"
 
+	"github.com/caiofdev/sortly/backend/fs/files"
+	"github.com/caiofdev/sortly/backend/fs/paths"
 	"github.com/caiofdev/sortly/backend/organizer/criteria"
 	"github.com/caiofdev/sortly/backend/store"
 )
 
-// Options e Duplicates vêm das preferências salvas (#44, #82).
+// Options, Duplicates e IncludeSubfolders vêm das preferências salvas (#44, #82, #83).
 type Request struct {
 	SourceFolderPath      string
 	DestinationFolderPath string
 	Options               criteria.Options
 	Duplicates            string
+	IncludeSubfolders     bool
 }
 
 // Sem mensagem pronta: o frontend monta o texto no idioma do usuário (ADR 0004, #8).
@@ -78,6 +83,8 @@ type Service struct {
 	store    RecordStore
 	backups  BackupStore
 	log      *slog.Logger
+	// Remove só pasta vazia; nunca apaga arquivo nem conteúdo (#9, #83).
+	removeDir func(string) bool
 }
 
 func NewService(d Deps) *Service {
@@ -90,11 +97,12 @@ func NewService(d Deps) *Service {
 		backups = noBackups{}
 	}
 	return &Service{
-		planner:  NewPlanner(criteria.New(d.Metadata, loc)),
-		executor: NewExecutor(d.Logger),
-		store:    d.Store,
-		backups:  backups,
-		log:      logger(d.Logger),
+		planner:   NewPlanner(criteria.New(d.Metadata, loc)),
+		executor:  NewExecutor(d.Logger),
+		store:     d.Store,
+		backups:   backups,
+		log:       logger(d.Logger),
+		removeDir: files.RemoveEmptyDir,
 	}
 }
 
@@ -110,7 +118,7 @@ func (s *Service) OrganizeReporting(ctx context.Context, req Request, report Rep
 	if err != nil {
 		return Result{}, err
 	}
-	plan, err := s.planner.Plan(ctx, src, dst, opts)
+	plan, err := s.plan(ctx, src, dst, opts, req.IncludeSubfolders)
 	if err != nil {
 		canceled := errors.Is(err, context.Canceled)
 		return Result{SourceFolderPath: src, DestinationFolderPath: dst, Canceled: canceled, Folders: []FolderCount{}}, err
@@ -118,6 +126,7 @@ func (s *Service) OrganizeReporting(ctx context.Context, req Request, report Rep
 
 	s.prepare(&plan, req.Duplicates)
 	out, applyErr := s.executor.ApplyReporting(ctx, plan, report)
+	s.removeEmptied(plan.Source, out.MovedItems)
 	saveErr := s.record(plan, out)
 
 	result := Result{
@@ -137,6 +146,42 @@ func (s *Service) OrganizeReporting(ctx context.Context, req Request, report Rep
 	result.SkippedDuplicates = out.SkippedDuplicates
 	result.ReplacedFiles = len(out.ReplacedItems)
 	return result, errors.Join(applyErr, saveErr)
+}
+
+func (s *Service) plan(ctx context.Context, src, dst string, opts criteria.Options, subfolders bool) (Plan, error) {
+	if subfolders {
+		return s.planner.PlanTree(ctx, src, dst, opts)
+	}
+	return s.planner.Plan(ctx, src, dst, opts)
+}
+
+// As subpastas da origem de onde saíram arquivos e que ficaram vazias são
+// removidas, da mais funda para a mais rasa, subindo até a origem (sem removê-la).
+// O desfazer as recria ao devolver os arquivos, porque o Executor cria a pasta
+// antes de mover. Uma pasta com qualquer outra coisa dentro fica (#83).
+func (s *Service) removeEmptied(src string, moved []store.MovedItem) {
+	seen := map[string]bool{}
+	var dirs []string
+	for _, item := range moved {
+		dir := filepath.Dir(item.From)
+		if !seen[paths.Key(dir)] {
+			seen[paths.Key(dir)] = true
+			dirs = append(dirs, dir)
+		}
+	}
+	sort.SliceStable(dirs, func(i, j int) bool { return len(dirs[i]) > len(dirs[j]) })
+	for _, dir := range dirs {
+		s.removeUpTo(dir, src)
+	}
+}
+
+// Para na primeira pasta que não pôde ser removida (tem outra coisa dentro) (#83).
+func (s *Service) removeUpTo(dir, src string) {
+	for d := dir; paths.IsInside(d, src) && !paths.Equal(d, src); d = filepath.Dir(d) {
+		if !s.removeDir(d) {
+			return
+		}
+	}
 }
 
 // Política desconhecida (preferência de uma versão futura) vale como renomear (#82).

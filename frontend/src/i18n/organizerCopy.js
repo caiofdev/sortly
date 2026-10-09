@@ -72,6 +72,9 @@ const organizerCopy = {
     duplicatesRename: 'Renomear',
     duplicatesSkip: 'Ignorar',
     duplicatesReplace: 'Substituir',
+    settingsSubfolders: 'Incluir subpastas',
+    settingsHintSubfolders:
+      'Também organiza os arquivos dentro das pastas da origem; as que ficarem vazias somem.',
     settingsLockedHint: 'Pelo menos um critério fica ligado.',
     settingsByType: 'Tipo',
     settingsHintByType: 'Por categoria, em pastas como images e documents.',
@@ -161,6 +164,9 @@ const organizerCopy = {
     duplicatesRename: 'Rename',
     duplicatesSkip: 'Skip',
     duplicatesReplace: 'Replace',
+    settingsSubfolders: 'Include subfolders',
+    settingsHintSubfolders:
+      'Also organizes the files inside the source’s folders; the ones left empty are removed.',
     settingsLockedHint: 'At least one criterion stays on.',
     settingsByType: 'Type',
     settingsHintByType: 'By category, in folders like images and documents.',

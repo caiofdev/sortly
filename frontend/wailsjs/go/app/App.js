@@ -46,6 +46,10 @@ export function SetDuplicates(arg1) {
   return window['go']['app']['App']['SetDuplicates'](arg1);
 }
 
+export function SetIncludeSubfolders(arg1) {
+  return window['go']['app']['App']['SetIncludeSubfolders'](arg1);
+}
+
 export function SetLanguage(arg1) {
   return window['go']['app']['App']['SetLanguage'](arg1);
 }

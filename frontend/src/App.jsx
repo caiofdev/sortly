@@ -5,7 +5,7 @@ import OrganizerView from './views/OrganizerView';
 
 function App() {
   const { state, ready, actions } = useViewState();
-  const { language, theme, duplicates, criteria } = state.settings;
+  const { language, theme, duplicates, includeSubfolders, criteria } = state.settings;
   const notifications = useMemo(
     () => toNotificationItems(state.notifications, language),
     [state.notifications, language]
@@ -32,6 +32,7 @@ function App() {
       language={language}
       theme={theme}
       duplicates={duplicates}
+      includeSubfolders={includeSubfolders}
       criteria={criteria}
       sourceFolderPath={state.sourceFolderPath}
       destinationFolderPath={state.destinationFolderPath}
@@ -49,6 +50,7 @@ function App() {
       onLanguageChange={actions.setLanguage}
       onThemeChange={actions.setTheme}
       onDuplicatesChange={actions.setDuplicates}
+      onIncludeSubfoldersChange={actions.setIncludeSubfolders}
       onCriterionChange={actions.setCriterion}
       onSelectSourceFolder={actions.selectSource}
       onSelectDestinationFolder={actions.selectDestination}

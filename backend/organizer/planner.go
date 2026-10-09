@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/caiofdev/sortly/backend/fs/paths"
 	"github.com/caiofdev/sortly/backend/organizer/criteria"
@@ -68,6 +69,58 @@ func (p *Planner) Plan(ctx context.Context, src, dst string, opts criteria.Optio
 	return plan, nil
 }
 
+// Com "Incluir subpastas": os arquivos de qualquer nível vão para as mesmas
+// pastas de critério no destino. Não segue links (atalhos e junções não são
+// pastas para o ReadDir), pula a pasta de destino quando ela fica dentro da
+// origem e conta como ignorada uma subpasta que não pôde ser lida (#83).
+func (p *Planner) PlanTree(ctx context.Context, src, dst string, opts criteria.Options) (Plan, error) {
+	entries, err := p.readDir(src)
+	if err != nil {
+		return Plan{}, fmt.Errorf("%w: %w", ErrInvalidSource, err)
+	}
+	plan := Plan{Source: src, Destination: dst, CategoryFolders: opts.ByType}
+	if err := p.walk(ctx, src, entries, &plan, p.active(opts)); err != nil {
+		return Plan{}, err
+	}
+	return plan, nil
+}
+
+func (p *Planner) walk(ctx context.Context, dir string, entries []fs.DirEntry, plan *Plan, rules []criteria.Rule) error {
+	for _, entry := range entries {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+		if err := p.visit(ctx, dir, entry, plan, rules); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (p *Planner) visit(ctx context.Context, dir string, entry fs.DirEntry, plan *Plan, rules []criteria.Rule) error {
+	if !entry.IsDir() {
+		return plan.addFile(ctx, dir, entry, rules)
+	}
+	child := filepath.Join(dir, entry.Name())
+	if hiddenFolder(entry.Name()) || paths.Equal(child, plan.Destination) {
+		plan.IgnoredFolders++
+		return nil
+	}
+	entries, err := p.readDir(child)
+	if err != nil {
+		plan.IgnoredFolders++
+		return nil
+	}
+	return p.walk(ctx, child, entries, plan, rules)
+}
+
+// Pastas ocultas guardam o funcionamento de outros programas: espalhar o
+// conteúdo de um .git corromperia o repositório, e o .sortly tem o registro do
+// próprio desfazer (#83).
+func hiddenFolder(name string) bool {
+	return strings.HasPrefix(name, ".")
+}
+
 func (p *Planner) active(opts criteria.Options) []criteria.Rule {
 	var rules []criteria.Rule
 	for _, r := range p.rules {
@@ -83,6 +136,10 @@ func (plan *Plan) add(ctx context.Context, entry fs.DirEntry, rules []criteria.R
 		plan.IgnoredFolders++
 		return nil
 	}
+	return plan.addFile(ctx, plan.Source, entry, rules)
+}
+
+func (plan *Plan) addFile(ctx context.Context, dir string, entry fs.DirEntry, rules []criteria.Rule) error {
 	if !entry.Type().IsRegular() {
 		return nil
 	}
@@ -93,7 +150,7 @@ func (plan *Plan) add(ctx context.Context, entry fs.DirEntry, rules []criteria.R
 		// Sumiu entre a listagem e a leitura: segue com os demais (#8).
 		return nil
 	}
-	file := criteria.NewFile(plan.Source, info)
+	file := criteria.NewFile(dir, info)
 
 	segments, err := segmentsFor(ctx, rules, file)
 	if errors.Is(err, criteria.ErrSkipNoExtension) {

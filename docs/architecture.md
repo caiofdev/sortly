@@ -74,7 +74,7 @@ O frontend só renderiza ([ADR 0005](adr/0005-estado-da-tela-no-backend.md)). A 
 | `StartOver()` | "Organizar outra pasta": limpa a origem e o `lastResult`; o destino e o desfazer continuam |
 | `MarkNotificationsRead()` | Apaga o ponto de não lidas do sino; a lista continua |
 | `ClearNotifications()` | Apaga o histórico de notificações |
-| `SetLanguage(language)` / `SetTheme(theme)` / `SetDuplicates(policy)` / `SetCriterion(key, enabled)` | Alteram as preferências (`backend/settings`). `SetTheme` também troca a cor de fundo da janela |
+| `SetLanguage(language)` / `SetTheme(theme)` / `SetDuplicates(policy)` / `SetIncludeSubfolders(on)` / `SetCriterion(key, enabled)` | Alteram as preferências (`backend/settings`). `SetTheme` também troca a cor de fundo da janela |
 
 ```
 ViewState {
@@ -87,7 +87,7 @@ ViewState {
   progress: { done, total, file, folder }    // durante organizar; total 0 = ainda planejando
   lastResult: Result | null                  // a tela Concluído; preenchido quando a organização move arquivos
   history: [{ at, sourceFolderPath, destinationFolderPath, movedFiles, status: "done" | "undone" | "canceled" }]
-  settings: { language, theme: "dark" | "light", duplicates: "rename" | "skip" | "replace", criteria: [{ key, enabled, locked }] }
+  settings: { language, theme: "dark" | "light", duplicates: "rename" | "skip" | "replace", includeSubfolders, criteria: [{ key, enabled, locked }] }
   notifications: [{ id, kind: "success" | "info" | "error", code, action, path?, organize?, undo?, at }]   // até 80, a mais recente primeiro
 }
 ```
@@ -95,7 +95,7 @@ ViewState {
 - **Erros não rejeitam a promessa:** viram uma notificação `kind: "error"` com o código (`INVALID_SOURCE`, `NOTHING_TO_UNDO`, `DROPPED_MISSING`, `LAST_CRITERION`, `UNEXPECTED`…) e a ação que falhou. O detalhe vai para o log. O frontend traduz o código, ou usa o texto padrão da ação quando o código não tem tradução própria (ADR 0004).
 - **Notificações de sucesso** também são códigos com dados: `ORGANIZE_DONE` (com `organize`: movidos, falhas, ignorados…), `UNDO_DONE` (com `undo`) e `SOURCE_DROPPED` (com `path`).
 - **Status (`kind`):** o backend decide se o aviso é sucesso, neutro ou erro. Organizar ou desfazer com algum arquivo que falhou é `error`, e organizar sem nada movido é `info`. A interface usa o `kind` para o ponto do painel e a variante do toast; o toast de erro fica até o usuário fechar.
-- **Prévia da origem:** ao definir a origem ou o destino, mudar um critério, ao fim de organizar e de desfazer e na origem recuperada ao abrir, o `App` planeja em segundo plano (`organizer.Service.Preview`, o mesmo `Planner` da organização, sem mover nada). Uma prévia nova cancela a anterior, e um resultado antigo que chegue depois é descartado. O binding devolve `status: "loading"`, e o resultado chega pelo evento de estado. `folders` traz até 7 pastas de 1º nível (as sete categorias do Tipo cabem), da maior para a menor (nome vazio = raiz do destino); o resto soma em `otherFiles`. Origem ilegível vira uma notificação de erro com a ação `preview`. Durante organizar e desfazer, a prévia some.
+- **Prévia da origem:** ao definir a origem ou o destino, mudar um critério ou "Incluir subpastas", ao fim de organizar e de desfazer e na origem recuperada ao abrir, o `App` planeja em segundo plano (`organizer.Service.Preview`, o mesmo `Planner` da organização, sem mover nada). Uma prévia nova cancela a anterior, e um resultado antigo que chegue depois é descartado. O binding devolve `status: "loading"`, e o resultado chega pelo evento de estado. `folders` traz até 7 pastas de 1º nível (as sete categorias do Tipo cabem), da maior para a menor (nome vazio = raiz do destino); o resto soma em `otherFiles`. Origem ilegível vira uma notificação de erro com a ação `preview`. Durante organizar e desfazer, a prévia some.
 - **Progresso e Cancelar:** o `Executor` reporta o progresso antes de cada movimento e no fim (`organizer.Progress`: feitos, total, nome do arquivo e pasta relativa ao destino). O `App` emite no máximo um estado a cada 50 ms (~20/s); o primeiro e o último sempre saem. `Cancel` cancela o `context` da organização: o resultado sai com `canceled: true`, o journal parcial é gravado, e a notificação `ORGANIZE_CANCELED` diz quantos arquivos foram movidos. Se o registro não pôde ser salvo, vale o erro `RECORD_NOT_SAVED`.
 - **Concluído:** quando a organização move ao menos um arquivo (mesmo com falhas), o `lastResult` guarda o resultado, com `folders` (as pastas de 1º nível do que foi movido de fato, no mesmo resumo da prévia) e `otherFiles`. Cancelada, com erro ou sem nada movido, a tela continua na inicial. Desfazer, escolher outra origem e `StartOver` limpam o `lastResult`.
 - **Histórico:** só as organizações que moveram arquivos entram (`done` ou, se interrompidas, `canceled`), as mesmas que gravam o registro do desfazer; desfazer marca a mais recente como `undone`. Uma falha ao gravar o histórico vai só para o log (ADR 0007).

@@ -32,7 +32,7 @@ func (s *Service) Preview(ctx context.Context, req Request) (Preview, error) {
 	if err != nil {
 		return Preview{}, err
 	}
-	plan, err := s.planner.Plan(ctx, src, dst, opts)
+	plan, err := s.plan(ctx, src, dst, opts, req.IncludeSubfolders)
 	if err != nil {
 		return Preview{}, err
 	}

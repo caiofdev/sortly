@@ -18,6 +18,7 @@ vi.mock('../../wailsjs/go/app/App', () => ({
   StartOver: vi.fn(),
   SetTheme: vi.fn(),
   SetDuplicates: vi.fn(),
+  SetIncludeSubfolders: vi.fn(),
   SetLanguage: vi.fn(),
   SetCriterion: vi.fn()
 }));
@@ -107,6 +108,12 @@ describe('useViewState', () => {
       'SetDuplicates',
       ['skip'],
       { settings: { duplicates: 'skip', criteria: [] } }
+    ],
+    [
+      'setIncludeSubfolders',
+      'SetIncludeSubfolders',
+      [true],
+      { settings: { includeSubfolders: true, criteria: [] } }
     ],
     ['setCriterion', 'SetCriterion', ['byDate', true], { busy: '' }]
   ])('%s chama %s e mostra o estado devolvido', async (action, binding, args, expected) => {
