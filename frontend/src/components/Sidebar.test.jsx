@@ -14,6 +14,7 @@ function renderSidebar(page = 'organize') {
 describe('Sidebar', () => {
   it.each([
     ['organize', labels.navOrganize, labels.navSettings],
+    ['history', labels.navHistory, labels.navOrganize],
     ['settings', labels.navSettings, labels.navOrganize]
   ])('página %s: "%s" é a atual e "%s" não', (page, current, other) => {
     const { nav } = renderSidebar(page);
@@ -22,6 +23,12 @@ describe('Sidebar', () => {
       'page'
     );
     expect(within(nav).getByRole('button', { name: other })).not.toHaveAttribute('aria-current');
+  });
+
+  it('ordem do protótipo: Organizar, Histórico, Configurações', () => {
+    const { nav } = renderSidebar();
+    const items = [...nav.querySelectorAll('.st-nav')].map((b) => b.textContent);
+    expect(items).toEqual([labels.navOrganize, labels.navHistory, labels.navSettings]);
   });
 
   it('clicar num item navega', () => {

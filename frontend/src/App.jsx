@@ -37,6 +37,7 @@ function App() {
       preview={state.preview}
       progress={state.progress}
       lastResult={state.lastResult}
+      history={state.history}
       hasUndo={state.hasUndo}
       isLoading={Boolean(state.busy)}
       loadingAction={state.busy || null}

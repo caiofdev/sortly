@@ -5,6 +5,7 @@ import Sidebar from '../components/Sidebar';
 import ToastStack from '../components/ToastStack';
 import { getCopy } from '../i18n/language';
 import organizerCopy from '../i18n/organizerCopy';
+import HistoryPage from './HistoryPage';
 import OrganizePage from './OrganizePage';
 import SettingsPage from './SettingsPage';
 
@@ -12,6 +13,7 @@ import SettingsPage from './SettingsPage';
 // backend pronto (ADR 0005, #74).
 const HEADINGS = {
   organize: ['titleOrganize', 'subtitleOrganize'],
+  history: ['titleHistory', 'subtitleHistory'],
   settings: ['titleSettings', 'subtitleSettings']
 };
 
@@ -24,6 +26,7 @@ function OrganizerView({
   preview,
   progress,
   lastResult,
+  history,
   hasUndo,
   isLoading,
   loadingAction,
@@ -108,6 +111,10 @@ function OrganizerView({
               onOpenDestination={onOpenDestination}
               onStartOver={onStartOver}
             />
+          )}
+
+          {page === 'history' && (
+            <HistoryPage labels={text} history={history} language={language} />
           )}
 
           {page === 'settings' && (

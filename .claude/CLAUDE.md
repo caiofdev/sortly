@@ -17,6 +17,7 @@ backend/            backend Go (pacotes por responsabilidade; teste sempre ao la
   metadata/         resolução de imagem, duração de mp4, páginas (pdf/docx/odt)
   store/            registro da última organização (~/.sortly/last-operation.json)
   settings/         preferências (idioma, tema e critérios) em ~/.sortly/settings.json
+  history/          histórico das organizações em ~/.sortly/history.json (ADR 0007)
   fs/paths/         caminhos: Ext, Equal, IsInside, Native (prefixo \\?\ do Windows)
   fs/files/         disco: WriteAtomic, Move (fallback entre volumes), MoveUnique, Reserve, pastas
   apperr/           erros com código estável
@@ -70,7 +71,7 @@ cd frontend && npm run lint && npm run format:check && npm test   # ESLint (comp
 - Nomes das pastas criadas e o formato de `~/.sortly/last-operation.json` são os da versão 1.0 (um desfazer pendente da 1.0 funciona na 2.0). Especificação em `docs/organization-rules.md`.
 - O backend devolve **dados e códigos de erro**, nunca texto para o usuário; o i18n fica inteiro no frontend (ADR 0004).
 - A interface não muda visualmente sem pedido explícito.
-- Decisões registradas em `docs/adr/`: 0001 Electron → Wails, 0002 gateway no frontend (substituída), 0003 Strategy + registry nas regras, 0004 erros com código, 0005 estado da tela no backend, 0006 CSS do design system no lugar do Tailwind.
+- Decisões registradas em `docs/adr/`: 0001 Electron → Wails, 0002 gateway no frontend (substituída), 0003 Strategy + registry nas regras, 0004 erros com código, 0005 estado da tela no backend, 0006 CSS do design system no lugar do Tailwind, 0007 histórico separado do registro do desfazer.
 
 ## Armadilhas do ambiente
 

@@ -24,6 +24,7 @@ const viewState = (overrides = {}) => ({
   preview: { status: '', totalFiles: 0, folders: [], otherFiles: 0 },
   progress: { done: 0, total: 0, file: '', folder: '' },
   lastResult: null,
+  history: [],
   settings: { language: 'pt-BR', theme: 'dark', criteria },
   notifications: [],
   ...overrides

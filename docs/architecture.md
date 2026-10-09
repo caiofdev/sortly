@@ -40,6 +40,7 @@ flowchart LR
 | `backend/app` | Fachada `App` exposta ao frontend: guarda o estado da tela (`ViewState`, notificações), delega as regras aos serviços e emite `sortly:state`; também as opções da janela (`Options`) e a composição das dependências (`wire.go`) |
 | `backend/organizer` | Validação do pedido, `Planner` (calcula o plano, sem efeitos colaterais), `Executor` (aplica os movimentos e mantém o journal), erros com código ([ADR 0004](adr/0004-erros-com-codigo.md)) |
 | `backend/organizer/criteria` | Os seis critérios, um por arquivo, atrás da interface `Rule` e do registry `New` ([ADR 0003](adr/0003-strategy-regras.md)); `Options` (com a ordem de exibição `Keys` e o acesso por chave) e `File` |
+| `backend/history` | Histórico das organizações em `~/.sortly/history.json` (últimas 50, a mais recente primeiro, `files.WriteAtomic`), separado do registro do desfazer ([ADR 0007](adr/0007-historico-separado-do-desfazer.md)). Arquivo ausente ou corrompido vale como vazio, com log |
 | `backend/settings` | Preferências (idioma, tema e critérios) em `~/.sortly/settings.json`: lê uma vez, aceita só valores válidos, recusa desligar o último critério e grava com `files.WriteAtomic`; monta a visão para a tela (`View`) |
 | `backend/metadata` | Leitura de resolução de imagens, duração de mp4 e contagem de páginas (`PageCounter` por extensão) |
 | `backend/undo` | Reverte o journal da última operação e remove as pastas que ficaram vazias |
@@ -84,6 +85,7 @@ ViewState {
   preview: { status: "" | "loading" | "ready", totalFiles, folders: [{ name, count }], otherFiles }
   progress: { done, total, file, folder }    // durante organizar; total 0 = ainda planejando
   lastResult: Result | null                  // a tela Concluído; preenchido quando a organização move arquivos
+  history: [{ at, sourceFolderPath, destinationFolderPath, movedFiles, status: "done" | "undone" | "canceled" }]
   settings: { language, theme: "dark" | "light", criteria: [{ key, enabled, locked }] }
   notifications: [{ id, kind: "success" | "info" | "error", code, action, path?, organize?, undo?, at }]   // até 80, a mais recente primeiro
 }
@@ -95,6 +97,7 @@ ViewState {
 - **Prévia da origem:** ao definir a origem ou o destino, mudar um critério, ao fim de organizar e de desfazer e na origem recuperada ao abrir, o `App` planeja em segundo plano (`organizer.Service.Preview`, o mesmo `Planner` da organização, sem mover nada). Uma prévia nova cancela a anterior, e um resultado antigo que chegue depois é descartado. O binding devolve `status: "loading"`, e o resultado chega pelo evento de estado. `folders` traz até 6 pastas de 1º nível, da maior para a menor (nome vazio = raiz do destino); o resto soma em `otherFiles`. Origem ilegível vira uma notificação de erro com a ação `preview`. Durante organizar e desfazer, a prévia some.
 - **Progresso e Cancelar:** o `Executor` reporta o progresso antes de cada movimento e no fim (`organizer.Progress`: feitos, total, nome do arquivo e pasta relativa ao destino). O `App` emite no máximo um estado a cada 50 ms (~20/s); o primeiro e o último sempre saem. `Cancel` cancela o `context` da organização: o resultado sai com `canceled: true`, o journal parcial é gravado, e a notificação `ORGANIZE_CANCELED` diz quantos arquivos foram movidos. Se o registro não pôde ser salvo, vale o erro `RECORD_NOT_SAVED`.
 - **Concluído:** quando a organização move ao menos um arquivo (mesmo com falhas), o `lastResult` guarda o resultado, com `folders` (as pastas de 1º nível do que foi movido de fato, no mesmo resumo da prévia) e `otherFiles`. Cancelada, com erro ou sem nada movido, a tela continua na inicial. Desfazer, escolher outra origem e `StartOver` limpam o `lastResult`.
+- **Histórico:** só as organizações que moveram arquivos entram (`done` ou, se interrompidas, `canceled`), as mesmas que gravam o registro do desfazer; desfazer marca a mais recente como `undone`. Uma falha ao gravar o histórico vai só para o log (ADR 0007).
 - **Evento `sortly:state`:** emitido a cada mudança, com o estado inteiro. É por ele que a tela mostra "Organizando…" enquanto a chamada de `Organize` ainda não terminou.
 - **Estados fora de ordem:** evento e retorno do binding saem do lock antes de chegar à tela, então duas ações quase simultâneas podem entregá-los fora de ordem. O `useViewState` só troca o estado por um de `version` maior.
 - **Organizar e desfazer não rodam juntos:** uma chamada durante a outra devolve o estado sem fazer nada.

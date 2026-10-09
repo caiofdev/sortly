@@ -3,6 +3,7 @@ package app
 import (
 	"time"
 
+	"github.com/caiofdev/sortly/backend/history"
 	"github.com/caiofdev/sortly/backend/organizer"
 	"github.com/caiofdev/sortly/backend/settings"
 	"github.com/caiofdev/sortly/backend/undo"
@@ -96,6 +97,7 @@ type ViewState struct {
 	// Preenchido quando a organização move arquivos: a tela mostra o Concluído
 	// até Organizar outra pasta ou Desfazer (#79).
 	LastResult    *organizer.Result `json:"lastResult"`
+	History       []history.Entry   `json:"history"`
 	Settings      settings.View     `json:"settings"`
 	Notifications []Notification    `json:"notifications"`
 }

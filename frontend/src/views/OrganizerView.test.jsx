@@ -17,6 +17,7 @@ function renderView(props = {}) {
       destinationFolderPath=""
       preview={{ status: '', totalFiles: 0, folders: [], otherFiles: 0 }}
       lastResult={null}
+      history={[]}
       hasUndo={false}
       isLoading={false}
       loadingAction=""
@@ -52,6 +53,13 @@ describe('OrganizerView', () => {
     expect(screen.getByRole('switch', { name: pt.settingsByExtension })).toBeInTheDocument();
     fireEvent.click(within(sidebar()).getByRole('button', { name: pt.navOrganize }));
     expect(screen.getByRole('heading', { name: pt.titleOrganize })).toBeInTheDocument();
+  });
+
+  it('a sidebar abre o Histórico', () => {
+    renderView();
+    fireEvent.click(within(sidebar()).getByRole('button', { name: pt.navHistory }));
+    expect(screen.getByRole('heading', { name: pt.titleHistory })).toBeInTheDocument();
+    expect(screen.getByText(pt.historyEmpty)).toBeInTheDocument();
   });
 
   it('em inglês usa os textos em inglês', () => {

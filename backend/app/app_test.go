@@ -18,6 +18,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options"
 
 	"github.com/caiofdev/sortly/backend/apperr"
+	"github.com/caiofdev/sortly/backend/history"
 	"github.com/caiofdev/sortly/backend/organizer"
 	"github.com/caiofdev/sortly/backend/organizer/criteria"
 	"github.com/caiofdev/sortly/backend/settings"
@@ -84,6 +85,33 @@ type fakeRecords struct {
 
 func (f fakeRecords) Load() (*store.Operation, error) { return f.op, f.err }
 
+type fakeHistory struct {
+	entries []history.Entry
+	err     error
+	undone  int
+}
+
+func (f *fakeHistory) List() []history.Entry { return append([]history.Entry{}, f.entries...) }
+
+func (f *fakeHistory) Add(e history.Entry) error {
+	if f.err != nil {
+		return f.err
+	}
+	f.entries = append([]history.Entry{e}, f.entries...)
+	return nil
+}
+
+func (f *fakeHistory) MarkLastUndone() error {
+	f.undone++
+	if f.err != nil {
+		return f.err
+	}
+	if len(f.entries) > 0 {
+		f.entries[0].Status = history.StatusUndone
+	}
+	return nil
+}
+
 type fakeSettings struct {
 	current settings.Settings
 	err     error
@@ -127,6 +155,9 @@ func newTestApp(d Deps) (*App, *bytes.Buffer) {
 	}
 	if d.Organizer == nil {
 		d.Organizer = &fakeOrganizer{}
+	}
+	if d.History == nil {
+		d.History = &fakeHistory{}
 	}
 	if d.Background == nil {
 		d.Background = func(task func()) { task() }
@@ -555,6 +586,79 @@ func TestOpenDestination(t *testing.T) {
 	}
 }
 
+func TestHistory(t *testing.T) {
+	tests := []struct {
+		name       string
+		result     organizer.Result
+		err        error
+		wantStatus string
+	}{
+		{"organizar entra como concluída", organizer.Result{MovedFiles: 3, CanUndo: true}, nil, history.StatusDone},
+		{"interrompida com arquivos movidos entra", organizer.Result{MovedFiles: 2, CanUndo: true, Canceled: true}, context.Canceled, history.StatusCanceled},
+		{"nada movido não entra", organizer.Result{}, nil, ""},
+		{"interrompida sem nada movido não entra", organizer.Result{Canceled: true}, context.Canceled, ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			hist := &fakeHistory{}
+			a, _ := newTestApp(Deps{Organizer: &fakeOrganizer{result: organizer.Result{
+				SourceFolderPath: `C:\origem`, DestinationFolderPath: `C:\destino`,
+				MovedFiles: tt.result.MovedFiles, CanUndo: tt.result.CanUndo, Canceled: tt.result.Canceled,
+			}, err: tt.err}, History: hist})
+			a.state.SourceFolderPath = `C:\origem`
+
+			got := a.Organize().History
+
+			if tt.wantStatus == "" {
+				if len(got) != 0 {
+					t.Fatalf("histórico = %+v, want vazio", got)
+				}
+				return
+			}
+			want := history.Entry{At: testNow, SourceFolderPath: `C:\origem`, DestinationFolderPath: `C:\destino`,
+				MovedFiles: tt.result.MovedFiles, Status: tt.wantStatus}
+			if len(got) != 1 || got[0] != want {
+				t.Fatalf("histórico = %+v, want [%+v]", got, want)
+			}
+		})
+	}
+}
+
+func TestHistoryAfterUndo(t *testing.T) {
+	hist := &fakeHistory{entries: []history.Entry{{MovedFiles: 1, Status: history.StatusDone}}}
+	a, _ := newTestApp(Deps{Undoer: fakeUndoer{result: undo.Result{RestoredFiles: 1}}, History: hist})
+
+	if got := a.Undo().History; got[0].Status != history.StatusUndone {
+		t.Fatalf("o desfazer marca a mais recente: %+v", got)
+	}
+
+	failing, _ := newTestApp(Deps{Undoer: fakeUndoer{err: undo.ErrNothingToUndo}, History: hist})
+	failing.Undo()
+	if hist.undone != 1 {
+		t.Fatalf("desfazer que falhou não marca nada: %d marcações", hist.undone)
+	}
+}
+
+func TestHistoryFailureOnlyLogs(t *testing.T) {
+	hist := &fakeHistory{err: errors.New("disco cheio")}
+	a, logs := newTestApp(Deps{
+		Organizer: &fakeOrganizer{result: organizer.Result{MovedFiles: 1, CanUndo: true}},
+		Undoer:    fakeUndoer{result: undo.Result{RestoredFiles: 1}},
+		History:   hist,
+	})
+	a.state.SourceFolderPath = `C:\origem`
+
+	organized := a.Organize()
+	undone := a.Undo()
+
+	if last(organized).Code != CodeOrganizeDone || last(undone).Code != CodeUndoDone {
+		t.Fatalf("falha no histórico não pode virar aviso: %+v / %+v", last(organized), last(undone))
+	}
+	if strings.Count(logs.String(), "disco cheio") != 2 {
+		t.Fatalf("as duas falhas deveriam ir para o log: %s", logs.String())
+	}
+}
+
 func TestCancelWithoutOrganizeDoesNothing(t *testing.T) {
 	a, _ := newTestApp(Deps{})
 	if got := a.Cancel(); got.Busy != "" || len(got.Notifications) != 0 {
@@ -702,7 +806,7 @@ func TestPreviewTriggers(t *testing.T) {
 // Sem o Background dos testes: a prévia roda numa goroutine e chega sozinha (#77).
 func TestPreviewRunsInBackground(t *testing.T) {
 	org := &fakeOrganizer{}
-	a := New(Deps{Organizer: org, Records: fakeRecords{}, Settings: &fakeSettings{current: settings.Default()},
+	a := New(Deps{Organizer: org, Records: fakeRecords{}, Settings: &fakeSettings{current: settings.Default()}, History: &fakeHistory{},
 		PickDir: func(context.Context, string) (string, error) { return `C:\origem`, nil }})
 
 	a.SelectSource()
@@ -734,7 +838,7 @@ func TestPreviewReady(t *testing.T) {
 	prefs := &fakeSettings{current: settings.Settings{Options: criteria.Options{ByDate: true}}}
 	a, _ := newTestApp(Deps{Organizer: org, Settings: prefs, Emit: func(_ context.Context, s ViewState) { emitted = append(emitted, s) }})
 	a.startup(context.Background())
-	a.state.DestinationFolderPath = `C:destino`
+	a.state.DestinationFolderPath = `C:\destino`
 
 	a.DropPaths([]string{t.TempDir()})
 
@@ -746,7 +850,7 @@ func TestPreviewReady(t *testing.T) {
 		t.Fatalf("prévia = %+v", ready)
 	}
 	req := org.previewReqs[0]
-	if req.DestinationFolderPath != `C:destino` || req.Options != (criteria.Options{ByDate: true}) {
+	if req.DestinationFolderPath != `C:\destino` || req.Options != (criteria.Options{ByDate: true}) {
 		t.Fatalf("pedido da prévia = %+v", req)
 	}
 }
@@ -1031,7 +1135,7 @@ func TestStateJSONAlwaysHasLists(t *testing.T) {
 			t.Fatal(err)
 		}
 		if !strings.Contains(string(data), `"notifications":[]`) || !strings.Contains(string(data), `"criteria":[`) ||
-			!strings.Contains(string(data), `"folders":[]`) {
+			!strings.Contains(string(data), `"folders":[]`) || !strings.Contains(string(data), `"history":[]`) {
 			t.Errorf("%s: listas deveriam ser arrays, não null: %s", name, data)
 		}
 	}

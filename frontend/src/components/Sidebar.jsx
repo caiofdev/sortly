@@ -1,9 +1,10 @@
 import logo from '../assets/sortly-logo.png';
-import { OrganizeIcon, SettingsIcon } from './icons';
+import { HistoryIcon, OrganizeIcon, SettingsIcon } from './icons';
 import LanguageToggle from './LanguageToggle';
 
 export const PAGES = [
   { id: 'organize', labelKey: 'navOrganize', Icon: OrganizeIcon },
+  { id: 'history', labelKey: 'navHistory', Icon: HistoryIcon },
   { id: 'settings', labelKey: 'navSettings', Icon: SettingsIcon }
 ];
 

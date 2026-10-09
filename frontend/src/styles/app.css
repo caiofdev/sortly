@@ -450,3 +450,63 @@ button {
 .st-done__head:focus {
   outline: none;
 }
+
+/* A grade do protótipo tem 600px de largura mínima; em janela estreita, a
+   tabela rola dentro do card, sem empurrar a página (#80). */
+.st-history {
+  padding: 0;
+  overflow-x: auto;
+}
+
+.st-history__table {
+  min-width: 600px;
+}
+
+.st-history__row {
+  display: grid;
+  grid-template-columns: 170px minmax(0, 1fr) 90px 120px;
+  gap: var(--space-4);
+  align-items: center;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--line-100);
+}
+
+.st-history__row:last-child {
+  border-bottom: 0;
+}
+
+.st-history__row--head {
+  font: 700 11px/16px var(--font-sans);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-200);
+}
+
+.st-history__when {
+  font: 400 14px/20px var(--font-sans);
+  color: var(--ink-200);
+}
+
+.st-history__path {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 500 13px/20px var(--font-mono);
+  color: var(--ink-100);
+}
+
+.st-history__files {
+  text-align: right;
+}
+
+.st-history__count {
+  font: 500 15px/20px var(--font-display);
+  color: var(--ink-100);
+}
+
+.st-history__empty {
+  margin: 0;
+  padding: var(--space-6) 20px;
+  font: 400 14px/20px var(--font-sans);
+  color: var(--ink-200);
+}
