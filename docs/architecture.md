@@ -114,9 +114,12 @@ A interface segue o design system "Sortly" (amarelo `#F5E600`, fonte pixel; [ADR
 |---|---|
 | `hooks/useViewState.js` | Único módulo que importa os bindings e o runtime do Wails. Espelho do `ViewState`: estado inicial, evento `sortly:state`, arquivos soltos (`DropPaths`) e as ações; fora do Wails, fica no estado inicial |
 | `i18n/` | Textos PT/EN; `notifications.js` transforma notificações estruturadas em título e texto no idioma atual |
-| `views/` | Shell (`OrganizerView`: sidebar, cabeçalho e a página aberta) e as páginas Organizar e Configurações |
-| `components/` | Peças do design system: Sidebar, PageHead, Dropzone, PathField, botões, Switch, notificações, toasts e ícones |
+| `views/` | Shell (`OrganizerView`: sidebar, cabeçalho e a página aberta) e as páginas Organizar, Histórico e Configurações. A página aberta e os painéis abertos são o único estado do React; o resto vem do `ViewState` |
+| `components/` | Peças do design system: Sidebar, PageHead, Dropzone (`DragDropPanel`), PathField, prévia (`PreviewSummary`), botões, Organizando (`OrganizingPanel` com `FileFlow` e `ProgressBlocks`), Concluído (`DonePanel`), SegmentedControl, Switch, notificações, toasts e ícones (SVG inline) |
 | `styles/` | `tokens.css` (temas), `components.css` (classes `st-*` do design system, sem edição) e `app.css` (fonte embutida e ajustes) |
+| `assets/` | A logo (`sortly-logo.png`), na sidebar e no README |
+
+O ícone do app (`build/appicon.png`, de onde o Wails gera o `.icns` do macOS e que o `.deb` instala no Linux, e `build/windows/icon.ico`, do executável e do instalador) vem da mesma logo, num quadrado preto arredondado. Nos tamanhos de 32 px para baixo, o `.ico` mostra só as placas, sem o nome, como pede o design system: abaixo disso o texto em pixel vira ruído.
 
 A estrutura de pastas do repositório está em [development.md](development.md#3-estrutura-do-repositório).
 

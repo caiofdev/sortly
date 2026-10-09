@@ -300,7 +300,8 @@ try {
   $backupFile = @(Get-ChildItem "$home_\.sortly\substituidos" -Recurse -File -ErrorAction SilentlyContinue | Select-Object -First 1)
   $replaced = ((Get-Content "$dupDst\txt\nota.txt") -eq 'nova') -and $backupFile.Count -eq 1 -and ((Get-Content $backupFile[0].FullName) -eq 'antiga')
   Click 'Desfazer'
-  $restored = Wait-Until { (Test-Path "$dup\nota.txt") -and ((Get-Content "$dupDst\txt\nota.txt") -eq 'antiga') } 15
+  # No meio do desfazer, o destino fica sem nota.txt até o substituído voltar do backup (#84).
+  $restored = Wait-Until { (Test-Path "$dup\nota.txt") -and ((Get-Content "$dupDst\txt\nota.txt" -ErrorAction SilentlyContinue) -eq 'antiga') } 15
   $cleaned = @(Get-ChildItem "$home_\.sortly\substituidos" -Recurse -File -ErrorAction SilentlyContinue).Count -eq 0
   Check 'WIN_DUP_REPLACE' ($replaced -and $restored -and $cleaned) "substituído e guardado: $replaced; desfeito: $restored; backup apagado: $cleaned"
   Click 'Configurações'; Click 'Renomear'; Start-Sleep -Milliseconds 500; Click 'Organizar'

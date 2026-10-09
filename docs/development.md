@@ -57,6 +57,7 @@ sortly/
     app/                  # fachada do Wails, drop, janela, composição
     organizer/            # planejamento e execução; criteria/ com um critério por arquivo
     undo/  store/  metadata/  apperr/  logging/
+    settings/  history/  backup/   # preferências, histórico e arquivos substituídos em ~/.sortly
     fs/paths/             # caminhos (extensão, comparação, prefixo do Windows)
     fs/files/             # mover, reservar nome, pastas
     tests/                # testes de integração (só API pública)
@@ -65,7 +66,7 @@ sortly/
     tests/                # testes de integração (App inteiro com os bindings reais)
     vitest.setup.js       # configuração do Vitest (jest-dom e limpeza)
     wailsjs/              # bindings gerados pelo Wails (versionados)
-  build/                  # ícones, manifesto do Windows, Info.plist, NSIS e nfpm
+  build/                  # ícone (appicon.png e windows/icon.ico, a partir da logo), manifesto do Windows, Info.plist, NSIS e nfpm
   scripts/
     check-coverage.sh     # cobertura mínima de backend/
     cccases/              # complexidade ciclomática × casos de teste
@@ -172,7 +173,9 @@ O workflow [`release.yml`](../.github/workflows/release.yml) roda quando uma tag
 |---|---|
 | Registro do último organizar (desfazer) | `~/.sortly/last-operation.json`, o mesmo da versão 1.0 |
 | Log | `%AppData%\Sortly\logs` (Windows), `~/Library/Application Support/Sortly/logs` (macOS), `~/.config/Sortly/logs` (Linux) |
-| Idioma e critérios | `~/.sortly/settings.json` (some com a pasta `~/.sortly`, não com os dados do WebView) |
+| Preferências (idioma, tema, critérios, duplicados e subpastas) | `~/.sortly/settings.json` (some com a pasta `~/.sortly`, não com os dados do WebView) |
+| Histórico das organizações | `~/.sortly/history.json` (últimas 50) |
+| Arquivos substituídos (duplicados em "Substituir") | `~/.sortly/substituidos/`, apagados quando a organização deixa de poder ser desfeita |
 
 Para testar sem mexer nos seus dados, abra o app com outra pasta de usuário. No Windows, defina `USERPROFILE`, `APPDATA` e `LOCALAPPDATA` apontando para uma pasta temporária, como fazem os scripts em `scripts/`.
 

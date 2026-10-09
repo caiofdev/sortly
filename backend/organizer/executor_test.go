@@ -227,6 +227,26 @@ func TestApplyReportingProgress(t *testing.T) {
 	}
 }
 
+// Regressão (#84): sem CategoryFolders, a tela mostrava "Movendo a.jpg → images",
+// com a chave da categoria em vez do rótulo traduzido.
+func TestApplyReportingCategoryFolders(t *testing.T) {
+	src, dst := t.TempDir(), t.TempDir()
+	writeAt(t, filepath.Join(src, "a.jpg"), "a", testTime)
+	plan := Plan{Destination: dst, CategoryFolders: true, Moves: []Move{
+		{filepath.Join(src, "a.jpg"), filepath.Join(dst, "images", "a.jpg")},
+	}}
+	var got []Progress
+
+	if _, err := NewExecutor(nil).ApplyReporting(context.Background(), plan, func(p Progress) { got = append(got, p) }); err != nil {
+		t.Fatal(err)
+	}
+
+	want := []Progress{{Done: 0, Total: 1, File: "a.jpg", Folder: "images", CategoryFolders: true}, {Done: 1, Total: 1}}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("progresso =\n%+v\nwant\n%+v", got, want)
+	}
+}
+
 func TestApplyReportingEmptyPlan(t *testing.T) {
 	var got []Progress
 	if _, err := NewExecutor(nil).ApplyReporting(context.Background(), Plan{}, func(p Progress) { got = append(got, p) }); err != nil {

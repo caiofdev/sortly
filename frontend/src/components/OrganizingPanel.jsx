@@ -1,12 +1,13 @@
 import { useEffect, useRef } from 'react';
 import FileFlow from './FileFlow';
 import ProgressBlocks from './ProgressBlocks';
+import { folderPathLabel } from '../i18n/folderLabel';
 
 // Só o nome da pasta, como no protótipo; o caminho inteiro está na tela anterior (#78).
 export const folderName = (path) => path.split(/[\\/]/).filter(Boolean).pop() ?? path;
 
 function OrganizingPanel({ labels, progress, sourceFolderPath, destinationFolderPath, onCancel }) {
-  const { done, total, file, folder } = progress;
+  const { done, total, file, folder, categoryFolders } = progress;
   const cancel = useRef(null);
 
   // O botão Organizar, que tinha o foco, some quando o painel aparece; sem isto o
@@ -39,7 +40,9 @@ function OrganizingPanel({ labels, progress, sourceFolderPath, destinationFolder
             <span className="st-running__muted">{labels.moving}</span>{' '}
             <span className="st-running__file">{file}</span>{' '}
             <span className="st-running__muted">→</span>{' '}
-            <span className="st-running__folder">{folder || labels.previewRoot}</span>
+            <span className="st-running__folder">
+              {folderPathLabel(folder, categoryFolders, labels)}
+            </span>
           </>
         )}
       </p>

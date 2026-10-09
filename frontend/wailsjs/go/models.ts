@@ -203,6 +203,7 @@ export namespace organizer {
 	    total: number;
 	    file: string;
 	    folder: string;
+	    categoryFolders: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new Progress(source);
@@ -214,6 +215,7 @@ export namespace organizer {
 	        this.total = source["total"];
 	        this.file = source["file"];
 	        this.folder = source["folder"];
+	        this.categoryFolders = source["categoryFolders"];
 	    }
 	}
 	export class Result {

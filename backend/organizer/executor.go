@@ -64,12 +64,14 @@ func NewExecutor(log *slog.Logger) *Executor {
 }
 
 // File é só o nome do arquivo; Folder é a pasta de destino relativa ao destino
-// da organização ("" = a raiz). Done = Total marca o fim (#78).
+// da organização ("" = a raiz). Done = Total marca o fim (#78). CategoryFolders diz
+// se o 1º nível de Folder é uma categoria do Tipo, que a interface traduz (#84).
 type Progress struct {
-	Done   int    `json:"done"`
-	Total  int    `json:"total"`
-	File   string `json:"file"`
-	Folder string `json:"folder"`
+	Done            int    `json:"done"`
+	Total           int    `json:"total"`
+	File            string `json:"file"`
+	Folder          string `json:"folder"`
+	CategoryFolders bool   `json:"categoryFolders"`
 }
 
 // Chamado antes de cada movimento e uma vez no fim, na goroutine da organização (#78).
@@ -91,7 +93,10 @@ func (e *Executor) ApplyReporting(ctx context.Context, plan Plan, report Reporte
 		if err := ctx.Err(); err != nil {
 			return out, err
 		}
-		report(Progress{Done: i, Total: total, File: filepath.Base(m.From), Folder: relativeFolder(plan.Destination, m.To)})
+		report(Progress{
+			Done: i, Total: total, File: filepath.Base(m.From),
+			Folder: relativeFolder(plan.Destination, m.To), CategoryFolders: plan.CategoryFolders,
+		})
 		final, created, err := e.moveOne(m, plan, &out, placed)
 		out.CreatedFolders = append(out.CreatedFolders, created...)
 		if errors.Is(err, errSkippedDuplicate) {

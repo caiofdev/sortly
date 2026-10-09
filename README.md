@@ -26,34 +26,42 @@ A ideia é resolver aquela pasta de Downloads ou de Documentos que virou bagunç
 ### Interface
 
 <p align="center">
-  <img src="docs/images/screenshot-main.png" alt="Tela principal do Sortly" width="720" />
+  <img src="docs/images/demo.gif" alt="Demonstração: a prévia da pasta, a organização com o progresso, o resumo e o desfazer" width="720" />
 </p>
 
-<p align="center">
-  <img src="docs/images/demo.gif" alt="Demonstração: escolher os critérios, organizar e desfazer" width="720" />
-</p>
-
-| Critérios de organização | Notificações |
+| Prévia da origem | Organizando |
 |---|---|
-| <img src="docs/images/screenshot-settings.png" alt="Painel de critérios de organização" width="360" /> | <img src="docs/images/screenshot-notifications.png" alt="Painel de notificações após organizar" width="360" /> |
+| <img src="docs/images/organizar-pt.png" alt="Página Organizar com a origem, o destino e a prévia de 1160 arquivos por categoria" width="360" /> | <img src="docs/images/organizando-pt.png" alt="Tela Organizando com a animação, a barra de progresso e o botão Cancelar" width="360" /> |
+
+| Concluído | Histórico |
+|---|---|
+| <img src="docs/images/concluido-pt.png" alt="Resumo com 1160 arquivos organizados e a contagem por pasta" width="360" /> | <img src="docs/images/historico-pt.png" alt="Página Histórico com três organizações" width="360" /> |
+
+| Configurações | Notificações |
+|---|---|
+| <img src="docs/images/configuracoes-pt.png" alt="Configurações: tema, duplicados, subpastas e critérios" width="360" /> | <img src="docs/images/notificacoes-pt.png" alt="Painel de notificações aberto sobre o resumo" width="360" /> |
 
 ### Funcionalidades
 
-- **Organiza por critérios combináveis:** extensão, data de modificação, tamanho, resolução (imagens), duração (vídeos mp4) e número de páginas (pdf, docx, odt).
+- **Organiza por critérios combináveis:** tipo (imagens, documentos, vídeos…), extensão, data de modificação, tamanho, resolução (imagens), duração (vídeos mp4) e número de páginas (pdf, docx, odt).
+- **Prévia:** ao escolher a pasta, o Sortly mostra quantos arquivos encontrou e para quais pastas eles vão, antes de mover qualquer coisa.
+- **Progresso e Cancelar:** acompanhe cada arquivo indo para a pasta dele e interrompa quando quiser; o que já foi movido pode ser desfeito.
+- **Resumo e histórico:** ao terminar, quantos arquivos foram para cada pasta; a página Histórico guarda as últimas 50 organizações.
 - **Origem e destino:** organize dentro da própria pasta ou envie tudo para outra.
 - **Arrastar e soltar:** solte uma pasta (ou um arquivo dela) na janela para começar.
-- **Nada é sobrescrito:** arquivos com o mesmo nome viram `nome (1).ext`, `nome (2).ext`…
+- **Arquivos duplicados:** renomear (`nome (1).ext`, o padrão), ignorar ou substituir. O substituído fica guardado e volta se você desfizer.
+- **Subpastas (opcional):** organiza também os arquivos de dentro das pastas da origem.
 - **Desfazer:** reverte a última organização, mesmo depois de fechar e abrir o app.
-- **Notificações:** histórico do que foi feito em cada ação.
-- **Português e inglês.**
+- **Notificações:** avisos no canto da tela e um painel com tudo o que foi feito.
+- **Tema escuro e claro, português e inglês.**
 
-Quando um arquivo não tem a informação necessária (por exemplo, um vídeo sem duração legível), ele vai para uma pasta `unknown`. Apenas os arquivos da pasta escolhida são organizados; subpastas existentes não são alteradas.
+Quando um arquivo não tem a informação necessária (por exemplo, um vídeo sem duração legível), ele vai para uma pasta `unknown`. Por padrão, só os arquivos do primeiro nível da pasta escolhida são organizados, e as subpastas ficam como estão.
 
 As regras completas estão em [docs/organization-rules.md](docs/organization-rules.md).
 
 ### Por que uma nova versão?
 
-A versão 1.0 foi feita com Electron, que embute um navegador inteiro em cada app. A versão 2.0 foi reescrita com [Wails](https://wails.io) (Go + React), que usa o navegador já presente no sistema. O resultado é um app com a mesma interface, **instalador 9× menor** (8,8 MB em vez de 82 MB), **15× menos espaço em disco**, **cerca de 1/3 menos memória** no Windows (177 MB em vez de 260 MB em repouso; metade no pico ao organizar) e organização cerca de 2× mais rápida. Os números estão em [docs/benchmark.md](docs/benchmark.md). Decisão em [docs/adr/0001-electron-para-wails.md](docs/adr/0001-electron-para-wails.md).
+A versão 1.0 foi feita com Electron, que embute um navegador inteiro em cada app. A versão 2.0 foi reescrita com [Wails](https://wails.io) (Go + React), que usa o navegador já presente no sistema. O resultado é um app com as mesmas regras, **instalador 9× menor** (8,8 MB em vez de 82 MB), **15× menos espaço em disco**, **cerca de 1/3 menos memória** no Windows (177 MB em vez de 260 MB em repouso; metade no pico ao organizar) e organização cerca de 2× mais rápida. Depois, a interface ganhou um visual novo, a partir da logo nova ([ADR 0006](docs/adr/0006-design-system-no-lugar-do-tailwind.md)), e os recursos acima. Os números estão em [docs/benchmark.md](docs/benchmark.md). Decisão em [docs/adr/0001-electron-para-wails.md](docs/adr/0001-electron-para-wails.md).
 
 ### Instalação
 
@@ -137,33 +145,37 @@ It is meant for that Downloads or Documents folder that became a mess — no mov
 
 ### Interface
 
-<p align="center">
-  <img src="docs/images/screenshot-main.png" alt="Sortly main screen" width="720" />
-</p>
-
-<p align="center">
-  <img src="docs/images/demo.gif" alt="Demo: choose the criteria, organize and undo" width="720" />
-</p>
-
-| Organization criteria | Notifications |
+| Source preview | Organizing |
 |---|---|
-| <img src="docs/images/screenshot-settings.png" alt="Organization criteria panel" width="360" /> | <img src="docs/images/screenshot-notifications.png" alt="Notifications panel after organizing" width="360" /> |
+| <img src="docs/images/organizar-en.png" alt="Organize page with source, destination and a preview of 1160 files by category" width="360" /> | <img src="docs/images/organizando-en.png" alt="Organizing screen with the animation, the progress bar and the Cancel button" width="360" /> |
+
+| Done | History |
+|---|---|
+| <img src="docs/images/concluido-en.png" alt="Summary with 1160 files organized and the count per folder" width="360" /> | <img src="docs/images/historico-en.png" alt="History page with three organizations" width="360" /> |
+
+| Settings | Light theme |
+|---|---|
+| <img src="docs/images/configuracoes-en.png" alt="Settings: theme, duplicates, subfolders and criteria" width="360" /> | <img src="docs/images/concluido-claro-en.png" alt="Summary screen in the light theme" width="360" /> |
 
 ### Features
 
-- **Combinable criteria:** extension, modification date, size, resolution (images), duration (mp4 videos) and page count (pdf, docx, odt).
+- **Combinable criteria:** type (images, documents, videos…), extension, modification date, size, resolution (images), duration (mp4 videos) and page count (pdf, docx, odt).
+- **Preview:** when you pick the folder, Sortly shows how many files it found and where they will go, before moving anything.
+- **Progress and Cancel:** watch each file go to its folder and stop whenever you want; whatever was already moved can be undone.
+- **Summary and history:** when it finishes, how many files went to each folder; the History page keeps the last 50 organizations.
 - **Source and destination:** organize in place or move everything to another folder.
 - **Drag and drop:** drop a folder (or a file inside it) on the window to start.
-- **Nothing is overwritten:** files with the same name become `name (1).ext`, `name (2).ext`…
+- **Duplicate files:** rename (`name (1).ext`, the default), skip or replace. The replaced file is kept and comes back if you undo.
+- **Subfolders (optional):** also organizes the files inside the source's folders.
 - **Undo:** reverts the last organization, even after closing and reopening the app.
-- **Notifications:** a history of what each action did.
-- **Portuguese and English.**
+- **Notifications:** toasts in the corner and a panel with everything that was done.
+- **Dark and light themes, Portuguese and English.**
 
-When a file lacks the required information (for example, a video without a readable duration), it goes into an `unknown` folder. Only files in the selected folder are organized; existing subfolders are left untouched.
+When a file lacks the required information (for example, a video without a readable duration), it goes into an `unknown` folder. By default, only the files at the top level of the selected folder are organized, and subfolders are left as they are.
 
 ### Why a new version?
 
-Version 1.0 was built with Electron, which bundles a full browser in every app. Version 2.0 was rewritten with [Wails](https://wails.io) (Go + React), which uses the browser already present in the operating system. The result is the same interface with a **9× smaller installer** (8.8 MB instead of 82 MB), **15× less disk space**, **about 1/3 less memory** on Windows (177 MB instead of 260 MB at idle; half at peak while organizing) and roughly 2× faster organizing. See [docs/benchmark.md](docs/benchmark.md).
+Version 1.0 was built with Electron, which bundles a full browser in every app. Version 2.0 was rewritten with [Wails](https://wails.io) (Go + React), which uses the browser already present in the operating system. The result is the same rules with a **9× smaller installer** (8.8 MB instead of 82 MB), **15× less disk space**, **about 1/3 less memory** on Windows (177 MB instead of 260 MB at idle; half at peak while organizing) and roughly 2× faster organizing. The interface then got a new look, based on the new logo, and the features above. See [docs/benchmark.md](docs/benchmark.md).
 
 ### Installation
 

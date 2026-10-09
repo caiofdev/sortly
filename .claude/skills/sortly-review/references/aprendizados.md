@@ -50,4 +50,6 @@ Regras que já falharam neste projeto e que a revisão deve conferir sempre. Cad
 
 - Percorrer pastas recursivamente pede uma lista do que nunca entrar: pastas ocultas (.git, .sortly) guardam o funcionamento de outros programas e do próprio app. — #83 (2026-10-09)
 
+- Dado que a interface traduz (chave de categoria, código) precisa da tradução em **toda** tela que o mostra: ao traduzir na prévia e no resumo, procure as outras (progresso, histórico, notificações). Capturas da tela com dados reais pegam o que o teste unitário não pega. — #84 (2026-10-09)
+
 <!-- Acrescente aqui: - Regra generalizada. — PR/issue (AAAA-MM-DD) -->

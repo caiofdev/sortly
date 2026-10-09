@@ -13,7 +13,7 @@ export const INITIAL_STATE = Object.freeze({
   busy: '',
   unread: false,
   preview: { status: '', totalFiles: 0, folders: [], otherFiles: 0 },
-  progress: { done: 0, total: 0, file: '', folder: '' },
+  progress: { done: 0, total: 0, file: '', folder: '', categoryFolders: false },
   lastResult: null,
   history: [],
   settings: {
