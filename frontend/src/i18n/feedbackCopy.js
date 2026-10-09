@@ -47,6 +47,14 @@ const feedbackCopy = {
         when(
           r.failedFiles,
           `${plural(r.failedFiles, 'não pôde ser movido', 'não puderam ser movidos')}.`
+        ),
+        when(
+          r.skippedDuplicates,
+          `${plural(r.skippedDuplicates, 'já existia no destino e ficou', 'já existiam no destino e ficaram')} na origem.`
+        ),
+        when(
+          r.replacedFiles,
+          `${plural(r.replacedFiles, 'arquivo antigo foi substituído e fica guardado', 'arquivos antigos foram substituídos e ficam guardados')} para o desfazer.`
         )
       )
     }),
@@ -74,6 +82,10 @@ const feedbackCopy = {
           r.skippedMissing,
           `${plural(r.skippedMissing, 'não foi encontrado', 'não foram encontrados')}.`
         ),
+        when(
+          r.restoredReplaced,
+          `${plural(r.restoredReplaced, 'substituído voltou', 'substituídos voltaram')} para o lugar.`
+        ),
         when(r.failedFiles, 'Desfaça de novo para tentar restaurar o resto.')
       )
     }),
@@ -91,6 +103,7 @@ const feedbackCopy = {
       UNKNOWN_CRITERION: 'Critério de organização desconhecido.',
       INVALID_LANGUAGE: 'Idioma não suportado.',
       INVALID_THEME: 'Tema não suportado.',
+      INVALID_DUPLICATES: 'Opção de arquivos duplicados não suportada.',
       DESTINATION_NOT_FOUND: 'A pasta de destino não existe mais.',
       SETTINGS_NOT_SAVED: 'Não foi possível salvar a preferência.'
     }
@@ -120,7 +133,15 @@ const feedbackCopy = {
           r.ignoredWithoutExtension,
           `${plural(r.ignoredWithoutExtension, 'file without extension', 'files without extension')} stayed in the source.`
         ),
-        when(r.failedFiles, `${plural(r.failedFiles, 'file', 'files')} could not be moved.`)
+        when(r.failedFiles, `${plural(r.failedFiles, 'file', 'files')} could not be moved.`),
+        when(
+          r.skippedDuplicates,
+          `${plural(r.skippedDuplicates, 'file was', 'files were')} already in the destination and stayed in the source.`
+        ),
+        when(
+          r.replacedFiles,
+          `${plural(r.replacedFiles, 'old file was', 'old files were')} replaced and kept for undo.`
+        )
       )
     }),
     organizeCanceled: (r) =>
@@ -139,6 +160,10 @@ const feedbackCopy = {
           `${plural(r.renamedOnRestore, 'was', 'were')} renamed to avoid overwriting another.`
         ),
         when(r.skippedMissing, `${plural(r.skippedMissing, 'was', 'were')} not found.`),
+        when(
+          r.restoredReplaced,
+          `${plural(r.restoredReplaced, 'replaced file is', 'replaced files are')} back in place.`
+        ),
         when(r.failedFiles, 'Undo again to try restoring the rest.')
       )
     }),
@@ -155,6 +180,7 @@ const feedbackCopy = {
       UNKNOWN_CRITERION: 'Unknown organization criterion.',
       INVALID_LANGUAGE: 'Unsupported language.',
       INVALID_THEME: 'Unsupported theme.',
+      INVALID_DUPLICATES: 'Unsupported duplicate files option.',
       DESTINATION_NOT_FOUND: 'The destination folder no longer exists.',
       SETTINGS_NOT_SAVED: 'Could not save the preference.'
     }

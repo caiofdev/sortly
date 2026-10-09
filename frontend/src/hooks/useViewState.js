@@ -16,7 +16,7 @@ export const INITIAL_STATE = Object.freeze({
   progress: { done: 0, total: 0, file: '', folder: '' },
   lastResult: null,
   history: [],
-  settings: { language: DEFAULT_LANGUAGE, theme: 'dark', criteria: [] },
+  settings: { language: DEFAULT_LANGUAGE, theme: 'dark', duplicates: 'rename', criteria: [] },
   notifications: []
 });
 
@@ -77,6 +77,7 @@ function useViewState() {
       markNotificationsRead: () => run(Backend.MarkNotificationsRead),
       setLanguage: (language) => run(() => Backend.SetLanguage(language)),
       setTheme: (theme) => run(() => Backend.SetTheme(theme)),
+      setDuplicates: (policy) => run(() => Backend.SetDuplicates(policy)),
       setCriterion: (key, enabled) => run(() => Backend.SetCriterion(key, enabled))
     }),
     [run]

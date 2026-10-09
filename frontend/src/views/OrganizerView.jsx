@@ -20,6 +20,7 @@ const HEADINGS = {
 function OrganizerView({
   language,
   theme,
+  duplicates,
   criteria,
   sourceFolderPath,
   destinationFolderPath,
@@ -36,6 +37,7 @@ function OrganizerView({
   onMarkNotificationsRead,
   onLanguageChange,
   onThemeChange,
+  onDuplicatesChange,
   onCriterionChange,
   onSelectSourceFolder,
   onSelectDestinationFolder,
@@ -121,8 +123,10 @@ function OrganizerView({
             <SettingsPage
               labels={text}
               theme={theme}
+              duplicates={duplicates}
               criteria={criteria}
               onThemeChange={onThemeChange}
+              onDuplicatesChange={onDuplicatesChange}
               onCriterionChange={onCriterionChange}
             />
           )}
