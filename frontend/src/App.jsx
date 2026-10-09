@@ -34,6 +34,7 @@ function App() {
       criteria={criteria}
       sourceFolderPath={state.sourceFolderPath}
       destinationFolderPath={state.destinationFolderPath}
+      preview={state.preview}
       hasUndo={state.hasUndo}
       isLoading={Boolean(state.busy)}
       loadingAction={state.busy || null}

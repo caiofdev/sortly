@@ -17,7 +17,8 @@ const fallbackByAction = {
   drop: 'droppedPathUnexpectedError',
   organize: 'organizeUnexpectedError',
   undo: 'undoUnexpectedError',
-  settings: 'settingsSaveError'
+  settings: 'settingsSaveError',
+  preview: 'previewError'
 };
 
 export function notificationText(notification, copy) {

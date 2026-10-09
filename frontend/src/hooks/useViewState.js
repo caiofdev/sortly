@@ -12,6 +12,7 @@ export const INITIAL_STATE = Object.freeze({
   hasUndo: false,
   busy: '',
   unread: false,
+  preview: { status: '', totalFiles: 0, folders: [], otherFiles: 0 },
   settings: { language: DEFAULT_LANGUAGE, theme: 'dark', criteria: [] },
   notifications: []
 });

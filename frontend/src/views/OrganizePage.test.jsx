@@ -17,6 +17,7 @@ function renderPage(props = {}) {
       labels={pt}
       sourceFolderPath=""
       destinationFolderPath=""
+      preview={{ status: '', totalFiles: 0, folders: [], otherFiles: 0 }}
       hasUndo={false}
       isLoading={false}
       loadingAction=""
