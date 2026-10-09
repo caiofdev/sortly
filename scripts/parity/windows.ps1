@@ -171,6 +171,8 @@ try {
   Set-Record $src $dst
   Start-App
   Set-Criteria @('Duração (.mp4)', 'Páginas', 'Resolução', 'Data', 'Tamanho (MB)', 'Extensão do arquivo')
+  $found = Wait-Until { (Find-Text '^arquivos? encontrados?$') -ne '' } 15
+  Check 'WIN_PREVIEW' ($found -and (Find-Text '^pdf$') -ne '') 'prévia da origem recuperada, com o chip da pasta pdf'
   Click 'Organizar' -Last
   $moved = Wait-Until { (Tree $src).Count -eq 3 }
   $organized = Tree $dst
