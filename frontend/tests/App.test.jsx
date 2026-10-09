@@ -22,6 +22,7 @@ const viewState = (overrides = {}) => ({
   busy: '',
   unread: false,
   preview: { status: '', totalFiles: 0, folders: [], otherFiles: 0 },
+  progress: { done: 0, total: 0, file: '', folder: '' },
   settings: { language: 'pt-BR', theme: 'dark', criteria },
   notifications: [],
   ...overrides
@@ -88,7 +89,7 @@ describe('App', () => {
     mockBackend(
       viewState({
         sourceFolderPath: 'C:\\origem',
-        busy: 'organize',
+        busy: 'restore',
         unread: true,
         notifications: [recovered]
       })
@@ -96,12 +97,12 @@ describe('App', () => {
     window.go.app.App.MarkNotificationsRead = vi
       .fn()
       .mockResolvedValue(
-        viewState({ sourceFolderPath: 'C:\\origem', busy: 'organize', notifications: [recovered] })
+        viewState({ sourceFolderPath: 'C:\\origem', busy: 'restore', notifications: [recovered] })
       );
     const { container } = render(<App />);
 
     expect(await screen.findByText('C:\\origem')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Organizando…' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Desfazendo…' })).toBeDisabled();
     expect(container.querySelector('.st-toast')).toHaveTextContent(
       'Última organização recuperadaVocê pode desfazer essa alteração.'
     );
@@ -136,6 +137,26 @@ describe('App', () => {
     );
     expect(screen.getByText('pdf')).toHaveTextContent('pdf 2');
     expect(screen.getByText('Outras')).toHaveTextContent('Outras 1');
+  });
+
+  it('organizando: mostra o progresso real e Cancelar chama o binding', async () => {
+    const running = viewState({
+      sourceFolderPath: 'C:\\Users\\caio\\Downloads',
+      busy: 'organize',
+      progress: { done: 3, total: 10, file: 'foto.jpg', folder: 'jpg' }
+    });
+    mockBackend(running, { Cancel: vi.fn().mockResolvedValue(running) });
+    render(<App />);
+
+    expect(await screen.findByText('3 / 10')).toBeInTheDocument();
+    expect(screen.getByRole('progressbar', { name: 'Progresso da organização' })).toHaveAttribute(
+      'aria-valuenow',
+      '3'
+    );
+    expect(screen.getByText('foto.jpg')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
+    await vi.waitFor(() => expect(window.go.app.App.Cancel).toHaveBeenCalled());
   });
 
   it('ações chamam os bindings e mostram o estado devolvido', async () => {

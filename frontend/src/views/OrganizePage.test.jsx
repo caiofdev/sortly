@@ -18,6 +18,7 @@ function renderPage(props = {}) {
       sourceFolderPath=""
       destinationFolderPath=""
       preview={{ status: '', totalFiles: 0, folders: [], otherFiles: 0 }}
+      progress={{ done: 0, total: 0, file: '', folder: '' }}
       hasUndo={false}
       isLoading={false}
       loadingAction=""
@@ -56,8 +57,23 @@ describe('OrganizePage', () => {
     expect(onSelectSourceFolder).toHaveBeenCalled();
   });
 
-  it('organizando: link do destino desabilitado', () => {
-    renderPage({ isLoading: true, loadingAction: 'organize', destinationFolderPath: 'C:\\d' });
+  it('desfazendo: link do destino desabilitado', () => {
+    renderPage({ isLoading: true, loadingAction: 'restore', destinationFolderPath: 'C:\\d' });
     expect(screen.getByRole('button', { name: pt.destinationChange })).toBeDisabled();
+  });
+
+  it('organizando: o card mostra só o progresso e o Cancelar', () => {
+    const onCancel = vi.fn();
+    renderPage({
+      isLoading: true,
+      loadingAction: 'organize',
+      sourceFolderPath: 'C:\\origem',
+      progress: { done: 1, total: 4, file: 'a.pdf', folder: 'pdf' },
+      onCancel
+    });
+    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '1');
+    expect(screen.queryByText(pt.dropTitle)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: pt.cancel }));
+    expect(onCancel).toHaveBeenCalled();
   });
 });

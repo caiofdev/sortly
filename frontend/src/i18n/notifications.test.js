@@ -41,6 +41,9 @@ describe('notificationText', () => {
       title: 'Organização desfeita',
       text: '2 arquivos voltaram para a origem.'
     });
+    expect(
+      notificationText({ code: 'ORGANIZE_CANCELED', organize: { movedFiles: 4 } }, pt).title
+    ).toBe('Interrompido: 4 arquivos movidos');
   });
 
   it.each([

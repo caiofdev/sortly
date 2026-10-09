@@ -35,6 +35,7 @@ function App() {
       sourceFolderPath={state.sourceFolderPath}
       destinationFolderPath={state.destinationFolderPath}
       preview={state.preview}
+      progress={state.progress}
       hasUndo={state.hasUndo}
       isLoading={Boolean(state.busy)}
       loadingAction={state.busy || null}
@@ -49,6 +50,7 @@ function App() {
       onSelectDestinationFolder={actions.selectDestination}
       onOrganizeFiles={actions.organize}
       onUndoLastOrganization={actions.undo}
+      onCancel={actions.cancel}
     />
   );
 }
