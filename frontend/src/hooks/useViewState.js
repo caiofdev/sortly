@@ -15,6 +15,7 @@ export const INITIAL_STATE = Object.freeze({
   preview: { status: '', totalFiles: 0, folders: [], otherFiles: 0 },
   progress: { done: 0, total: 0, file: '', folder: '' },
   lastResult: null,
+  history: [],
   settings: { language: DEFAULT_LANGUAGE, theme: 'dark', criteria: [] },
   notifications: []
 });
