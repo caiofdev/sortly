@@ -199,6 +199,11 @@ try {
   $restored = Wait-Until { (Compare-Object $before (Tree $src)) -eq $null }
   Check 'WIN_UNDO_RESTART' ($canUndo -and $restored) 'reaberto: desfazer ativo e árvore original restaurada'
   Check 'WIN_UNDO' ($restored -and -not (Test-Path $dst) -or @(Get-ChildItem $dst -Recurse -File -ErrorAction SilentlyContinue).Count -eq 0) 'pastas criadas removidas do destino'
+  # O histórico sobrevive ao reabrir, e o desfazer marca a organização como desfeita (#80).
+  Click 'Histórico'
+  $historyRow = (Find-Text "^$([regex]::Escape($src))$") -ne '' -and (Find-Text '^Desfeito$') -ne ''
+  Check 'WIN_HISTORY' $historyRow 'histórico com a origem e o status Desfeito depois de reabrir e desfazer'
+  Click 'Organizar'
 
   # --- 2) Último critério não pode ser desmarcado ---
   Set-Criteria @('Extensão do arquivo')
