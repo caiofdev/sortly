@@ -126,12 +126,12 @@ function Criterion([string]$label) {
 
 function Set-Criteria([string[]]$on) {
   Click 'Configurações'
-  foreach ($label in 'Duração (.mp4)', 'Páginas', 'Resolução', 'Data', 'Tamanho (MB)', 'Extensão do arquivo') {
+  foreach ($label in 'Tipo', 'Duração (.mp4)', 'Páginas', 'Resolução', 'Data', 'Tamanho (MB)', 'Extensão do arquivo') {
     $toggle = Criterion $label
     $want = $on -contains $label
     if (($toggle.Current.ToggleState -eq 'On') -ne $want -and $want) { $toggle.Toggle(); Start-Sleep -Milliseconds 200 }
   }
-  foreach ($label in 'Duração (.mp4)', 'Páginas', 'Resolução', 'Data', 'Tamanho (MB)', 'Extensão do arquivo') {
+  foreach ($label in 'Tipo', 'Duração (.mp4)', 'Páginas', 'Resolução', 'Data', 'Tamanho (MB)', 'Extensão do arquivo') {
     $toggle = Criterion $label
     if ($toggle.Current.ToggleState -eq 'On' -and $on -notcontains $label) { $toggle.Toggle(); Start-Sleep -Milliseconds 200 }
   }
@@ -271,6 +271,18 @@ try {
   Click 'Desfazer'
   $back = Wait-Until { @(Get-ChildItem $big -File).Count -eq 4000 }
   Check 'WIN_CANCEL' ($moving -and $notice -match '^Interrompido: \d+ arquivos movidos$' -and $left -gt 0 -and $left -lt 4000 -and $back) "$notice; movendo: $moving; ficaram $left na origem; desfeito: $back"
+
+  # --- 6c) Critério Tipo: categorias no 1º nível e o sem extensão em other (#81) ---
+  Stop-App
+  $typ = "$work\tipo"; New-Dataset $typ
+  Set-Record $typ $typ
+  Start-App
+  Set-Criteria @('Tipo')
+  Click 'Organizar' -Last
+  $typed = Wait-Until { Test-Path "$typ\other\LEIAME" }
+  $tree = Tree $typ
+  Check 'WIN_CRIT_TYPE' ($typed -and $tree -contains 'images\3x2.png' -and $tree -contains 'documents\nota.txt' -and $tree -contains 'videos\video-only-59s.mp4') 'images, documents, videos e LEIAME em other'
+
   # O desfazer apagou o registro; o passo 7 reabre o app e precisa da origem do B8.
   Set-Criteria @('Resolução')
   Stop-App
