@@ -7,8 +7,9 @@ import (
 	"strings"
 )
 
-// Como no protótipo: até 6 pastas e um chip "outras" com o resto (#77).
-const MaxPreviewFolders = 6
+// Sete, para as sete categorias do critério Tipo caberem sempre, como no
+// protótipo; o resto vira um chip "demais pastas" (#77, #81).
+const MaxPreviewFolders = 7
 
 // Name vazio são os arquivos que vão para a raiz do destino, sem subpasta (#77).
 type FolderCount struct {

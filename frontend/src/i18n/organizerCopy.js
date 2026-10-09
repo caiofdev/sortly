@@ -32,7 +32,7 @@ const organizerCopy = {
     previewFound: 'arquivos encontrados',
     previewFoundOne: 'arquivo encontrado',
     previewRoot: 'Sem subpasta',
-    previewOthers: 'Outras',
+    previewOthers: 'Demais pastas',
     categories: {
       images: 'Imagens',
       documents: 'Documentos',
@@ -116,7 +116,7 @@ const organizerCopy = {
     previewFound: 'files found',
     previewFoundOne: 'file found',
     previewRoot: 'No subfolder',
-    previewOthers: 'Other',
+    previewOthers: 'More folders',
     categories: {
       images: 'Images',
       documents: 'Documents',

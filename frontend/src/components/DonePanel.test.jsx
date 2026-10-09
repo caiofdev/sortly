@@ -93,6 +93,7 @@ describe('DonePanel', () => {
       result: result({ categoryFolders: true, folders: [{ name: 'documents', count: 3 }] })
     });
     expect(rows(container)[0][0]).toBe('Documentos');
+    expect(container.querySelector('.st-done__folder')).toHaveAttribute('title', 'documents');
   });
 
   it('"Outras" vira mais uma barra', () => {

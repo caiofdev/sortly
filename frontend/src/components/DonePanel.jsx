@@ -6,10 +6,12 @@ import { folderName } from './OrganizingPanel';
 // As barras são relativas à maior pasta, como no protótipo (#79).
 export const barWidth = (count, max) => `${max > 0 ? Math.round((count / max) * 100) : 0}%`;
 
-function FolderBar({ name, count, max }) {
+function FolderBar({ name, folder, count, max }) {
   return (
     <div className="st-done__row">
-      <span className="st-done__folder">{name}</span>
+      <span className="st-done__folder" title={folder}>
+        {name}
+      </span>
       <div className="st-done__track">
         <div className="st-done__bar" style={{ width: barWidth(count, max) }} />
       </div>
@@ -63,6 +65,7 @@ function DonePanel({
           <FolderBar
             key={f.name}
             name={folderLabel(f.name, result.categoryFolders, labels)}
+            folder={f.name || undefined}
             count={f.count}
             max={max}
           />

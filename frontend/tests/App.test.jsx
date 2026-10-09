@@ -138,7 +138,7 @@ describe('App', () => {
       '3 arquivos encontrados'
     );
     expect(screen.getByText('pdf')).toHaveTextContent('pdf 2');
-    expect(screen.getByText('Outras')).toHaveTextContent('Outras 1');
+    expect(screen.getByText('Demais pastas')).toHaveTextContent('Demais pastas 1');
   });
 
   it('organizando: mostra o progresso real e Cancelar chama o binding', async () => {
