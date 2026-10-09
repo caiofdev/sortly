@@ -6,25 +6,48 @@ import SettingsPage from './SettingsPage';
 const pt = organizerCopy['pt-BR'];
 const KEYS = ['byType', 'byDuration', 'byPages', 'byResolution', 'byDate', 'bySize', 'byExtension'];
 
-function renderSettings(criteria, theme = 'dark', duplicates = 'rename') {
+function renderSettings(
+  criteria,
+  theme = 'dark',
+  duplicates = 'rename',
+  includeSubfolders = false
+) {
   const onCriterionChange = vi.fn();
   const onThemeChange = vi.fn();
   const onDuplicatesChange = vi.fn();
+  const onIncludeSubfoldersChange = vi.fn();
   render(
     <SettingsPage
       labels={pt}
       theme={theme}
       duplicates={duplicates}
+      includeSubfolders={includeSubfolders}
       criteria={criteria}
       onThemeChange={onThemeChange}
       onDuplicatesChange={onDuplicatesChange}
+      onIncludeSubfoldersChange={onIncludeSubfoldersChange}
       onCriterionChange={onCriterionChange}
     />
   );
-  return Object.assign(onCriterionChange, { onThemeChange, onDuplicatesChange });
+  return Object.assign(onCriterionChange, {
+    onThemeChange,
+    onDuplicatesChange,
+    onIncludeSubfoldersChange
+  });
 }
 
 describe('SettingsPage', () => {
+  it.each([
+    [false, 'false', true],
+    [true, 'true', false]
+  ])('subpastas = %s: switch marcado = %s; clicar pede %s', (on, checked, next) => {
+    const { onIncludeSubfoldersChange } = renderSettings([], 'dark', 'rename', on);
+    const control = screen.getByRole('switch', { name: pt.settingsSubfolders });
+    expect(control).toHaveAttribute('aria-checked', checked);
+    fireEvent.click(control);
+    expect(onIncludeSubfoldersChange).toHaveBeenCalledWith(next);
+  });
+
   it.each([
     ['rename', pt.duplicatesRename],
     ['skip', pt.duplicatesSkip],
@@ -60,6 +83,7 @@ describe('SettingsPage', () => {
   it('um switch por critério, na ordem do backend', () => {
     renderSettings(KEYS.map((key) => ({ key, enabled: false, locked: false })));
     expect(screen.getAllByRole('switch').map((s) => s.getAttribute('aria-label'))).toEqual([
+      pt.settingsSubfolders,
       'Tipo',
       'Duração (.mp4)',
       'Páginas',

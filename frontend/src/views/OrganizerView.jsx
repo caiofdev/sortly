@@ -21,6 +21,7 @@ function OrganizerView({
   language,
   theme,
   duplicates,
+  includeSubfolders,
   criteria,
   sourceFolderPath,
   destinationFolderPath,
@@ -38,6 +39,7 @@ function OrganizerView({
   onLanguageChange,
   onThemeChange,
   onDuplicatesChange,
+  onIncludeSubfoldersChange,
   onCriterionChange,
   onSelectSourceFolder,
   onSelectDestinationFolder,
@@ -124,9 +126,11 @@ function OrganizerView({
               labels={text}
               theme={theme}
               duplicates={duplicates}
+              includeSubfolders={includeSubfolders}
               criteria={criteria}
               onThemeChange={onThemeChange}
               onDuplicatesChange={onDuplicatesChange}
+              onIncludeSubfoldersChange={onIncludeSubfoldersChange}
               onCriterionChange={onCriterionChange}
             />
           )}

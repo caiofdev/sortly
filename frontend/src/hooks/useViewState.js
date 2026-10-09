@@ -16,7 +16,13 @@ export const INITIAL_STATE = Object.freeze({
   progress: { done: 0, total: 0, file: '', folder: '' },
   lastResult: null,
   history: [],
-  settings: { language: DEFAULT_LANGUAGE, theme: 'dark', duplicates: 'rename', criteria: [] },
+  settings: {
+    language: DEFAULT_LANGUAGE,
+    theme: 'dark',
+    duplicates: 'rename',
+    includeSubfolders: false,
+    criteria: []
+  },
   notifications: []
 });
 
@@ -78,6 +84,7 @@ function useViewState() {
       setLanguage: (language) => run(() => Backend.SetLanguage(language)),
       setTheme: (theme) => run(() => Backend.SetTheme(theme)),
       setDuplicates: (policy) => run(() => Backend.SetDuplicates(policy)),
+      setIncludeSubfolders: (on) => run(() => Backend.SetIncludeSubfolders(on)),
       setCriterion: (key, enabled) => run(() => Backend.SetCriterion(key, enabled))
     }),
     [run]

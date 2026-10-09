@@ -9,9 +9,11 @@ function SettingsPage({
   labels,
   theme,
   duplicates,
+  includeSubfolders,
   criteria,
   onThemeChange,
   onDuplicatesChange,
+  onIncludeSubfoldersChange,
   onCriterionChange
 }) {
   const themes = [
@@ -49,6 +51,18 @@ function SettingsPage({
           options={duplicateOptions}
           value={duplicates}
           onChange={onDuplicatesChange}
+        />
+      </div>
+
+      <div className="st-settings__row">
+        <div>
+          <p className="st-settings__title">{labels.settingsSubfolders}</p>
+          <p className="st-settings__hint">{labels.settingsHintSubfolders}</p>
+        </div>
+        <Switch
+          checked={includeSubfolders}
+          label={labels.settingsSubfolders}
+          onChange={onIncludeSubfoldersChange}
         />
       </div>
 
