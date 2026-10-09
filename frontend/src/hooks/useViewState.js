@@ -14,6 +14,7 @@ export const INITIAL_STATE = Object.freeze({
   unread: false,
   preview: { status: '', totalFiles: 0, folders: [], otherFiles: 0 },
   progress: { done: 0, total: 0, file: '', folder: '' },
+  lastResult: null,
   settings: { language: DEFAULT_LANGUAGE, theme: 'dark', criteria: [] },
   notifications: []
 });
@@ -69,6 +70,8 @@ function useViewState() {
       organize: () => run(Backend.Organize),
       undo: () => run(Backend.Undo),
       cancel: () => run(Backend.Cancel),
+      openDestination: () => run(Backend.OpenDestination),
+      startOver: () => run(Backend.StartOver),
       clearNotifications: () => run(Backend.ClearNotifications),
       markNotificationsRead: () => run(Backend.MarkNotificationsRead),
       setLanguage: (language) => run(() => Backend.SetLanguage(language)),

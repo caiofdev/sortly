@@ -16,6 +16,7 @@ const BACKEND_CODES = [
   'UNKNOWN_CRITERION',
   'INVALID_LANGUAGE',
   'INVALID_THEME',
+  'DESTINATION_NOT_FOUND',
   'SETTINGS_NOT_SAVED'
 ];
 const NOTICE_TEXTS = ['sourceRequired', 'recovered', 'unexpectedError'];

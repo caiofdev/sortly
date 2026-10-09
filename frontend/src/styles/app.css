@@ -354,3 +354,95 @@ button {
     max-width: 312px;
   }
 }
+
+.st-done {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.st-done__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-4);
+}
+
+.st-done__number {
+  margin: 0;
+  font: 600 64px/64px var(--font-display);
+  color: var(--brand-text);
+}
+
+.st-done__text {
+  padding-bottom: 6px;
+}
+
+.st-done__title {
+  margin: 0;
+  font: 700 17px/24px var(--font-sans);
+  color: var(--ink-100);
+}
+
+.st-done__sub {
+  margin: 0;
+  font: 400 14px/20px var(--font-sans);
+  color: var(--ink-200);
+  overflow-wrap: anywhere;
+}
+
+.st-done__sub--err {
+  color: var(--danger);
+}
+
+.st-done__folders {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: var(--space-4);
+  background: var(--bg-200);
+  border: 1px solid var(--line-100);
+  border-radius: var(--radius-md);
+}
+
+.st-done__folders:empty {
+  display: none;
+}
+
+.st-done__row {
+  display: grid;
+  grid-template-columns: minmax(0, 140px) minmax(0, 1fr) 48px;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.st-done__folder {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 500 13px/20px var(--font-mono);
+  color: var(--ink-100);
+}
+
+.st-done__track {
+  height: 8px;
+  background: var(--bg-300);
+}
+
+.st-done__bar {
+  height: 8px;
+  background: var(--brand);
+}
+
+.st-done__count {
+  font: 500 14px/20px var(--font-display);
+  color: var(--ink-100);
+  text-align: right;
+}
+
+.st-done__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+}

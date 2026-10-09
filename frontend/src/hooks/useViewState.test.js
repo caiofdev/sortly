@@ -14,6 +14,8 @@ vi.mock('../../wailsjs/go/app/App', () => ({
   ClearNotifications: vi.fn(),
   MarkNotificationsRead: vi.fn(),
   Cancel: vi.fn(),
+  OpenDestination: vi.fn(),
+  StartOver: vi.fn(),
   SetTheme: vi.fn(),
   SetLanguage: vi.fn(),
   SetCriterion: vi.fn()
@@ -93,6 +95,8 @@ describe('useViewState', () => {
     ['organize', 'Organize', [], { hasUndo: true }],
     ['undo', 'Undo', [], { hasUndo: false }],
     ['cancel', 'Cancel', [], { busy: '' }],
+    ['openDestination', 'OpenDestination', [], { busy: '' }],
+    ['startOver', 'StartOver', [], { sourceFolderPath: '' }],
     ['clearNotifications', 'ClearNotifications', [], { notifications: [] }],
     ['markNotificationsRead', 'MarkNotificationsRead', [], { unread: false }],
     ['setLanguage', 'SetLanguage', ['en'], { settings: { language: 'en', criteria: [] } }],

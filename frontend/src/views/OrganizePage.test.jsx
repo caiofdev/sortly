@@ -19,6 +19,7 @@ function renderPage(props = {}) {
       destinationFolderPath=""
       preview={{ status: '', totalFiles: 0, folders: [], otherFiles: 0 }}
       progress={{ done: 0, total: 0, file: '', folder: '' }}
+      lastResult={null}
       hasUndo={false}
       isLoading={false}
       loadingAction=""
@@ -60,6 +61,25 @@ describe('OrganizePage', () => {
   it('desfazendo: link do destino desabilitado', () => {
     renderPage({ isLoading: true, loadingAction: 'restore', destinationFolderPath: 'C:\\d' });
     expect(screen.getByRole('button', { name: pt.destinationChange })).toBeDisabled();
+  });
+
+  it('com resultado: o card mostra o Concluído no lugar da configuração', () => {
+    const onStartOver = vi.fn();
+    renderPage({
+      hasUndo: true,
+      lastResult: {
+        movedFiles: 3,
+        failedFiles: 0,
+        destinationFolderPath: 'C:\\destino',
+        folders: [{ name: 'pdf', count: 3 }],
+        otherFiles: 0
+      },
+      onStartOver
+    });
+    expect(screen.getByText(pt.doneTitle)).toBeInTheDocument();
+    expect(screen.queryByText(pt.dropTitle)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: pt.startOver }));
+    expect(onStartOver).toHaveBeenCalled();
   });
 
   it('organizando: o card mostra só o progresso e o Cancelar', () => {

@@ -23,6 +23,7 @@ const viewState = (overrides = {}) => ({
   unread: false,
   preview: { status: '', totalFiles: 0, folders: [], otherFiles: 0 },
   progress: { done: 0, total: 0, file: '', folder: '' },
+  lastResult: null,
   settings: { language: 'pt-BR', theme: 'dark', criteria },
   notifications: [],
   ...overrides
@@ -157,6 +158,36 @@ describe('App', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
     await vi.waitFor(() => expect(window.go.app.App.Cancel).toHaveBeenCalled());
+  });
+
+  it('Concluído: abrir o destino e organizar outra pasta chamam os bindings', async () => {
+    const done = viewState({
+      sourceFolderPath: 'C:\\origem',
+      hasUndo: true,
+      lastResult: {
+        movedFiles: 12,
+        failedFiles: 0,
+        destinationFolderPath: 'C:\\origem',
+        folders: [{ name: 'pdf', count: 12 }],
+        otherFiles: 0
+      }
+    });
+    const startOver = viewState({ hasUndo: true });
+    mockBackend(done, {
+      OpenDestination: vi.fn().mockResolvedValue(done),
+      StartOver: vi.fn().mockResolvedValue(startOver)
+    });
+    render(<App />);
+
+    expect(await screen.findByText('Pronto! Arquivos organizados.')).toBeInTheDocument();
+    expect(document.querySelector('.st-done__number')).toHaveTextContent('12');
+    fireEvent.click(screen.getByRole('button', { name: 'Abrir pasta de destino' }));
+    await vi.waitFor(() => expect(window.go.app.App.OpenDestination).toHaveBeenCalled());
+
+    fireEvent.click(screen.getByRole('button', { name: 'Organizar outra pasta' }));
+    expect(
+      await screen.findByText('Arraste e solte uma pasta ou arquivo aqui')
+    ).toBeInTheDocument();
   });
 
   it('ações chamam os bindings e mostram o estado devolvido', async () => {
