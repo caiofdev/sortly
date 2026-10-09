@@ -116,6 +116,7 @@ Os erros costumam aparecer nas fronteiras. Para cada fronteira testamos **o limi
 | Conflito de nomes | nome ocupado | livre, `(1)`, `(1)` e `(2)` ocupados, limite de tentativas |
 | Critérios | pelo menos 1 marcado | 0, 1 e 2 marcados; todos os 6 |
 | Cobertura (CI) | 85% | 84,9% falha; 85,0% passa |
+| Histórico | últimas 50 organizações | 49, 50 e 51 entradas |
 | Interface | histórico de 80 notificações; um toast por vez; toast some em 4 s | 80 / 81 notificações; 0, 1 e 2 toasts novos; 3 999 / 4 000 ms |
 
 As regras completas, com os valores esperados, estão em [organization-rules.md](organization-rules.md).

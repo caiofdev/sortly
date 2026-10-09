@@ -18,6 +18,7 @@ Mantido por Caio Reis & Claude.
 - Ao escolher a pasta de origem, o app mostra quantos arquivos encontrou e em quais pastas eles vão ficar, antes de organizar. A prévia se atualiza ao mudar os critérios.
 - Enquanto organiza, o app mostra os arquivos indo de uma pasta para a outra, quantos faltam e qual arquivo está sendo movido. Dá para cancelar no meio: o que já foi movido pode ser desfeito.
 - Ao terminar, uma tela de resumo mostra quantos arquivos foram organizados e em quais pastas, com os botões "Abrir pasta de destino", "Desfazer" e "Organizar outra pasta".
+- Página Histórico, com as últimas 50 organizações: quando, a pasta, quantos arquivos e se foi concluída, desfeita ou interrompida. O histórico fica salvo na pasta `.sortly` do usuário.
 
 ### Corrigido
 - Ao mover para outro disco ou pendrive, o arquivo original só é apagado depois que a cópia está gravada de fato. Uma queda de energia ou um pendrive removido logo depois não perde mais o arquivo.
