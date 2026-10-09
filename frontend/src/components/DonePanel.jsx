@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { FolderIcon, UndoIcon } from './icons';
 import { folderName } from './OrganizingPanel';
 
@@ -28,10 +29,17 @@ function DonePanel({
 }) {
   const max = Math.max(result.otherFiles, ...result.folders.map((f) => f.count));
   const restoring = loadingAction === 'restore';
+  const head = useRef(null);
+
+  // O Cancelar, que tinha o foco, some quando a organização acaba; o foco vai
+  // para o resumo, e o leitor de tela anuncia o resultado (#79).
+  useEffect(() => {
+    head.current.focus();
+  }, []);
 
   return (
     <div className="st-done">
-      <div className="st-done__head">
+      <div className="st-done__head" ref={head} tabIndex={-1}>
         <p className="st-done__number">{result.movedFiles}</p>
         <div className="st-done__text">
           <p className="st-done__title">

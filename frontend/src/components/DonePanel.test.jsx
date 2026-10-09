@@ -93,6 +93,11 @@ describe('DonePanel', () => {
     expect(rows(container).at(-1)).toEqual([pt.previewOthers, '8', '100%']);
   });
 
+  it('ao aparecer, o foco vai para o resumo', () => {
+    const { container } = renderDone();
+    expect(container.querySelector('.st-done__head')).toHaveFocus();
+  });
+
   it('os três botões chamam as ações', () => {
     const { onOpenDestination, onUndo, onStartOver } = renderDone();
     fireEvent.click(screen.getByRole('button', { name: pt.openDestination }));
