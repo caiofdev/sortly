@@ -24,4 +24,17 @@ describe('ProgressBlocks', () => {
     expect(container.querySelectorAll('.st-blocks__b')).toHaveLength(BLOCKS);
     expect(container.querySelectorAll('.st-blocks__b--on')).toHaveLength(16);
   });
+
+  it('total 1 concluído: todos os blocos cheios', () => {
+    const { container } = render(<ProgressBlocks label="Progresso" done={1} total={1} />);
+    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuemax', '1');
+    expect(container.querySelectorAll('.st-blocks__b--on')).toHaveLength(BLOCKS);
+  });
+
+  it('sem total: barra indeterminada, sem valor', () => {
+    render(<ProgressBlocks label="Progresso" done={0} total={0} />);
+    const bar = screen.getByRole('progressbar', { name: 'Progresso' });
+    expect(bar).not.toHaveAttribute('aria-valuenow');
+    expect(bar).not.toHaveAttribute('aria-valuemax');
+  });
 });

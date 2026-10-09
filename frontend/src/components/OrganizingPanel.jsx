@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import FileFlow from './FileFlow';
 import ProgressBlocks from './ProgressBlocks';
 
@@ -6,6 +7,14 @@ export const folderName = (path) => path.split(/[\\/]/).filter(Boolean).pop() ??
 
 function OrganizingPanel({ labels, progress, sourceFolderPath, destinationFolderPath, onCancel }) {
   const { done, total, file, folder } = progress;
+  const cancel = useRef(null);
+
+  // O botão Organizar, que tinha o foco, some quando o painel aparece; sem isto o
+  // foco cairia no <body> e o teclado perderia o Cancelar (#78).
+  useEffect(() => {
+    cancel.current.focus();
+  }, []);
+
   return (
     <div className="st-running">
       <div className="st-running__head">
@@ -36,7 +45,7 @@ function OrganizingPanel({ labels, progress, sourceFolderPath, destinationFolder
       </p>
 
       <div className="st-actions">
-        <button type="button" className="st-btn st-btn--ghost" onClick={onCancel}>
+        <button ref={cancel} type="button" className="st-btn st-btn--ghost" onClick={onCancel}>
           {labels.cancel}
         </button>
       </div>

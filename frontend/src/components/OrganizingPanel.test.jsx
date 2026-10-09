@@ -61,6 +61,11 @@ describe('OrganizingPanel', () => {
     );
   });
 
+  it('ao aparecer, o foco vai para o Cancelar', () => {
+    renderPanel({ total: 0 });
+    expect(screen.getByRole('button', { name: pt.cancel })).toHaveFocus();
+  });
+
   it('Cancelar pede o cancelamento', () => {
     const { container, onCancel } = renderPanel(
       { done: 1, total: 2 },
