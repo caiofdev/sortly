@@ -1,3 +1,4 @@
+import DonePanel from '../components/DonePanel';
 import DragDropPanel from '../components/DragDropPanel';
 import OrganizerActions from '../components/OrganizerActions';
 import OrganizingPanel from '../components/OrganizingPanel';
@@ -10,6 +11,7 @@ function OrganizePage({
   destinationFolderPath,
   preview,
   progress,
+  lastResult,
   hasUndo,
   isLoading,
   loadingAction,
@@ -17,7 +19,9 @@ function OrganizePage({
   onSelectDestinationFolder,
   onOrganizeFiles,
   onUndoLastOrganization,
-  onCancel
+  onCancel,
+  onOpenDestination,
+  onStartOver
 }) {
   // Enquanto organiza, o card mostra só o progresso, como no protótipo (#78).
   if (loadingAction === 'organize') {
@@ -29,6 +33,25 @@ function OrganizePage({
           sourceFolderPath={sourceFolderPath}
           destinationFolderPath={destinationFolderPath}
           onCancel={onCancel}
+        />
+      </section>
+    );
+  }
+
+  // Depois de organizar, o card mostra o resumo até "Organizar outra pasta" ou
+  // Desfazer; quem decide é o backend, pelo lastResult (#79).
+  if (lastResult) {
+    return (
+      <section className="st-card">
+        <DonePanel
+          labels={labels}
+          result={lastResult}
+          hasUndo={hasUndo}
+          isLoading={isLoading}
+          loadingAction={loadingAction}
+          onOpenDestination={onOpenDestination}
+          onUndo={onUndoLastOrganization}
+          onStartOver={onStartOver}
         />
       </section>
     );

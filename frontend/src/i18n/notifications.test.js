@@ -54,6 +54,7 @@ describe('notificationText', () => {
     ['undo', pt.undoUnexpectedError],
     ['settings', pt.settingsSaveError],
     ['preview', pt.previewError],
+    ['openDestination', pt.openDestinationError],
     ['desconhecida', pt.unexpectedError]
   ])('UNEXPECTED na ação %s usa o texto padrão da ação', (action, expected) => {
     expect(notificationText({ code: 'UNEXPECTED', action }, pt)).toEqual({

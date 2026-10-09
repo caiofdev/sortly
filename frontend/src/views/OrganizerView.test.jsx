@@ -16,6 +16,7 @@ function renderView(props = {}) {
       sourceFolderPath=""
       destinationFolderPath=""
       preview={{ status: '', totalFiles: 0, folders: [], otherFiles: 0 }}
+      lastResult={null}
       hasUndo={false}
       isLoading={false}
       loadingAction=""

@@ -438,6 +438,123 @@ func TestCancel(t *testing.T) {
 	}
 }
 
+func TestLastResult(t *testing.T) {
+	tests := []struct {
+		name   string
+		result organizer.Result
+		err    error
+		want   bool
+	}{
+		{"arquivos movidos mostram o Concluído", organizer.Result{MovedFiles: 1, CanUndo: true}, nil, true},
+		{"com falhas, mas algo movido, também", organizer.Result{MovedFiles: 2, FailedFiles: 1, CanUndo: true}, nil, true},
+		{"nada movido fica na tela inicial", organizer.Result{}, nil, false},
+		{"cancelado fica na tela inicial", organizer.Result{MovedFiles: 3, Canceled: true, CanUndo: true}, context.Canceled, false},
+		{"erro fica na tela inicial", organizer.Result{MovedFiles: 1}, organizer.ErrRecordNotSaved, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			a, _ := newTestApp(Deps{Organizer: &fakeOrganizer{result: tt.result, err: tt.err}})
+			a.state.SourceFolderPath = `C:\origem`
+
+			got := a.Organize()
+
+			if (got.LastResult != nil) != tt.want {
+				t.Fatalf("lastResult = %+v, want presente = %v", got.LastResult, tt.want)
+			}
+		})
+	}
+}
+
+func TestLastResultIsCleared(t *testing.T) {
+	tests := []struct {
+		name   string
+		action func(a *App) ViewState
+	}{
+		{"desfazer", func(a *App) ViewState { return a.Undo() }},
+		{"organizar outra pasta", func(a *App) ViewState { return a.StartOver() }},
+		{"escolher outra origem", func(a *App) ViewState { return a.SelectSource() }},
+		{"arrastar outra origem", func(a *App) ViewState { return a.DropPaths([]string{t.TempDir()}) }},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			a, _ := newTestApp(Deps{
+				Organizer: &fakeOrganizer{result: organizer.Result{MovedFiles: 1, CanUndo: true}},
+				Undoer:    fakeUndoer{result: undo.Result{RestoredFiles: 1}},
+				PickDir:   func(context.Context, string) (string, error) { return `C:\outra`, nil },
+			})
+			a.state.SourceFolderPath = `C:\origem`
+			a.Organize()
+
+			if got := tt.action(a); got.LastResult != nil {
+				t.Fatalf("o Concluído deveria sumir: %+v", got.LastResult)
+			}
+		})
+	}
+}
+
+func TestStartOver(t *testing.T) {
+	a, _ := newTestApp(Deps{Organizer: &fakeOrganizer{result: organizer.Result{MovedFiles: 1, CanUndo: true}}})
+	a.state.SourceFolderPath, a.state.DestinationFolderPath = `C:\origem`, `C:\destino`
+	a.Organize()
+
+	got := a.StartOver()
+
+	if got.SourceFolderPath != "" || got.DestinationFolderPath != `C:\destino` || !got.HasUndo || got.Preview.Status != PreviewNone {
+		t.Fatalf("volta à tela inicial sem origem, com o destino e o desfazer: %+v", got)
+	}
+}
+
+func TestOpenDestinationWithoutPath(t *testing.T) {
+	opened := 0
+	a, _ := newTestApp(Deps{
+		Organizer:  &fakeOrganizer{result: organizer.Result{MovedFiles: 1, CanUndo: true}},
+		OpenFolder: func(string) error { opened++; return nil },
+	})
+	a.state.SourceFolderPath = "origem"
+	a.Organize()
+
+	if a.OpenDestination(); opened != 0 {
+		t.Fatal("resultado sem destino não abre nada")
+	}
+}
+
+func TestOpenDestination(t *testing.T) {
+	done := organizer.Result{MovedFiles: 1, CanUndo: true, DestinationFolderPath: `C:\destino`}
+	tests := []struct {
+		name     string
+		organize bool
+		openErr  error
+		want     []string
+		wantCode string
+	}{
+		{"sem resultado, não abre nada", false, nil, nil, ""},
+		{"abre o destino do resultado", true, nil, []string{`C:\destino`}, ""},
+		{"falha vira aviso", true, ErrDestinationNotFound, []string{`C:\destino`}, "DESTINATION_NOT_FOUND"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var opened []string
+			a, _ := newTestApp(Deps{
+				Organizer:  &fakeOrganizer{result: done},
+				OpenFolder: func(path string) error { opened = append(opened, path); return tt.openErr },
+			})
+			a.state.SourceFolderPath = `C:\origem`
+			if tt.organize {
+				a.Organize()
+			}
+
+			got := a.OpenDestination()
+
+			if !reflect.DeepEqual(opened, tt.want) {
+				t.Fatalf("abriu %v, want %v", opened, tt.want)
+			}
+			if tt.wantCode != "" && (last(got).Code != tt.wantCode || last(got).Action != ActionOpenDestination) {
+				t.Fatalf("aviso = %+v", last(got))
+			}
+		})
+	}
+}
+
 func TestCancelWithoutOrganizeDoesNothing(t *testing.T) {
 	a, _ := newTestApp(Deps{})
 	if got := a.Cancel(); got.Busy != "" || len(got.Notifications) != 0 {

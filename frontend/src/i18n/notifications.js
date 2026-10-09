@@ -19,7 +19,8 @@ const fallbackByAction = {
   organize: 'organizeUnexpectedError',
   undo: 'undoUnexpectedError',
   settings: 'settingsSaveError',
-  preview: 'previewError'
+  preview: 'previewError',
+  openDestination: 'openDestinationError'
 };
 
 export function notificationText(notification, copy) {

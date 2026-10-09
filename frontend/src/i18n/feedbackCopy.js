@@ -28,6 +28,7 @@ const feedbackCopy = {
     droppedPathUnexpectedError: 'Não foi possível usar o item arrastado.',
     settingsSaveError: 'Não foi possível salvar a preferência.',
     previewError: 'Não foi possível ler a pasta de origem.',
+    openDestinationError: 'Não foi possível abrir a pasta de destino.',
     unexpectedError: 'Erro inesperado.',
     recovered: {
       title: 'Última organização recuperada',
@@ -90,6 +91,7 @@ const feedbackCopy = {
       UNKNOWN_CRITERION: 'Critério de organização desconhecido.',
       INVALID_LANGUAGE: 'Idioma não suportado.',
       INVALID_THEME: 'Tema não suportado.',
+      DESTINATION_NOT_FOUND: 'A pasta de destino não existe mais.',
       SETTINGS_NOT_SAVED: 'Não foi possível salvar a preferência.'
     }
   },
@@ -102,6 +104,7 @@ const feedbackCopy = {
     droppedPathUnexpectedError: 'Could not use the dropped item.',
     settingsSaveError: 'Could not save the preference.',
     previewError: 'Could not read the source folder.',
+    openDestinationError: 'Could not open the destination folder.',
     unexpectedError: 'Unexpected error.',
     recovered: {
       title: 'Last organization recovered',
@@ -152,6 +155,7 @@ const feedbackCopy = {
       UNKNOWN_CRITERION: 'Unknown organization criterion.',
       INVALID_LANGUAGE: 'Unsupported language.',
       INVALID_THEME: 'Unsupported theme.',
+      DESTINATION_NOT_FOUND: 'The destination folder no longer exists.',
       SETTINGS_NOT_SAVED: 'Could not save the preference.'
     }
   }

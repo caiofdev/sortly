@@ -12,6 +12,8 @@ export function GetState():Promise<app.ViewState>;
 
 export function MarkNotificationsRead():Promise<app.ViewState>;
 
+export function OpenDestination():Promise<app.ViewState>;
+
 export function Organize():Promise<app.ViewState>;
 
 export function SelectDestination():Promise<app.ViewState>;
@@ -23,5 +25,7 @@ export function SetCriterion(arg1:string,arg2:boolean):Promise<app.ViewState>;
 export function SetLanguage(arg1:string):Promise<app.ViewState>;
 
 export function SetTheme(arg1:string):Promise<app.ViewState>;
+
+export function StartOver():Promise<app.ViewState>;
 
 export function Undo():Promise<app.ViewState>;

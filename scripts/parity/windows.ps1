@@ -138,6 +138,13 @@ function Set-Criteria([string[]]$on) {
   Click 'Organizar'
 }
 
+# Depois de organizar, a tela é o Concluído, sem o botão Organizar; reabrir volta
+# à tela inicial com a origem do último registro (#79).
+function Restart-App {
+  Stop-App
+  Start-App
+}
+
 # Primeiro texto da janela que casa com o padrão; o painel vem antes dos toasts (#75).
 function Find-Text([string]$pattern) {
   $window = $UIA::FromHandle($script:proc.MainWindowHandle)
@@ -210,9 +217,17 @@ try {
   } finally { $lock.Close() }
   Check 'WIN_CONFLICT' ((Get-Content "$dst\txt\nota.txt") -eq 'já existia' -and (Test-Path "$dst\txt\nota (1).txt")) 'nota.txt existente preservado; novo vira nota (1).txt'
   Check 'WIN_B1' ($done -and $notice -match ', 1 com falha$') $notice
+  $doneTitle = Find-Text '^Pronto! Arquivos? organizados?\.$'
+  $doneOpen = $null -ne (Find-Element 'Abrir pasta de destino' 5)
+  Check 'WIN_DONE' ($doneTitle -ne '' -and $doneOpen) "Concluído: $doneTitle"
+  Click 'Organizar outra pasta'
+  $startOver = (Find-Text '^Nenhuma pasta selecionada$') -ne '' -and (Is-Enabled 'Desfazer')
+  Check 'WIN_START_OVER' $startOver 'Organizar outra pasta volta ao início sem origem, com o desfazer ativo'
 
   # --- 4) Organizar sem nada para mover mantém o desfazer (B2) ---
+  Restart-App
   Click 'Organizar' -Last; Start-Sleep -Seconds 2
+  Restart-App
   Click 'Organizar' -Last; Start-Sleep -Seconds 2   # nada para mover
   $keep = Is-Enabled 'Desfazer'
   Check 'WIN_B2' $keep 'botão de desfazer continua ativo após organizar sem movimentos'

@@ -53,7 +53,10 @@ type Emitter func(ctx context.Context, state ViewState)
 
 type BackgroundPainter func(ctx context.Context, colour options.RGBA)
 
-// Logger, Emit, Paint, Now e Background são opcionais. Background roda as tarefas
+// Abre a pasta no gerenciador de arquivos do sistema (#79).
+type FolderOpener func(path string) error
+
+// Logger, Emit, Paint, Now, Background e OpenFolder são opcionais. Background roda as tarefas
 // em segundo plano (a prévia): por padrão, numa goroutine; os testes a rodam na hora
 // (#10, #77).
 type Deps struct {
@@ -64,6 +67,7 @@ type Deps struct {
 	PickDir    DirectoryPicker
 	Emit       Emitter
 	Paint      BackgroundPainter
+	OpenFolder FolderOpener
 	Now        func() time.Time
 	Background func(task func())
 	Logger     *slog.Logger
@@ -105,6 +109,9 @@ func New(d Deps) *App {
 	if d.Background == nil {
 		d.Background = func(task func()) { go task() }
 	}
+	if d.OpenFolder == nil {
+		d.OpenFolder = newFolderOpener().open
+	}
 	return &App{ctx: context.Background(), deps: d, log: d.Logger}
 }
 
@@ -145,6 +152,7 @@ func (a *App) pick(title, action string, set func(*ViewState, string)) ViewState
 		}
 		if path != "" {
 			set(s, path)
+			s.LastResult = nil
 			a.startPreview(s)
 		}
 	})
@@ -162,6 +170,7 @@ func (a *App) DropPaths(paths []string) ViewState {
 			return
 		}
 		s.SourceFolderPath = src
+		s.LastResult = nil
 		a.startPreview(s)
 		a.notify(s, Notification{Kind: KindInfo, Code: CodeSourceDropped, Action: ActionDrop, Path: src})
 	})
@@ -195,6 +204,7 @@ func (a *App) Organize() ViewState {
 	a.update(func(s *ViewState) {
 		s.Busy = BusyOrganize
 		s.Progress = organizer.Progress{}
+		s.LastResult = nil
 		a.cancelWork = cancel
 		a.stopPreview(s)
 	})
@@ -205,6 +215,36 @@ func (a *App) Organize() ViewState {
 		a.cancelWork = nil
 		a.applyOrganize(s, result, err)
 		a.startPreview(s)
+	})
+}
+
+// Volta à tela inicial: sem origem e sem o Concluído. O destino escolhido fica,
+// e o desfazer da organização continua disponível (#79).
+func (a *App) StartOver() ViewState {
+	return a.update(func(s *ViewState) {
+		s.SourceFolderPath = ""
+		s.LastResult = nil
+		a.stopPreview(s)
+	})
+}
+
+// Só o destino do último resultado, guardado aqui: o frontend não manda caminho,
+// então a tela não consegue abrir uma pasta qualquer (#79).
+func (a *App) OpenDestination() ViewState {
+	a.mu.Lock()
+	var path string
+	if a.state.LastResult != nil {
+		path = a.state.LastResult.DestinationFolderPath
+	}
+	a.mu.Unlock()
+	if path == "" {
+		return a.GetState()
+	}
+	err := a.deps.OpenFolder(path)
+	return a.update(func(s *ViewState) {
+		if err != nil {
+			a.fail(s, ActionOpenDestination, err)
+		}
 	})
 }
 
@@ -257,6 +297,9 @@ func (a *App) applyOrganize(s *ViewState, result organizer.Result, err error) {
 	a.log.Info("organização concluída", "origem", result.SourceFolderPath, "destino", result.DestinationFolderPath,
 		"movidos", result.MovedFiles, "falhas", result.FailedFiles)
 	a.notify(s, Notification{Kind: organizeKind(result), Code: CodeOrganizeDone, Action: ActionOrganize, Organize: &result})
+	if result.MovedFiles > 0 {
+		s.LastResult = &result
+	}
 }
 
 // Falha parcial conta como erro, para o aviso ficar na tela até o usuário vê-lo;
@@ -299,6 +342,7 @@ func (a *App) Undo() ViewState {
 		}
 		a.log.Info("desfazer concluído", "restaurados", result.RestoredFiles, "falhas", result.FailedFiles)
 		s.HasUndo = result.CanUndo
+		s.LastResult = nil
 		a.notify(s, Notification{Kind: undoKind(result), Code: CodeUndoDone, Action: ActionUndo, Undo: &result})
 	})
 }

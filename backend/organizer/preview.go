@@ -37,14 +37,25 @@ func (s *Service) Preview(ctx context.Context, req Request) (Preview, error) {
 	return summarize(plan), nil
 }
 
-// Da pasta com mais arquivos para a com menos; no empate, pelo nome, para a
-// ordem não mudar entre uma prévia e outra (#77).
 func summarize(plan Plan) Preview {
-	counts := map[string]int{}
+	targets := make([]string, 0, len(plan.Moves))
 	for _, m := range plan.Moves {
-		counts[firstFolder(plan.Destination, m.To)]++
+		targets = append(targets, m.To)
 	}
-	folders := make([]FolderCount, 0, len(counts))
+	folders, others := countFolders(plan.Destination, targets)
+	return Preview{TotalFiles: plan.ProcessedFiles, Folders: folders, OtherFiles: others}
+}
+
+// Agrupa pela pasta de 1º nível, da com mais arquivos para a com menos; no empate,
+// pelo nome, para a ordem não mudar entre uma prévia e outra. Passando de
+// MaxPreviewFolders, o resto soma em others. A prévia e a tela Concluído usam o
+// mesmo resumo (#77, #79).
+func countFolders(dst string, targets []string) (folders []FolderCount, others int) {
+	counts := map[string]int{}
+	for _, to := range targets {
+		counts[firstFolder(dst, to)]++
+	}
+	folders = make([]FolderCount, 0, len(counts))
 	for name, n := range counts {
 		folders = append(folders, FolderCount{Name: name, Count: n})
 	}
@@ -55,14 +66,13 @@ func summarize(plan Plan) Preview {
 		return folders[i].Name < folders[j].Name
 	})
 
-	p := Preview{TotalFiles: plan.ProcessedFiles, Folders: folders}
-	if len(folders) > MaxPreviewFolders {
-		for _, f := range folders[MaxPreviewFolders:] {
-			p.OtherFiles += f.Count
-		}
-		p.Folders = folders[:MaxPreviewFolders]
+	if len(folders) <= MaxPreviewFolders {
+		return folders, 0
 	}
-	return p
+	for _, f := range folders[MaxPreviewFolders:] {
+		others += f.Count
+	}
+	return folders[:MaxPreviewFolders], others
 }
 
 // To sempre começa com o destino do plano (Plan.addMove), então o Rel não falha (#77).
