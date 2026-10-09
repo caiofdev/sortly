@@ -17,6 +17,7 @@ Mantido por Caio Reis & Claude.
 - Tema claro nas Configurações, com a barra lateral branca. O tema escolhido fica salvo, e a janela já abre na cor dele.
 - Ao escolher a pasta de origem, o app mostra quantos arquivos encontrou e em quais pastas eles vão ficar, antes de organizar. A prévia se atualiza ao mudar os critérios.
 - Enquanto organiza, o app mostra os arquivos indo de uma pasta para a outra, quantos faltam e qual arquivo está sendo movido. Dá para cancelar no meio: o que já foi movido pode ser desfeito.
+- Ao terminar, uma tela de resumo mostra quantos arquivos foram organizados e em quais pastas, com os botões "Abrir pasta de destino", "Desfazer" e "Organizar outra pasta".
 
 ### Corrigido
 - Ao mover para outro disco ou pendrive, o arquivo original só é apagado depois que a cópia está gravada de fato. Uma queda de energia ou um pendrive removido logo depois não perde mais o arquivo.

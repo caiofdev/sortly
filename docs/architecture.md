@@ -67,7 +67,9 @@ O frontend só renderiza ([ADR 0005](adr/0005-estado-da-tela-no-backend.md)). A 
 | `DropPaths(paths)` | Define a origem a partir do primeiro item solto (a pasta, ou a pasta do arquivo) |
 | `Organize()` | Organiza a origem no destino (vazio = a própria origem) com os critérios salvos. Sem origem: `SOURCE_REQUIRED` |
 | `Cancel()` | Cancela a organização em andamento; o que já foi movido fica no registro e pode ser desfeito. Sem organização em andamento, não faz nada |
-| `Undo()` | Desfaz a última organização |
+| `Undo()` | Desfaz a última organização (e sai do Concluído) |
+| `OpenDestination()` | Abre no gerenciador de arquivos (explorer, open, xdg-open) o destino do `lastResult`. O caminho vem do estado no Go, nunca do JS; pasta apagada vira `DESTINATION_NOT_FOUND` |
+| `StartOver()` | "Organizar outra pasta": limpa a origem e o `lastResult`; o destino e o desfazer continuam |
 | `MarkNotificationsRead()` | Apaga o ponto de não lidas do sino; a lista continua |
 | `ClearNotifications()` | Apaga o histórico de notificações |
 | `SetLanguage(language)` / `SetTheme(theme)` / `SetCriterion(key, enabled)` | Alteram as preferências (`backend/settings`). `SetTheme` também troca a cor de fundo da janela |
@@ -81,6 +83,7 @@ ViewState {
   unread: bool                               // há notificação nova desde a última leitura
   preview: { status: "" | "loading" | "ready", totalFiles, folders: [{ name, count }], otherFiles }
   progress: { done, total, file, folder }    // durante organizar; total 0 = ainda planejando
+  lastResult: Result | null                  // a tela Concluído; preenchido quando a organização move arquivos
   settings: { language, theme: "dark" | "light", criteria: [{ key, enabled, locked }] }
   notifications: [{ id, kind: "success" | "info" | "error", code, action, path?, organize?, undo?, at }]   // até 80, a mais recente primeiro
 }
@@ -91,6 +94,7 @@ ViewState {
 - **Status (`kind`):** o backend decide se o aviso é sucesso, neutro ou erro. Organizar ou desfazer com algum arquivo que falhou é `error`, e organizar sem nada movido é `info`. A interface usa o `kind` para o ponto do painel e a variante do toast; o toast de erro fica até o usuário fechar.
 - **Prévia da origem:** ao definir a origem ou o destino, mudar um critério, ao fim de organizar e de desfazer e na origem recuperada ao abrir, o `App` planeja em segundo plano (`organizer.Service.Preview`, o mesmo `Planner` da organização, sem mover nada). Uma prévia nova cancela a anterior, e um resultado antigo que chegue depois é descartado. O binding devolve `status: "loading"`, e o resultado chega pelo evento de estado. `folders` traz até 6 pastas de 1º nível, da maior para a menor (nome vazio = raiz do destino); o resto soma em `otherFiles`. Origem ilegível vira uma notificação de erro com a ação `preview`. Durante organizar e desfazer, a prévia some.
 - **Progresso e Cancelar:** o `Executor` reporta o progresso antes de cada movimento e no fim (`organizer.Progress`: feitos, total, nome do arquivo e pasta relativa ao destino). O `App` emite no máximo um estado a cada 50 ms (~20/s); o primeiro e o último sempre saem. `Cancel` cancela o `context` da organização: o resultado sai com `canceled: true`, o journal parcial é gravado, e a notificação `ORGANIZE_CANCELED` diz quantos arquivos foram movidos. Se o registro não pôde ser salvo, vale o erro `RECORD_NOT_SAVED`.
+- **Concluído:** quando a organização move ao menos um arquivo (mesmo com falhas), o `lastResult` guarda o resultado, com `folders` (as pastas de 1º nível do que foi movido de fato, no mesmo resumo da prévia) e `otherFiles`. Cancelada, com erro ou sem nada movido, a tela continua na inicial. Desfazer, escolher outra origem e `StartOver` limpam o `lastResult`.
 - **Evento `sortly:state`:** emitido a cada mudança, com o estado inteiro. É por ele que a tela mostra "Organizando…" enquanto a chamada de `Organize` ainda não terminou.
 - **Estados fora de ordem:** evento e retorno do binding saem do lock antes de chegar à tela, então duas ações quase simultâneas podem entregá-los fora de ordem. O `useViewState` só troca o estado por um de `version` maior.
 - **Organizar e desfazer não rodam juntos:** uma chamada durante a outra devolve o estado sem fazer nada.
