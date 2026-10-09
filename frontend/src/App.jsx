@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useLayoutEffect, useMemo } from 'react';
 import useViewState from './hooks/useViewState';
 import { toNotificationItems } from './i18n/notifications';
 import OrganizerView from './views/OrganizerView';
@@ -16,8 +16,10 @@ function App() {
     document.documentElement.lang = language;
   }, [language]);
 
-  // No <html>, para os tokens do tema valerem também fora do #root (ADR 0006, #76).
-  useEffect(() => {
+  // No <html>, para os tokens do tema valerem também fora do #root. Antes da
+  // pintura: com useEffect, a primeira tela saía no tema escuro por um quadro
+  // (ADR 0006, #76).
+  useLayoutEffect(() => {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
 
