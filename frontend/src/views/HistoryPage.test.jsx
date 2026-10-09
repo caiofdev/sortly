@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import organizerCopy from '../i18n/organizerCopy';
 import HistoryPage, { formatWhen } from './HistoryPage';
 
@@ -38,6 +38,13 @@ describe('HistoryPage', () => {
   it('uma linha por organização, com a pasta inteira no title', () => {
     renderHistory([entry(), entry({ at: new Date(2026, 2, 4).toISOString(), movedFiles: 7 })]);
     expect(screen.queryByText(pt.historyEmpty)).not.toBeInTheDocument();
+    const table = screen.getByRole('table', { name: pt.titleHistory });
+    expect(within(table).getAllByRole('row')).toHaveLength(3);
+    expect(
+      within(table)
+        .getAllByRole('columnheader')
+        .map((c) => c.textContent)
+    ).toEqual([pt.historyWhen, pt.sourceLabel, pt.historyFiles, pt.historyStatus]);
     expect(screen.getByText('42')).toBeInTheDocument();
     expect(screen.getByText('7')).toBeInTheDocument();
     expect(screen.getAllByTitle('C:\\Users\\caio\\Downloads')).toHaveLength(2);
