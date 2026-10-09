@@ -64,7 +64,6 @@ export const DropFolderIcon = () => (
   </Icon>
 );
 
-// Ícones do toast, com traço 2.5 como no protótipo (#75).
 export const CheckIcon = () => (
   <Icon strokeWidth={2.5}>
     <path d="M5 12l5 5L20 7" />

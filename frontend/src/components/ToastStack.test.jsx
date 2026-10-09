@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import ToastStack, { MAX_TOASTS } from './ToastStack';
 
-// Como no backend: a mais recente no topo, com id maior.
 const notice = (id, kind = 'error', title = `aviso ${id}`) => ({ id, kind, title, text: '' });
 const newestFirst = (...ids) => ids.sort((a, b) => b - a).map((id) => notice(id));
 
