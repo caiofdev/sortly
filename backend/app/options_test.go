@@ -7,10 +7,42 @@ import (
 
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/linux"
+
+	"github.com/caiofdev/sortly/backend/settings"
 )
 
+func withTheme(theme string) *App {
+	current := settings.Default()
+	current.Theme = theme
+	return New(Deps{Settings: &fakeSettings{current: current}})
+}
+
+func TestBackgroundFor(t *testing.T) {
+	tests := []struct {
+		theme string
+		want  options.RGBA
+	}{
+		{"dark", options.RGBA{R: 0, G: 0, B: 0, A: 255}},
+		{"light", options.RGBA{R: 0xf7, G: 0xf7, B: 0xf2, A: 255}},
+		{"desconhecido", options.RGBA{R: 0, G: 0, B: 0, A: 255}},
+	}
+	for _, tt := range tests {
+		if got := backgroundFor(tt.theme); got != tt.want {
+			t.Errorf("backgroundFor(%q) = %+v, want %+v", tt.theme, got, tt.want)
+		}
+	}
+}
+
+// Com o tema claro salvo, a janela já abre clara, sem piscar preto (#76).
+func TestOptionsBackgroundFollowsSavedTheme(t *testing.T) {
+	opts := Options(withTheme("light"), fstest.MapFS{}, testIcon)
+	if want := (options.RGBA{R: 0xf7, G: 0xf7, B: 0xf2, A: 255}); *opts.BackgroundColour != want {
+		t.Fatalf("fundo = %+v, want %+v", *opts.BackgroundColour, want)
+	}
+}
+
 func TestOptionsWindow(t *testing.T) {
-	opts := Options(New(Deps{}), fstest.MapFS{}, testIcon)
+	opts := Options(withTheme(settings.DefaultTheme), fstest.MapFS{}, testIcon)
 
 	cases := []struct {
 		name      string
@@ -45,7 +77,7 @@ func TestOptionsWindow(t *testing.T) {
 }
 
 func TestOptionsWiresApp(t *testing.T) {
-	app := New(Deps{})
+	app := withTheme(settings.DefaultTheme)
 	assets := fstest.MapFS{"index.html": &fstest.MapFile{Data: []byte("<html></html>")}}
 
 	opts := Options(app, assets, testIcon)
@@ -62,17 +94,17 @@ func TestOptionsWiresApp(t *testing.T) {
 }
 
 func TestOptionsDoesNotShareBackground(t *testing.T) {
-	first := Options(New(Deps{}), fstest.MapFS{}, testIcon)
+	first := Options(withTheme(settings.DefaultTheme), fstest.MapFS{}, testIcon)
 	first.BackgroundColour.R = 255
 
-	second := Options(New(Deps{}), fstest.MapFS{}, testIcon)
-	if *second.BackgroundColour != backgroundColour {
+	second := Options(withTheme(settings.DefaultTheme), fstest.MapFS{}, testIcon)
+	if *second.BackgroundColour != backgroundFor(settings.DefaultTheme) {
 		t.Fatalf("cor de fundo compartilhada entre instâncias: %+v", *second.BackgroundColour)
 	}
 }
 
 func TestStartupStoresContext(t *testing.T) {
-	app := New(Deps{})
+	app := withTheme(settings.DefaultTheme)
 	ctx := context.WithValue(context.Background(), runtimeKey{}, "runtime")
 
 	Options(app, fstest.MapFS{}, testIcon).OnStartup(ctx)

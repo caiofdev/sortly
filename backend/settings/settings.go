@@ -1,4 +1,4 @@
-// Package settings guarda as preferências do usuário (idioma e critérios) em
+// Package settings guarda as preferências do usuário (idioma, tema e critérios) em
 // ~/.sortly/settings.json. Fora do WebView, elas sobrevivem à limpeza dos dados
 // do navegador embutido e às atualizações do app. O caminho do arquivo é
 // decidido na composição, em app.NewDefault (#44).
@@ -20,22 +20,31 @@ import (
 
 var (
 	ErrInvalidLanguage  = apperr.New("INVALID_LANGUAGE", "settings: idioma desconhecido")
+	ErrInvalidTheme     = apperr.New("INVALID_THEME", "settings: tema desconhecido")
 	ErrUnknownCriterion = apperr.New("UNKNOWN_CRITERION", "settings: critério desconhecido")
 	ErrLastCriterion    = apperr.New("LAST_CRITERION", "settings: pelo menos um critério precisa ficar ligado")
 	ErrNotSaved         = apperr.New("SETTINGS_NOT_SAVED", "settings: preferências não foram salvas")
 )
 
-const DefaultLanguage = "pt-BR"
+// O escuro é o tema principal do design system, o da logo (#76).
+const (
+	DefaultLanguage = "pt-BR"
+	DefaultTheme    = "dark"
+)
 
-var languages = map[string]bool{"pt-BR": true, "en": true}
+var (
+	languages = map[string]bool{"pt-BR": true, "en": true}
+	themes    = map[string]bool{"dark": true, "light": true}
+)
 
 type Settings struct {
 	Language string
+	Theme    string
 	Options  criteria.Options
 }
 
 func Default() Settings {
-	return Settings{Language: DefaultLanguage, Options: criteria.Default}
+	return Settings{Language: DefaultLanguage, Theme: DefaultTheme, Options: criteria.Default}
 }
 
 // Seguro para uso concorrente: os bindings do Wails rodam em goroutines separadas (#44).
@@ -66,6 +75,16 @@ func (s *Service) SetLanguage(lang string) (Settings, error) {
 			return st, fmt.Errorf("%w: %q", ErrInvalidLanguage, lang)
 		}
 		st.Language = lang
+		return st, nil
+	})
+}
+
+func (s *Service) SetTheme(theme string) (Settings, error) {
+	return s.update(func(st Settings) (Settings, error) {
+		if !themes[theme] {
+			return st, fmt.Errorf("%w: %q", ErrInvalidTheme, theme)
+		}
+		st.Theme = theme
 		return st, nil
 	})
 }
@@ -125,10 +144,12 @@ func (s *Service) load() Settings {
 // futura) sejam ignoradas em vez de quebrar a leitura (#44).
 type fileFormat struct {
 	Language            string          `json:"language"`
+	Theme               string          `json:"theme"`
 	OrganizationOptions map[string]bool `json:"organizationOptions"`
 }
 
-// Só valores válidos: idioma desconhecido ou nenhum critério ligado voltam ao padrão (#44).
+// Só valores válidos: idioma ou tema desconhecido (ou ausente, num arquivo
+// anterior ao tema) e nenhum critério ligado voltam ao padrão (#44, #76).
 func (s *Service) decode(data []byte) Settings {
 	st := Default()
 	var f fileFormat
@@ -138,6 +159,9 @@ func (s *Service) decode(data []byte) Settings {
 	}
 	if languages[f.Language] {
 		st.Language = f.Language
+	}
+	if themes[f.Theme] {
+		st.Theme = f.Theme
 	}
 	var opts criteria.Options
 	for key, on := range f.OrganizationOptions {
@@ -150,11 +174,11 @@ func (s *Service) decode(data []byte) Settings {
 }
 
 func (s *Service) save(st Settings) error {
-	f := fileFormat{Language: st.Language, OrganizationOptions: map[string]bool{}}
+	f := fileFormat{Language: st.Language, Theme: st.Theme, OrganizationOptions: map[string]bool{}}
 	for _, key := range criteria.Keys {
 		f.OrganizationOptions[key], _ = st.Options.Get(key)
 	}
-	// Marshal de string e map[string]bool não falha (#44).
+	// Marshal de strings e map[string]bool não falha (#44).
 	data, _ := json.Marshal(f)
 	if err := files.WriteAtomic(s.path, data); err != nil {
 		s.log.Error("preferências não salvas", "path", s.path, "err", err)

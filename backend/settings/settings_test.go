@@ -31,19 +31,23 @@ func TestGet(t *testing.T) {
 	}{
 		{"sem arquivo", "", Default()},
 		{"válido", `{"language":"en","organizationOptions":{"byDate":true,"bySize":true}}`,
-			Settings{Language: "en", Options: criteria.Options{ByDate: true, BySize: true}}},
+			Settings{Language: "en", Theme: DefaultTheme, Options: criteria.Options{ByDate: true, BySize: true}}},
 		{"vazio", " ", Default()},
 		{"JSON corrompido", `{"language":`, Default()},
 		{"null", "null", Default()},
 		{"campos ausentes", `{}`, Default()},
 		{"idioma desconhecido", `{"language":"fr","organizationOptions":{"byPages":true}}`,
-			Settings{Language: DefaultLanguage, Options: criteria.Options{ByPages: true}}},
+			Settings{Language: DefaultLanguage, Theme: DefaultTheme, Options: criteria.Options{ByPages: true}}},
 		{"nenhum critério ligado", `{"language":"en","organizationOptions":{"byExtension":false}}`,
-			Settings{Language: "en", Options: criteria.Default}},
+			Settings{Language: "en", Theme: DefaultTheme, Options: criteria.Default}},
 		{"chave desconhecida é ignorada", `{"language":"pt-BR","organizationOptions":{"byColor":true,"byDate":true}}`,
-			Settings{Language: "pt-BR", Options: criteria.Options{ByDate: true}}},
+			Settings{Language: "pt-BR", Theme: DefaultTheme, Options: criteria.Options{ByDate: true}}},
+		{"tema claro", `{"language":"en","theme":"light","organizationOptions":{"byDate":true}}`,
+			Settings{Language: "en", Theme: "light", Options: criteria.Options{ByDate: true}}},
+		{"tema desconhecido", `{"language":"en","theme":"sepia","organizationOptions":{"byDate":true}}`,
+			Settings{Language: "en", Theme: DefaultTheme, Options: criteria.Options{ByDate: true}}},
 		{"6 critérios", `{"language":"en","organizationOptions":{"byDuration":true,"byPages":true,"byResolution":true,"byDate":true,"bySize":true,"byExtension":true}}`,
-			Settings{Language: "en", Options: criteria.Options{ByDuration: true, ByPages: true, ByResolution: true, ByDate: true, BySize: true, ByExtension: true}}},
+			Settings{Language: "en", Theme: DefaultTheme, Options: criteria.Options{ByDuration: true, ByPages: true, ByResolution: true, ByDate: true, BySize: true, ByExtension: true}}},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -109,6 +113,27 @@ func TestSetLanguage(t *testing.T) {
 		got, err := s.SetLanguage("fr")
 		if !errors.Is(err, ErrInvalidLanguage) || got != Default() {
 			t.Fatalf("SetLanguage = (%+v, %v), want (padrão, ErrInvalidLanguage)", got, err)
+		}
+	})
+}
+
+func TestSetTheme(t *testing.T) {
+	t.Run("tema claro é salvo", func(t *testing.T) {
+		s := newService(t, "")
+		got, err := s.SetTheme("light")
+		if err != nil || got.Theme != "light" {
+			t.Fatalf("SetTheme = (%+v, %v)", got, err)
+		}
+		if reread := New(s.path, nil).Get(); reread != got {
+			t.Fatalf("relido do disco = %+v, want %+v", reread, got)
+		}
+	})
+
+	t.Run("tema desconhecido é recusado", func(t *testing.T) {
+		s := newService(t, "")
+		got, err := s.SetTheme("sepia")
+		if !errors.Is(err, ErrInvalidTheme) || got != Default() {
+			t.Fatalf("SetTheme = (%+v, %v), want (padrão, ErrInvalidTheme)", got, err)
 		}
 	})
 }
@@ -185,7 +210,7 @@ func TestSavedFileFormat(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := `{"language":"pt-BR","organizationOptions":{"byDate":false,"byDuration":false,"byExtension":true,"byPages":false,"byResolution":false,"bySize":true}}`
+	want := `{"language":"pt-BR","theme":"dark","organizationOptions":{"byDate":false,"byDuration":false,"byExtension":true,"byPages":false,"byResolution":false,"bySize":true}}`
 	if string(data) != want {
 		t.Fatalf("arquivo =\n%s\nwant\n%s", data, want)
 	}
