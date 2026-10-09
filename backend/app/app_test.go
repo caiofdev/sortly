@@ -33,6 +33,26 @@ type fakeOrganizer struct {
 	got    organizer.Request
 	calls  int
 	during func()
+
+	preview     func(ctx context.Context) (organizer.Preview, error)
+	previewMu   sync.Mutex
+	previewReqs []organizer.Request
+}
+
+func (f *fakeOrganizer) Preview(ctx context.Context, req organizer.Request) (organizer.Preview, error) {
+	f.previewMu.Lock()
+	f.previewReqs = append(f.previewReqs, req)
+	f.previewMu.Unlock()
+	if f.preview == nil {
+		return organizer.Preview{TotalFiles: 1, Folders: []organizer.FolderCount{{Name: "pdf", Count: 1}}}, nil
+	}
+	return f.preview(ctx)
+}
+
+func (f *fakeOrganizer) previewCalls() int {
+	f.previewMu.Lock()
+	defer f.previewMu.Unlock()
+	return len(f.previewReqs)
 }
 
 func (f *fakeOrganizer) Organize(_ context.Context, req organizer.Request) (organizer.Result, error) {
@@ -98,6 +118,12 @@ func newTestApp(d Deps) (*App, *bytes.Buffer) {
 	}
 	if d.Settings == nil {
 		d.Settings = &fakeSettings{current: settings.Default()}
+	}
+	if d.Organizer == nil {
+		d.Organizer = &fakeOrganizer{}
+	}
+	if d.Background == nil {
+		d.Background = func(task func()) { task() }
 	}
 	return New(d), &logs
 }
@@ -428,6 +454,178 @@ func TestNotificationKind(t *testing.T) {
 	}
 }
 
+func TestPreviewTriggers(t *testing.T) {
+	dir := func(context.Context, string) (string, error) { return `C:origem`, nil }
+	tests := []struct {
+		name   string
+		action func(a *App)
+		want   int
+	}{
+		{"escolher a origem", func(a *App) { a.SelectSource() }, 1},
+		{"escolher o destino", func(a *App) { a.SelectDestination() }, 1},
+		{"arrastar", func(a *App) { a.DropPaths([]string{t.TempDir()}) }, 1},
+		{"mudar um critério", func(a *App) { a.SetCriterion("byDate", true) }, 1},
+		{"organizar", func(a *App) { a.Organize() }, 1},
+		{"desfazer", func(a *App) { a.Undo() }, 1},
+		{"trocar o idioma não refaz", func(a *App) { a.SetLanguage("en") }, 0},
+		{"critério recusado não refaz", func(a *App) {
+			a.deps.Settings.(*fakeSettings).err = settings.ErrLastCriterion
+			a.SetCriterion("byExtension", false)
+		}, 0},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			org := &fakeOrganizer{}
+			a, _ := newTestApp(Deps{Organizer: org, Undoer: fakeUndoer{}, PickDir: dir})
+			a.state.SourceFolderPath = `C:origem`
+
+			tt.action(a)
+
+			if got := org.previewCalls(); got != tt.want {
+				t.Fatalf("prévias = %d, want %d", got, tt.want)
+			}
+		})
+	}
+}
+
+// Sem o Background dos testes: a prévia roda numa goroutine e chega sozinha (#77).
+func TestPreviewRunsInBackground(t *testing.T) {
+	org := &fakeOrganizer{}
+	a := New(Deps{Organizer: org, Records: fakeRecords{}, Settings: &fakeSettings{current: settings.Default()},
+		PickDir: func(context.Context, string) (string, error) { return `C:origem`, nil }})
+
+	a.SelectSource()
+
+	deadline := time.Now().Add(5 * time.Second)
+	for a.GetState().Preview.Status != PreviewReady {
+		if time.Now().After(deadline) {
+			t.Fatalf("a prévia não ficou pronta: %+v", a.GetState().Preview)
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+}
+
+func TestPreviewWithoutSource(t *testing.T) {
+	org := &fakeOrganizer{}
+	a, _ := newTestApp(Deps{Organizer: org, PickDir: func(context.Context, string) (string, error) { return "", nil }})
+
+	a.SetCriterion("byDate", true)
+	got := a.SelectSource()
+
+	if org.previewCalls() != 0 || got.Preview.Status != PreviewNone {
+		t.Fatalf("sem origem não há prévia: chamadas = %d, estado = %+v", org.previewCalls(), got.Preview)
+	}
+}
+
+func TestPreviewReady(t *testing.T) {
+	var emitted []ViewState
+	org := &fakeOrganizer{}
+	prefs := &fakeSettings{current: settings.Settings{Options: criteria.Options{ByDate: true}}}
+	a, _ := newTestApp(Deps{Organizer: org, Settings: prefs, Emit: func(_ context.Context, s ViewState) { emitted = append(emitted, s) }})
+	a.startup(context.Background())
+	a.state.DestinationFolderPath = `C:destino`
+
+	a.DropPaths([]string{t.TempDir()})
+
+	if len(emitted) != 2 || emitted[0].Preview.Status != PreviewLoading {
+		t.Fatalf("primeiro o estado contando, depois a prévia: %+v", emitted)
+	}
+	ready := emitted[1].Preview
+	if ready.Status != PreviewReady || ready.TotalFiles != 1 || ready.Folders[0].Name != "pdf" {
+		t.Fatalf("prévia = %+v", ready)
+	}
+	req := org.previewReqs[0]
+	if req.DestinationFolderPath != `C:destino` || req.Options != (criteria.Options{ByDate: true}) {
+		t.Fatalf("pedido da prévia = %+v", req)
+	}
+}
+
+func TestPreviewOnlyNewestCounts(t *testing.T) {
+	var queued []func()
+	calls := 0
+	org := &fakeOrganizer{preview: func(ctx context.Context) (organizer.Preview, error) {
+		calls++
+		if err := ctx.Err(); err != nil {
+			return organizer.Preview{}, err
+		}
+		return organizer.Preview{TotalFiles: calls, Folders: []organizer.FolderCount{}}, nil
+	}}
+	a, _ := newTestApp(Deps{Organizer: org, Background: func(task func()) { queued = append(queued, task) }})
+	a.state.SourceFolderPath = `C:origem`
+
+	a.SetCriterion("byDate", true)
+	a.SetCriterion("bySize", true)
+	queued[1]()
+	queued[0]()
+
+	got := a.GetState()
+	if got.Preview.Status != PreviewReady || got.Preview.TotalFiles != 1 || len(got.Notifications) != 0 {
+		t.Fatalf("a prévia antiga (cancelada) não pode sobrescrever a nova: %+v", got)
+	}
+}
+
+func TestPreviewStaleResultIsIgnored(t *testing.T) {
+	var queued []func()
+	org := &fakeOrganizer{preview: func(context.Context) (organizer.Preview, error) {
+		return organizer.Preview{TotalFiles: 99, Folders: []organizer.FolderCount{}}, nil
+	}}
+	a, _ := newTestApp(Deps{Organizer: org, Background: func(task func()) { queued = append(queued, task) }})
+	a.state.SourceFolderPath = `C:origem`
+
+	a.SetCriterion("byDate", true)
+	a.Organize()
+	queued[0]()
+
+	if got := a.GetState().Preview; got.Status == PreviewReady {
+		t.Fatalf("prévia de antes da organização apareceu: %+v", got)
+	}
+}
+
+func TestPreviewError(t *testing.T) {
+	org := &fakeOrganizer{preview: func(context.Context) (organizer.Preview, error) {
+		return organizer.Preview{}, fmt.Errorf("%w: sem permissão", organizer.ErrInvalidSource)
+	}}
+	a, _ := newTestApp(Deps{Organizer: org})
+	a.state.SourceFolderPath = `C:origem`
+
+	if loading := a.SetCriterion("byDate", true); loading.Preview.Status != PreviewLoading {
+		t.Fatalf("o binding devolve o estado contando: %+v", loading.Preview)
+	}
+
+	got := a.GetState()
+	if got.Preview.Status != PreviewNone || last(got).Code != "INVALID_SOURCE" || last(got).Action != ActionPreview {
+		t.Fatalf("estado = %+v, aviso = %+v", got.Preview, last(got))
+	}
+}
+
+func TestPreviewStartsAfterRecovery(t *testing.T) {
+	org := &fakeOrganizer{}
+	op := &store.Operation{SourceFolderPath: `C:origem`, MovedItems: []store.MovedItem{{From: "a", To: "b"}}}
+	a, _ := newTestApp(Deps{Organizer: org, Records: fakeRecords{op: op}})
+
+	a.GetState()
+
+	if org.previewCalls() != 1 || a.GetState().Preview.Status != PreviewReady {
+		t.Fatalf("a origem recuperada deveria ganhar prévia: chamadas = %d", org.previewCalls())
+	}
+}
+
+func TestOrganizeHidesPreviewWhileRunning(t *testing.T) {
+	org := &fakeOrganizer{result: organizer.Result{CanUndo: true}}
+	a, _ := newTestApp(Deps{Organizer: org})
+	a.state.SourceFolderPath = `C:origem`
+	org.during = func() {
+		if p := a.GetState().Preview; p.Status != PreviewNone {
+			t.Errorf("durante a organização, a prévia deveria sumir: %+v", p)
+		}
+	}
+
+	a.Organize()
+	if got := a.GetState(); got.Preview.Status != PreviewReady {
+		t.Fatalf("depois de organizar, a prévia volta: %+v", got.Preview)
+	}
+}
+
 func TestSnapshotDoesNotShareNotifications(t *testing.T) {
 	a, _ := newTestApp(Deps{PickDir: func(context.Context, string) (string, error) { return "", errors.New("x") }})
 	got := a.SelectSource()
@@ -604,7 +802,8 @@ func TestStateJSONAlwaysHasLists(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if !strings.Contains(string(data), `"notifications":[]`) || !strings.Contains(string(data), `"criteria":[`) {
+		if !strings.Contains(string(data), `"notifications":[]`) || !strings.Contains(string(data), `"criteria":[`) ||
+			!strings.Contains(string(data), `"folders":[]`) {
 			t.Errorf("%s: listas deveriam ser arrays, não null: %s", name, data)
 		}
 	}

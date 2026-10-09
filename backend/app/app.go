@@ -5,6 +5,7 @@ package app
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"sync"
 	"time"
@@ -25,6 +26,7 @@ const (
 
 type Organizer interface {
 	Organize(ctx context.Context, req organizer.Request) (organizer.Result, error)
+	Preview(ctx context.Context, req organizer.Request) (organizer.Preview, error)
 }
 
 type Undoer interface {
@@ -49,17 +51,20 @@ type Emitter func(ctx context.Context, state ViewState)
 
 type BackgroundPainter func(ctx context.Context, colour options.RGBA)
 
-// Logger, Emit, Paint e Now são opcionais (#10).
+// Logger, Emit, Paint, Now e Background são opcionais. Background roda as tarefas
+// em segundo plano (a prévia): por padrão, numa goroutine; os testes a rodam na hora
+// (#10, #77).
 type Deps struct {
-	Organizer Organizer
-	Undoer    Undoer
-	Records   RecordReader
-	Settings  SettingsStore
-	PickDir   DirectoryPicker
-	Emit      Emitter
-	Paint     BackgroundPainter
-	Now       func() time.Time
-	Logger    *slog.Logger
+	Organizer  Organizer
+	Undoer     Undoer
+	Records    RecordReader
+	Settings   SettingsStore
+	PickDir    DirectoryPicker
+	Emit       Emitter
+	Paint      BackgroundPainter
+	Now        func() time.Time
+	Background func(task func())
+	Logger     *slog.Logger
 }
 
 // Os métodos públicos viram os bindings em frontend/wailsjs/go/app/App.js;
@@ -76,6 +81,13 @@ type App struct {
 	state  ViewState
 	loaded bool
 	nextID int
+
+	// Só a prévia mais recente vale: uma nova cancela a anterior, e o resultado de
+	// uma antiga que termine depois é descartado pelo número (#77).
+	cancelPreview context.CancelFunc
+	previewSeq    uint64
+	// Disparadas depois de soltar o lock, porque chamam update de novo (#77).
+	pending []func()
 }
 
 func New(d Deps) *App {
@@ -84,6 +96,9 @@ func New(d Deps) *App {
 	}
 	if d.Now == nil {
 		d.Now = time.Now
+	}
+	if d.Background == nil {
+		d.Background = func(task func()) { go task() }
 	}
 	return &App{ctx: context.Background(), deps: d, log: d.Logger}
 }
@@ -125,6 +140,7 @@ func (a *App) pick(title, action string, set func(*ViewState, string)) ViewState
 		}
 		if path != "" {
 			set(s, path)
+			a.startPreview(s)
 		}
 	})
 }
@@ -141,6 +157,7 @@ func (a *App) DropPaths(paths []string) ViewState {
 			return
 		}
 		s.SourceFolderPath = src
+		a.startPreview(s)
 		a.notify(s, Notification{Kind: KindInfo, Code: CodeSourceDropped, Action: ActionDrop, Path: src})
 	})
 }
@@ -167,11 +184,16 @@ func (a *App) Organize() ViewState {
 		req.DestinationFolderPath = req.SourceFolderPath
 	}
 
-	a.update(func(s *ViewState) { s.Busy = BusyOrganize })
+	// A prévia leria arquivos que estão sendo movidos; volta quando a organização acaba (#77).
+	a.update(func(s *ViewState) {
+		s.Busy = BusyOrganize
+		a.stopPreview(s)
+	})
 	result, err := a.deps.Organizer.Organize(a.runtimeContext(), req)
 	return a.update(func(s *ViewState) {
 		s.Busy = ""
 		a.applyOrganize(s, result, err)
+		a.startPreview(s)
 	})
 }
 
@@ -217,10 +239,14 @@ func (a *App) Undo() ViewState {
 	}
 	defer a.work.Unlock()
 
-	a.update(func(s *ViewState) { s.Busy = BusyRestore })
+	a.update(func(s *ViewState) {
+		s.Busy = BusyRestore
+		a.stopPreview(s)
+	})
 	result, err := a.deps.Undoer.Undo(a.runtimeContext())
 	return a.update(func(s *ViewState) {
 		s.Busy = ""
+		a.startPreview(s)
 		if err != nil {
 			a.fail(s, ActionUndo, err)
 			return
@@ -249,7 +275,13 @@ func (a *App) SetLanguage(lang string) ViewState {
 
 func (a *App) SetCriterion(key string, enabled bool) ViewState {
 	_, err := a.deps.Settings.SetCriterion(key, enabled)
-	return a.afterSettings(err)
+	return a.update(func(s *ViewState) {
+		if err != nil {
+			a.fail(s, ActionSettings, err)
+			return
+		}
+		a.startPreview(s)
+	})
 }
 
 func (a *App) SetTheme(theme string) ViewState {
@@ -288,13 +320,21 @@ func (a *App) update(change func(*ViewState)) ViewState {
 	snapshot := a.state
 	// Lista sempre presente (nunca null no JSON): a interface percorre direto (#45).
 	snapshot.Notifications = append([]Notification{}, a.state.Notifications...)
+	if snapshot.Preview.Folders == nil {
+		snapshot.Preview = noPreview(snapshot.Preview.Status)
+	}
 	// Sob o lock, para que uma versão maior nunca traga preferências mais antigas (#55).
 	snapshot.Settings = a.deps.Settings.Get().View()
 	ctx, started := a.ctx, a.started
+	tasks := a.pending
+	a.pending = nil
 	a.mu.Unlock()
 
 	if started && a.deps.Emit != nil {
 		a.deps.Emit(ctx, snapshot)
+	}
+	for _, task := range tasks {
+		a.deps.Background(task)
 	}
 	return snapshot
 }
@@ -316,7 +356,55 @@ func (a *App) ensureLoaded() {
 	a.state.HasUndo = true
 	a.state.SourceFolderPath = op.SourceFolderPath
 	a.state.DestinationFolderPath = op.DestinationFolderPath
+	a.startPreview(&a.state)
 	a.notify(&a.state, Notification{Kind: KindInfo, Code: CodeRecovered, Action: ActionStartup})
+}
+
+// Chamado dentro de update, sob o lock: cancela a prévia anterior e calcula a
+// nova em segundo plano. A tela recebe o resultado pelo evento de estado (#77).
+func (a *App) startPreview(s *ViewState) {
+	a.stopPreview(s)
+	if s.SourceFolderPath == "" {
+		return
+	}
+	ctx, cancel := context.WithCancel(a.ctx)
+	a.cancelPreview = cancel
+	seq := a.previewSeq
+	s.Preview = noPreview(PreviewLoading)
+	req := organizer.Request{
+		SourceFolderPath:      s.SourceFolderPath,
+		DestinationFolderPath: s.DestinationFolderPath,
+		Options:               a.deps.Settings.Get().Options,
+	}
+	a.pending = append(a.pending, func() {
+		p, err := a.deps.Organizer.Preview(ctx, req)
+		a.update(func(s *ViewState) { a.finishPreview(s, seq, p, err) })
+	})
+}
+
+func (a *App) stopPreview(s *ViewState) {
+	a.previewSeq++
+	if a.cancelPreview != nil {
+		a.cancelPreview()
+		a.cancelPreview = nil
+	}
+	s.Preview = noPreview(PreviewNone)
+}
+
+// Cancelada por uma prévia nova não é erro; origem ilegível vira aviso (#77).
+func (a *App) finishPreview(s *ViewState, seq uint64, p organizer.Preview, err error) {
+	if seq != a.previewSeq {
+		return
+	}
+	a.stopPreview(s)
+	if errors.Is(err, context.Canceled) {
+		return
+	}
+	if err != nil {
+		a.fail(s, ActionPreview, err)
+		return
+	}
+	s.Preview = PreviewState{Status: PreviewReady, Preview: p}
 }
 
 func (a *App) notify(s *ViewState, n Notification) {
