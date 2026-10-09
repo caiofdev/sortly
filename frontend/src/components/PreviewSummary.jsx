@@ -1,3 +1,5 @@
+import { folderLabel } from '../i18n/folderLabel';
+
 // A prévia vem pronta do backend; aqui só se escolhem os textos. A região
 // anunciável fica sempre montada, para o leitor de tela ler a contagem quando
 // ela chega (#77).
@@ -15,7 +17,7 @@ function PreviewContent({ labels, preview }) {
       </span>
       {preview.folders.map((folder) => (
         <span key={folder.name} className="st-chip">
-          {folder.name || labels.previewRoot} <b>{folder.count}</b>
+          {folderLabel(folder.name, preview.categoryFolders, labels)} <b>{folder.count}</b>
         </span>
       ))}
       {preview.otherFiles > 0 && (

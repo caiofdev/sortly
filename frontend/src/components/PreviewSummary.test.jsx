@@ -41,6 +41,13 @@ describe('PreviewSummary', () => {
     expect(container.firstChild).toHaveTextContent(`${totalFiles} ${text}`);
   });
 
+  it('com o critério Tipo, as categorias aparecem traduzidas', () => {
+    const { container } = renderPreview(
+      preview({ categoryFolders: true, folders: [{ name: 'images', count: 2 }] })
+    );
+    expect(chips(container)).toEqual(['Imagens 2']);
+  });
+
   it('um chip por pasta, com a raiz do destino traduzida', () => {
     const { container } = renderPreview(
       preview({
