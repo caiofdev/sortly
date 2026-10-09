@@ -17,9 +17,10 @@ type FolderCount struct {
 }
 
 type Preview struct {
-	TotalFiles int           `json:"totalFiles"`
-	Folders    []FolderCount `json:"folders"`
-	OtherFiles int           `json:"otherFiles"`
+	TotalFiles      int           `json:"totalFiles"`
+	Folders         []FolderCount `json:"folders"`
+	OtherFiles      int           `json:"otherFiles"`
+	CategoryFolders bool          `json:"categoryFolders"`
 }
 
 // Planeja como o Organize, sem mover nada: a prévia mostra exatamente as pastas
@@ -43,7 +44,7 @@ func summarize(plan Plan) Preview {
 		targets = append(targets, m.To)
 	}
 	folders, others := countFolders(plan.Destination, targets)
-	return Preview{TotalFiles: plan.ProcessedFiles, Folders: folders, OtherFiles: others}
+	return Preview{TotalFiles: plan.ProcessedFiles, Folders: folders, OtherFiles: others, CategoryFolders: plan.CategoryFolders}
 }
 
 // Agrupa pela pasta de 1º nível, da com mais arquivos para a com menos; no empate,

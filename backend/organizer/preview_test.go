@@ -150,3 +150,11 @@ func TestMovedFolders(t *testing.T) {
 		})
 	}
 }
+
+func TestSummarizeKeepsCategoryFolders(t *testing.T) {
+	for _, on := range []bool{false, true} {
+		if got := summarize(Plan{CategoryFolders: on}); got.CategoryFolders != on {
+			t.Errorf("CategoryFolders = %v, want %v", got.CategoryFolders, on)
+		}
+	}
+}

@@ -28,6 +28,9 @@ type Plan struct {
 	// Arquivos que já estão no lugar certo (destino = origem e nenhum critério
 	// gerou subpasta): não são movidos nem renomeados (#8).
 	UnchangedFiles int
+	// Com o critério Tipo, as pastas de 1º nível são categorias (images,
+	// documents…), que a interface traduz (#81).
+	CategoryFolders bool
 }
 
 // Não altera nada no disco (#8).
@@ -49,7 +52,7 @@ func (p *Planner) Plan(ctx context.Context, src, dst string, opts criteria.Optio
 	}
 
 	rules := p.active(opts)
-	plan := Plan{Source: src, Destination: dst}
+	plan := Plan{Source: src, Destination: dst, CategoryFolders: opts.ByType}
 	for _, entry := range entries {
 		if err := ctx.Err(); err != nil {
 			return Plan{}, err

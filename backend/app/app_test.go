@@ -219,7 +219,7 @@ func TestGetStateIncludesSettings(t *testing.T) {
 	prefs := &fakeSettings{current: settings.Settings{Language: "en", Options: criteria.Options{ByDate: true}}}
 	a, _ := newTestApp(Deps{Settings: prefs})
 	got := a.GetState().Settings
-	if got.Language != "en" || len(got.Criteria) != len(criteria.Keys) || !got.Criteria[3].Locked {
+	if got.Language != "en" || len(got.Criteria) != len(criteria.Keys) || !got.Criteria[4].Locked {
 		t.Fatalf("Settings = %+v", got)
 	}
 }
@@ -1023,7 +1023,7 @@ func TestSetLanguage(t *testing.T) {
 func TestSetCriterion(t *testing.T) {
 	a, _ := newTestApp(Deps{})
 	got := a.SetCriterion("byDate", true).Settings.Criteria
-	if got[3].Key != "byDate" || !got[3].Enabled {
+	if got[4].Key != "byDate" || !got[4].Enabled {
 		t.Fatalf("critérios = %+v", got)
 	}
 
