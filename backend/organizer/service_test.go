@@ -198,7 +198,7 @@ func TestResultJSONHasNoMessage(t *testing.T) {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
-	want := []string{"canUndo", "canceled", "destinationFolderPath", "failedFiles", "folders", "ignoredFolders",
+	want := []string{"canUndo", "canceled", "categoryFolders", "destinationFolderPath", "failedFiles", "folders", "ignoredFolders",
 		"ignoredWithoutExtension", "movedFiles", "otherFiles", "processedFiles", "sourceFolderPath", "unchangedFiles"}
 	if !reflect.DeepEqual(keys, want) {
 		t.Fatalf("campos = %v, want %v (#8: sem \"message\")", keys, want)
@@ -298,4 +298,43 @@ func TestOrganizeCanceled(t *testing.T) {
 			t.Fatalf("Organize = (%+v, %v)", got, err)
 		}
 	})
+}
+
+func TestOrganizeByType(t *testing.T) {
+	tests := []struct {
+		name string
+		opts criteria.Options
+		want []string
+	}{
+		{"só o tipo: sem extensão vai para other", criteria.Options{ByType: true},
+			[]string{"documents/a.pdf", "documents/b.txt", "images/c.png", "other/LEIAME"}},
+		{"tipo e extensão: aninha e ignora o sem extensão, como na 1.0", criteria.Options{ByType: true, ByExtension: true},
+			[]string{"LEIAME", "documents/pdf/a.pdf", "documents/txt/b.txt", "images/png/c.png"}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			src := t.TempDir()
+			for _, f := range []string{"a.pdf", "b.txt", "c.png", "LEIAME"} {
+				writeAt(t, filepath.Join(src, f), f, testTime)
+			}
+			svc, _ := newTestService(t)
+
+			got, err := svc.Organize(context.Background(), Request{SourceFolderPath: src, Options: tt.opts})
+
+			if err != nil || !got.CategoryFolders {
+				t.Fatalf("Organize = (%+v, %v), want categoryFolders", got, err)
+			}
+			assertTree(t, src, tt.want)
+		})
+	}
+}
+
+func TestOrganizeWithoutTypeHasNoCategoryFolders(t *testing.T) {
+	src := t.TempDir()
+	writeAt(t, filepath.Join(src, "a.pdf"), "a", testTime)
+	svc, _ := newTestService(t)
+	got, err := svc.Organize(context.Background(), Request{SourceFolderPath: src, Options: criteria.Default})
+	if err != nil || got.CategoryFolders {
+		t.Fatalf("Organize = (%+v, %v)", got, err)
+	}
 }

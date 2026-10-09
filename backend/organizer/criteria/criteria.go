@@ -51,10 +51,11 @@ type Rule interface {
 	Segment(ctx context.Context, f File) (string, error)
 }
 
-// Ordem de aninhamento das pastas: extensão → data → tamanho → resolução →
-// duração → páginas (#8).
+// Ordem de aninhamento das pastas: tipo → extensão → data → tamanho → resolução →
+// duração → páginas. O tipo, que agrupa extensões, fica por fora (#8, #81).
 func New(meta MetadataReader, loc *time.Location) []Rule {
 	return []Rule{
+		typeRule{},
 		extensionRule{},
 		dateRule{loc: loc},
 		sizeRule{},

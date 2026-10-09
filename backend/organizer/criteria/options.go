@@ -1,6 +1,7 @@
 package criteria
 
 type Options struct {
+	ByType       bool
 	ByDuration   bool
 	ByPages      bool
 	ByResolution bool
@@ -9,11 +10,12 @@ type Options struct {
 	ByExtension  bool
 }
 
+// O tipo fica desligado: os nomes de pasta continuam os da 1.0 (#81).
 var Default = Options{ByExtension: true}
 
 // Ordem em que a interface mostra os critérios, diferente da ordem de
-// aninhamento das pastas (veja New) (#44).
-var Keys = []string{"byDuration", "byPages", "byResolution", "byDate", "bySize", "byExtension"}
+// aninhamento das pastas (veja New). O tipo vem antes, por ser o nível de fora (#44, #81).
+var Keys = []string{"byType", "byDuration", "byPages", "byResolution", "byDate", "bySize", "byExtension"}
 
 func (o Options) Any() bool {
 	return o != Options{}
@@ -47,6 +49,7 @@ func (o Options) With(key string, on bool) (Options, bool) {
 }
 
 var fields = map[string]func(*Options) *bool{
+	"byType":       func(o *Options) *bool { return &o.ByType },
 	"byDuration":   func(o *Options) *bool { return &o.ByDuration },
 	"byPages":      func(o *Options) *bool { return &o.ByPages },
 	"byResolution": func(o *Options) *bool { return &o.ByResolution },

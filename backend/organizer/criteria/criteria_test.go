@@ -31,7 +31,7 @@ var errRead = errors.New("falha de leitura")
 
 func TestNewOrder(t *testing.T) {
 	rules := New(fakeMeta{}, time.UTC)
-	want := []string{"criteria.extensionRule", "criteria.dateRule", "criteria.sizeRule",
+	want := []string{"criteria.typeRule", "criteria.extensionRule", "criteria.dateRule", "criteria.sizeRule",
 		"criteria.resolutionRule", "criteria.durationRule", "criteria.pagesRule"}
 	for i, r := range rules {
 		if got := reflect.TypeOf(r).String(); got != want[i] {
@@ -61,7 +61,7 @@ func TestSegmentOrUnknown(t *testing.T) {
 }
 
 func TestEnabledAndApplies(t *testing.T) {
-	all := Options{ByDuration: true, ByPages: true, ByResolution: true, ByDate: true, BySize: true, ByExtension: true}
+	all := Options{ByType: true, ByDuration: true, ByPages: true, ByResolution: true, ByDate: true, BySize: true, ByExtension: true}
 	for _, r := range New(fakeMeta{}, time.UTC) {
 		if !r.Enabled(all) || r.Enabled(Options{}) {
 			t.Errorf("%T: Enabled não segue a opção", r)

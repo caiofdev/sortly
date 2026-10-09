@@ -30,7 +30,7 @@ func TestGet(t *testing.T) {
 		want    Settings
 	}{
 		{"sem arquivo", "", Default()},
-		{"válido", `{"language":"en","organizationOptions":{"byDate":true,"bySize":true}}`,
+		{"válido", `{"language":"en","organizationOptions":{"byDate":true,"bySize":true,"byType":false}}`,
 			Settings{Language: "en", Theme: DefaultTheme, Options: criteria.Options{ByDate: true, BySize: true}}},
 		{"vazio", " ", Default()},
 		{"JSON corrompido", `{"language":`, Default()},
@@ -210,7 +210,7 @@ func TestSavedFileFormat(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := `{"language":"pt-BR","theme":"dark","organizationOptions":{"byDate":false,"byDuration":false,"byExtension":true,"byPages":false,"byResolution":false,"bySize":true}}`
+	want := `{"language":"pt-BR","theme":"dark","organizationOptions":{"byDate":false,"byDuration":false,"byExtension":true,"byPages":false,"byResolution":false,"bySize":true,"byType":false}}`
 	if string(data) != want {
 		t.Fatalf("arquivo =\n%s\nwant\n%s", data, want)
 	}

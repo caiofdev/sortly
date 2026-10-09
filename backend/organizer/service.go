@@ -36,8 +36,9 @@ type Result struct {
 	CanUndo                 bool   `json:"canUndo"`
 	Canceled                bool   `json:"canceled"`
 	// Só o que foi movido de fato, para a tela Concluído (#79).
-	Folders    []FolderCount `json:"folders"`
-	OtherFiles int           `json:"otherFiles"`
+	Folders         []FolderCount `json:"folders"`
+	OtherFiles      int           `json:"otherFiles"`
+	CategoryFolders bool          `json:"categoryFolders"`
 }
 
 type RecordStore interface {
@@ -105,6 +106,7 @@ func (s *Service) OrganizeReporting(ctx context.Context, req Request, report Rep
 		Canceled:                errors.Is(applyErr, context.Canceled),
 	}
 	result.Folders, result.OtherFiles = movedFolders(dst, out.MovedItems)
+	result.CategoryFolders = plan.CategoryFolders
 	return result, errors.Join(applyErr, saveErr)
 }
 

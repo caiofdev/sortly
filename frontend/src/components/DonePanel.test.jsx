@@ -88,6 +88,14 @@ describe('DonePanel', () => {
     ]);
   });
 
+  it('com o critério Tipo, as barras mostram as categorias traduzidas', () => {
+    const { container } = renderDone({
+      result: result({ categoryFolders: true, folders: [{ name: 'documents', count: 3 }] })
+    });
+    expect(rows(container)[0][0]).toBe('Documentos');
+    expect(container.querySelector('.st-done__folder')).toHaveAttribute('title', 'documents');
+  });
+
   it('"Outras" vira mais uma barra', () => {
     const { container } = renderDone({ result: result({ otherFiles: 8 }) });
     expect(rows(container).at(-1)).toEqual([pt.previewOthers, '8', '100%']);

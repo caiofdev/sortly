@@ -1,14 +1,17 @@
 import { useEffect, useRef } from 'react';
 import { FolderIcon, UndoIcon } from './icons';
+import { folderLabel } from '../i18n/folderLabel';
 import { folderName } from './OrganizingPanel';
 
 // As barras são relativas à maior pasta, como no protótipo (#79).
 export const barWidth = (count, max) => `${max > 0 ? Math.round((count / max) * 100) : 0}%`;
 
-function FolderBar({ name, count, max }) {
+function FolderBar({ name, folder, count, max }) {
   return (
     <div className="st-done__row">
-      <span className="st-done__folder">{name}</span>
+      <span className="st-done__folder" title={folder}>
+        {name}
+      </span>
       <div className="st-done__track">
         <div className="st-done__bar" style={{ width: barWidth(count, max) }} />
       </div>
@@ -59,7 +62,13 @@ function DonePanel({
 
       <div className="st-done__folders">
         {result.folders.map((f) => (
-          <FolderBar key={f.name} name={f.name || labels.previewRoot} count={f.count} max={max} />
+          <FolderBar
+            key={f.name}
+            name={folderLabel(f.name, result.categoryFolders, labels)}
+            folder={f.name || undefined}
+            count={f.count}
+            max={max}
+          />
         ))}
         {result.otherFiles > 0 && (
           <FolderBar name={labels.previewOthers} count={result.otherFiles} max={max} />

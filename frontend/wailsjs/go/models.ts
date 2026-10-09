@@ -50,6 +50,7 @@ export namespace app {
 	    totalFiles: number;
 	    folders: organizer.FolderCount[];
 	    otherFiles: number;
+	    categoryFolders: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new PreviewState(source);
@@ -61,6 +62,7 @@ export namespace app {
 	        this.totalFiles = source["totalFiles"];
 	        this.folders = this.convertValues(source["folders"], organizer.FolderCount);
 	        this.otherFiles = source["otherFiles"];
+	        this.categoryFolders = source["categoryFolders"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -227,6 +229,7 @@ export namespace organizer {
 	    canceled: boolean;
 	    folders: FolderCount[];
 	    otherFiles: number;
+	    categoryFolders: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new Result(source);
@@ -246,6 +249,7 @@ export namespace organizer {
 	        this.canceled = source["canceled"];
 	        this.folders = this.convertValues(source["folders"], FolderCount);
 	        this.otherFiles = source["otherFiles"];
+	        this.categoryFolders = source["categoryFolders"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

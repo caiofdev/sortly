@@ -44,12 +44,13 @@ Cada critério ativo gera **uma subpasta**, aninhada sempre nesta ordem:
 
 | Ordem | Critério | Aplica-se a | Nome da pasta | Sem informação |
 |---|---|---|---|---|
-| 1 | Extensão (`byExtension`) | todos | `<ext>` (ex.: `pdf`) | arquivo **não é movido**; conta em `ignoredWithoutExtension` |
-| 2 | Data (`byDate`) | todos | `date-YYYY-MM-DD` (data de modificação, fuso local) | — |
-| 3 | Tamanho (`bySize`) | todos | `size-<N>mb` | — |
-| 4 | Resolução (`byResolution`) | png, jpg, jpeg, gif, webp, bmp | `<largura>x<altura>` (ex.: `1920x1080`) | `unknown` |
-| 5 | Duração (`byDuration`) | mp4 | `duration-HHhMMmSSs` | `duration-unknown` |
-| 6 | Páginas (`byPages`) | pdf, docx, odt, doc | `pages-<N>` | `pages-unknown` |
+| 1 | Tipo (`byType`, desligado por padrão) | todos | a categoria (§4.5): `images`, `documents`, `archives`, `installers`, `videos`, `audio` ou `other` | `other` (sem extensão ou extensão desconhecida) |
+| 2 | Extensão (`byExtension`) | todos | `<ext>` (ex.: `pdf`) | arquivo **não é movido**; conta em `ignoredWithoutExtension` |
+| 3 | Data (`byDate`) | todos | `date-YYYY-MM-DD` (data de modificação, fuso local) | — |
+| 4 | Tamanho (`bySize`) | todos | `size-<N>mb` | — |
+| 5 | Resolução (`byResolution`) | png, jpg, jpeg, gif, webp, bmp | `<largura>x<altura>` (ex.: `1920x1080`) | `unknown` |
+| 6 | Duração (`byDuration`) | mp4 | `duration-HHhMMmSSs` | `duration-unknown` |
+| 7 | Páginas (`byPages`) | pdf, docx, odt, doc | `pages-<N>` | `pages-unknown` |
 
 Critérios que não se aplicam ao tipo do arquivo são pulados (não geram pasta).
 
@@ -59,7 +60,13 @@ Critérios que não se aplicam ao tipo do arquivo são pulados (não geram pasta
 <destino>/pdf/size-3mb/pages-12/relatorio.pdf
 ```
 
-Com a Extensão desligada, arquivos sem extensão **são** movidos pelos demais critérios.
+Com a Extensão desligada, arquivos sem extensão **são** movidos pelos demais critérios. Com Tipo e Extensão ligados, o arquivo sem extensão continua sem ser movido, como na 1.0.
+
+**Exemplo** — `foto.jpg` com Tipo + Extensão:
+
+```
+<destino>/images/jpg/foto.jpg
+```
 
 ### 4.1 Tamanho
 
@@ -104,6 +111,22 @@ Valores ausentes, zero ou inválidos resultam em `pages-unknown`.
 ### 4.4 Resolução
 
 Lida do cabeçalho da imagem (sem considerar orientação EXIF). O formato é detectado pelo **conteúdo**, não pela extensão: um `.png` que na verdade é um JPEG tem a resolução lida normalmente. No BMP, altura negativa (imagem gravada de cima para baixo) conta pelo valor absoluto. Falha de leitura ou dimensão zero resulta em `unknown`.
+
+### 4.5 Tipo
+
+As pastas têm nomes neutros, como as dos outros critérios; a interface mostra o rótulo traduzido (Imagens, Documentos, Compactados, Instaladores, Vídeos, Áudio, Outros). Para isso, a prévia e o resultado trazem `categoryFolders: true` quando o Tipo está ligado.
+
+| Pasta | Extensões |
+|---|---|
+| `images` | jpg, jpeg, png, gif, bmp, webp, svg, tif, tiff, heic, heif, ico, raw, cr2, nef, arw, dng, psd |
+| `documents` | pdf, doc, docx, odt, rtf, txt, md, xls, xlsx, ods, csv, ppt, pptx, odp, epub |
+| `archives` | zip, rar, 7z, tar, gz, tgz, bz2, xz, zst |
+| `installers` | exe, msi, msix, dmg, pkg, deb, rpm, appimage, apk |
+| `videos` | mp4, mkv, avi, mov, wmv, webm, m4v, flv, mpg, mpeg, 3gp |
+| `audio` | mp3, wav, flac, aac, ogg, oga, m4a, wma, opus, aiff |
+| `other` | qualquer outra extensão e arquivos sem extensão |
+
+A extensão é comparada em minúsculas e é só a última parte do nome: `backup.tar.gz` é `gz`, em `archives`.
 
 ## 5. Conflito de nomes
 
@@ -176,7 +199,7 @@ O item precisa ser solto **sobre o painel** de arrastar e soltar; fora dele, nad
 Idioma e critérios ficam em `~/.sortly/settings.json`, gravado de forma atômica:
 
 ```json
-{"language":"pt-BR","organizationOptions":{"byDate":false,"byDuration":false,"byExtension":true,"byPages":false,"byResolution":false,"bySize":false}}
+{"language":"pt-BR","theme":"dark","organizationOptions":{"byDate":false,"byDuration":false,"byExtension":true,"byPages":false,"byResolution":false,"bySize":false,"byType":false}}
 ```
 
 | Situação | Resultado |
@@ -190,4 +213,4 @@ Idioma e critérios ficam em `~/.sortly/settings.json`, gravado de forma atômic
 | Chave de critério desconhecida ao alterar | `UNKNOWN_CRITERION` |
 | Falha ao gravar | `SETTINGS_NOT_SAVED`; as preferências continuam as anteriores |
 
-A interface mostra os critérios na ordem Duração, Páginas, Resolução, Data, Tamanho, Extensão (diferente da ordem de aninhamento das pastas, §4).
+A interface mostra os critérios na ordem Tipo, Duração, Páginas, Resolução, Data, Tamanho, Extensão (diferente da ordem de aninhamento das pastas, §4). Um `settings.json` sem `byType` (de antes da #81) vale como Tipo desligado.

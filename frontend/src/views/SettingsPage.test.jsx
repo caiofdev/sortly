@@ -4,7 +4,7 @@ import organizerCopy from '../i18n/organizerCopy';
 import SettingsPage from './SettingsPage';
 
 const pt = organizerCopy['pt-BR'];
-const KEYS = ['byDuration', 'byPages', 'byResolution', 'byDate', 'bySize', 'byExtension'];
+const KEYS = ['byType', 'byDuration', 'byPages', 'byResolution', 'byDate', 'bySize', 'byExtension'];
 
 function renderSettings(criteria, theme = 'dark') {
   const onCriterionChange = vi.fn();
@@ -41,6 +41,7 @@ describe('SettingsPage', () => {
   it('um switch por critério, na ordem do backend', () => {
     renderSettings(KEYS.map((key) => ({ key, enabled: false, locked: false })));
     expect(screen.getAllByRole('switch').map((s) => s.getAttribute('aria-label'))).toEqual([
+      'Tipo',
       'Duração (.mp4)',
       'Páginas',
       'Resolução',

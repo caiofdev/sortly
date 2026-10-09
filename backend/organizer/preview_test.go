@@ -45,14 +45,14 @@ func TestSummarize(t *testing.T) {
 		{"nada para mover", planWith(dst, 2, nil), Preview{TotalFiles: 2, Folders: []FolderCount{}}},
 		{"raiz do destino e empate pelo nome", planWith(dst, 4, map[string]int{"txt": 1, "": 1, "pdf": 2}),
 			Preview{TotalFiles: 4, Folders: []FolderCount{{"pdf", 2}, {"", 1}, {"txt", 1}}}},
-		{"5 pastas", planWith(dst, 15, folderNames(5)),
-			Preview{TotalFiles: 15, Folders: []FolderCount{{"p0", 5}, {"p1", 4}, {"p2", 3}, {"p3", 2}, {"p4", 1}}}},
-		{"6 pastas, sem outras", planWith(dst, 21, folderNames(6)),
+		{"6 pastas", planWith(dst, 21, folderNames(6)),
 			Preview{TotalFiles: 21, Folders: []FolderCount{{"p0", 6}, {"p1", 5}, {"p2", 4}, {"p3", 3}, {"p4", 2}, {"p5", 1}}}},
-		{"8 pastas: as duas menores viram outras", planWith(dst, 36, folderNames(8)),
-			Preview{TotalFiles: 36, Folders: []FolderCount{{"p0", 8}, {"p1", 7}, {"p2", 6}, {"p3", 5}, {"p4", 4}, {"p5", 3}}, OtherFiles: 3}},
-		{"7 pastas: a menor vira outras", planWith(dst, 28, folderNames(7)),
-			Preview{TotalFiles: 28, Folders: []FolderCount{{"p0", 7}, {"p1", 6}, {"p2", 5}, {"p3", 4}, {"p4", 3}, {"p5", 2}}, OtherFiles: 1}},
+		{"7 pastas (as 7 categorias do Tipo), sem demais", planWith(dst, 28, folderNames(7)),
+			Preview{TotalFiles: 28, Folders: []FolderCount{{"p0", 7}, {"p1", 6}, {"p2", 5}, {"p3", 4}, {"p4", 3}, {"p5", 2}, {"p6", 1}}}},
+		{"8 pastas: a menor vira demais", planWith(dst, 36, folderNames(8)),
+			Preview{TotalFiles: 36, Folders: []FolderCount{{"p0", 8}, {"p1", 7}, {"p2", 6}, {"p3", 5}, {"p4", 4}, {"p5", 3}, {"p6", 2}}, OtherFiles: 1}},
+		{"9 pastas: as duas menores viram demais", planWith(dst, 45, folderNames(9)),
+			Preview{TotalFiles: 45, Folders: []FolderCount{{"p0", 9}, {"p1", 8}, {"p2", 7}, {"p3", 6}, {"p4", 5}, {"p5", 4}, {"p6", 3}}, OtherFiles: 3}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -148,5 +148,13 @@ func TestMovedFolders(t *testing.T) {
 				t.Fatalf("movedFolders = (%+v, %d), want (%+v, %d)", got, others, tt.want, tt.wantOthers)
 			}
 		})
+	}
+}
+
+func TestSummarizeKeepsCategoryFolders(t *testing.T) {
+	for _, on := range []bool{false, true} {
+		if got := summarize(Plan{CategoryFolders: on}); got.CategoryFolders != on {
+			t.Errorf("CategoryFolders = %v, want %v", got.CategoryFolders, on)
+		}
 	}
 }
