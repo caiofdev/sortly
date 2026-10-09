@@ -66,8 +66,6 @@ const feedbackCopy = {
         when(r.failedFiles, 'Desfaça de novo para tentar restaurar o resto.')
       )
     }),
-    // Textos dos códigos de erro do backend (ADR 0004). Em português, são os
-    // mesmos da versão 1.0.
     errors: {
       INVALID_SOURCE: 'Pasta inválida.',
       INVALID_DESTINATION: 'Pasta de destino inválida.',

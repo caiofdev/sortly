@@ -145,7 +145,6 @@ function Find-Text([string]$pattern) {
   return [string]($texts | ForEach-Object { $_.Current.Name } | Where-Object { $_ -match $pattern } | Select-Object -First 1)
 }
 
-# Último aviso mostrado na central de notificações.
 function Last-Notice {
   Click 'Notificações', 'Notifications'
   Start-Sleep -Milliseconds 600
@@ -173,7 +172,7 @@ try {
   Start-App
   Set-Criteria @('Duração (.mp4)', 'Páginas', 'Resolução', 'Data', 'Tamanho (MB)', 'Extensão do arquivo')
   Click 'Organizar' -Last
-  $moved = Wait-Until { (Tree $src).Count -eq 3 }   # ficam LEIAME, .gitignore (sem extensão) e subpasta\dentro.txt
+  $moved = Wait-Until { (Tree $src).Count -eq 3 }
   $organized = Tree $dst
   $toast = Find-Text '^Pronto! \d+ arquivos organizados$'
   Check 'WIN_TOAST' ($toast -ne '') "toast ao organizar: $toast"
@@ -211,7 +210,7 @@ try {
   Check 'WIN_B1' ($done -and $notice -match ', 1 com falha$') $notice
 
   # --- 4) Organizar sem nada para mover mantém o desfazer (B2) ---
-  Click 'Organizar' -Last; Start-Sleep -Seconds 2   # só sobra o png (já liberado), que agora é movido
+  Click 'Organizar' -Last; Start-Sleep -Seconds 2
   Click 'Organizar' -Last; Start-Sleep -Seconds 2   # nada para mover
   $keep = Is-Enabled 'Desfazer'
   Check 'WIN_B2' $keep 'botão de desfazer continua ativo após organizar sem movimentos'

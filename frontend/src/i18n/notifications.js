@@ -11,7 +11,6 @@ const notices = {
   UNDO_DONE: (n, copy) => copy.undoDone(n.undo)
 };
 
-// Texto padrão de cada ação para erros sem tradução própria (ex.: UNEXPECTED).
 const fallbackByAction = {
   selectSource: 'sourceSelectError',
   selectDestination: 'destinationSelectError',
@@ -33,7 +32,6 @@ export function notificationText(notification, copy) {
   return { title, text: '' };
 }
 
-// Notificações do backend prontas para o painel e os toasts, no idioma atual.
 export function toNotificationItems(notifications, language) {
   const copy = getCopy(feedbackCopy, language);
   const locale = toLocale(language);
