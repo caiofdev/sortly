@@ -78,6 +78,7 @@ ViewState {
   hasUndo: bool
   busy: "" | "organize" | "restore"          // ação em andamento
   unread: bool                               // há notificação nova desde a última leitura
+  preview: { status: "" | "loading" | "ready", totalFiles, folders: [{ name, count }], otherFiles }
   settings: { language, theme: "dark" | "light", criteria: [{ key, enabled, locked }] }
   notifications: [{ id, kind: "success" | "info" | "error", code, action, path?, organize?, undo?, at }]   // até 80, a mais recente primeiro
 }
@@ -86,6 +87,7 @@ ViewState {
 - **Erros não rejeitam a promessa:** viram uma notificação `kind: "error"` com o código (`INVALID_SOURCE`, `NOTHING_TO_UNDO`, `DROPPED_MISSING`, `LAST_CRITERION`, `UNEXPECTED`…) e a ação que falhou. O detalhe vai para o log. O frontend traduz o código, ou usa o texto padrão da ação quando o código não tem tradução própria (ADR 0004).
 - **Notificações de sucesso** também são códigos com dados: `ORGANIZE_DONE` (com `organize`: movidos, falhas, ignorados…), `UNDO_DONE` (com `undo`) e `SOURCE_DROPPED` (com `path`).
 - **Status (`kind`):** o backend decide se o aviso é sucesso, neutro ou erro. Organizar ou desfazer com algum arquivo que falhou é `error`, e organizar sem nada movido é `info`. A interface usa o `kind` para o ponto do painel e a variante do toast; o toast de erro fica até o usuário fechar.
+- **Prévia da origem:** ao definir a origem ou o destino, mudar um critério, ao fim de organizar e de desfazer e na origem recuperada ao abrir, o `App` planeja em segundo plano (`organizer.Service.Preview`, o mesmo `Planner` da organização, sem mover nada). Uma prévia nova cancela a anterior, e um resultado antigo que chegue depois é descartado. O binding devolve `status: "loading"`, e o resultado chega pelo evento de estado. `folders` traz até 6 pastas de 1º nível, da maior para a menor (nome vazio = raiz do destino); o resto soma em `otherFiles`. Origem ilegível vira uma notificação de erro com a ação `preview`. Durante organizar e desfazer, a prévia some.
 - **Evento `sortly:state`:** emitido a cada mudança, com o estado inteiro. É por ele que a tela mostra "Organizando…" enquanto a chamada de `Organize` ainda não terminou.
 - **Estados fora de ordem:** evento e retorno do binding saem do lock antes de chegar à tela, então duas ações quase simultâneas podem entregá-los fora de ordem. O `useViewState` só troca o estado por um de `version` maior.
 - **Organizar e desfazer não rodam juntos:** uma chamada durante a outra devolve o estado sem fazer nada.

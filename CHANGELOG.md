@@ -15,6 +15,7 @@ Mantido por Caio Reis & Claude.
 - Avisos no canto da tela ao organizar, ao desfazer e quando algo dá errado. Os de sucesso somem sozinhos em 4 segundos; os de erro ficam até você fechar.
 - O sino mostra um ponto amarelo quando há aviso novo. O painel tem "Marcar como lidas" e fecha com Esc.
 - Tema claro nas Configurações, com a barra lateral branca. O tema escolhido fica salvo, e a janela já abre na cor dele.
+- Ao escolher a pasta de origem, o app mostra quantos arquivos encontrou e em quais pastas eles vão ficar, antes de organizar. A prévia se atualiza ao mudar os critérios.
 
 ### Corrigido
 - Ao mover para outro disco ou pendrive, o arquivo original só é apagado depois que a cópia está gravada de fato. Uma queda de energia ou um pendrive removido logo depois não perde mais o arquivo.
