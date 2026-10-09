@@ -57,6 +57,29 @@ func TestPlanTreeSkipsDestinationInsideSource(t *testing.T) {
 	}
 }
 
+// Regressão (#83): com subpastas, os arquivos de dentro de um .git ou do .sortly eram
+// espalhados pelas pastas de critério.
+func TestPlanTreeSkipsHiddenFolders(t *testing.T) {
+	src := treeSource(t)
+	writeAt(t, filepath.Join(src, ".git", "objects", "ab", "cdef"), "obj", testTime)
+	writeAt(t, filepath.Join(src, ".sortly", "last-operation.json"), "{}", testTime)
+	writeAt(t, filepath.Join(src, ".config.json"), "{}", testTime)
+
+	got, err := newTestPlanner().PlanTree(context.Background(), src, t.TempDir(), criteria.Options{ByExtension: true})
+
+	if err != nil || got.ProcessedFiles != 5 || got.IgnoredFolders != 2 {
+		t.Fatalf("pastas ocultas não são percorridas; arquivo oculto no nível de cima continua: (%+v, %v)", got, err)
+	}
+}
+
+func TestHiddenFolder(t *testing.T) {
+	for name, want := range map[string]bool{".git": true, ".sortly": true, "fotos": false, "a.b": false} {
+		if got := hiddenFolder(name); got != want {
+			t.Errorf("hiddenFolder(%q) = %v, want %v", name, got, want)
+		}
+	}
+}
+
 func TestPlanTreeSpecialEntries(t *testing.T) {
 	src := t.TempDir()
 	p := newTestPlanner()

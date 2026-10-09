@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/caiofdev/sortly/backend/fs/paths"
 	"github.com/caiofdev/sortly/backend/organizer/criteria"
@@ -101,7 +102,7 @@ func (p *Planner) visit(ctx context.Context, dir string, entry fs.DirEntry, plan
 		return plan.addFile(ctx, dir, entry, rules)
 	}
 	child := filepath.Join(dir, entry.Name())
-	if paths.Equal(child, plan.Destination) {
+	if hiddenFolder(entry.Name()) || paths.Equal(child, plan.Destination) {
 		plan.IgnoredFolders++
 		return nil
 	}
@@ -111,6 +112,13 @@ func (p *Planner) visit(ctx context.Context, dir string, entry fs.DirEntry, plan
 		return nil
 	}
 	return p.walk(ctx, child, entries, plan, rules)
+}
+
+// Pastas ocultas guardam o funcionamento de outros programas: espalhar o
+// conteúdo de um .git corromperia o repositório, e o .sortly tem o registro do
+// próprio desfazer (#83).
+func hiddenFolder(name string) bool {
+	return strings.HasPrefix(name, ".")
 }
 
 func (p *Planner) active(opts criteria.Options) []criteria.Rule {

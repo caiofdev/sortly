@@ -23,6 +23,7 @@ Os critérios usados são os salvos nas preferências (§10); no primeiro uso, s
 - Por padrão, como na 1.0, apenas o **nível superior** da pasta de origem é lido; subpastas são ignoradas e contadas em `ignoredFolders`.
 - Com **Incluir subpastas** (`includeSubfolders`, desligado por padrão), a árvore inteira é percorrida, e os arquivos de qualquer nível vão para as **mesmas pastas de critério** no destino (`origem/fotos/2026/c.png` → `destino/png/c.png`). Nomes repetidos seguem a regra de duplicados (§5); dois arquivos da mesma organização são sempre renomeados.
   - Links e junções não são seguidos.
+  - Pastas ocultas (nome começando com ponto, como `.git` e `.sortly`) não são percorridas e contam em `ignoredFolders`: guardam o funcionamento de outros programas, e espalhar o conteúdo delas os quebraria.
   - A pasta de destino, se estiver dentro da origem, não é percorrida e conta em `ignoredFolders`; uma subpasta que não pode ser lida também.
   - Depois de mover, as subpastas da origem de onde saíram arquivos e que ficaram **vazias** são removidas, da mais funda para a mais rasa, até a origem (que nunca é removida). Uma pasta com qualquer outra coisa dentro fica.
 - Entradas que não são arquivo regular nem pasta (links, dispositivos) são ignoradas.
