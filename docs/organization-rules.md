@@ -20,8 +20,11 @@ Os critérios usados são os salvos nas preferências (§10); no primeiro uso, s
 
 ## 2. Varredura
 
-- Apenas o **nível superior** da pasta de origem é lido; não há recursão.
-- Subpastas são ignoradas e contadas em `ignoredFolders`.
+- Por padrão, como na 1.0, apenas o **nível superior** da pasta de origem é lido; subpastas são ignoradas e contadas em `ignoredFolders`.
+- Com **Incluir subpastas** (`includeSubfolders`, desligado por padrão), a árvore inteira é percorrida, e os arquivos de qualquer nível vão para as **mesmas pastas de critério** no destino (`origem/fotos/2026/c.png` → `destino/png/c.png`). Nomes repetidos seguem a regra de duplicados (§5); dois arquivos da mesma organização são sempre renomeados.
+  - Links e junções não são seguidos.
+  - A pasta de destino, se estiver dentro da origem, não é percorrida e conta em `ignoredFolders`; uma subpasta que não pode ser lida também.
+  - Depois de mover, as subpastas da origem de onde saíram arquivos e que ficaram **vazias** são removidas, da mais funda para a mais rasa, até a origem (que nunca é removida). Uma pasta com qualquer outra coisa dentro fica.
 - Entradas que não são arquivo regular nem pasta (links, dispositivos) são ignoradas.
 - Cada arquivo regular conta em `processedFiles`.
 - Se o destino calculado é o próprio arquivo (destino = origem e nenhum critério gerou subpasta), ele fica onde está e conta em `unchangedFiles`.
@@ -198,6 +201,7 @@ A pasta de backup é apagada quando o registro deixa de existir: depois de um de
 - Só voltam itens com `from` dentro da pasta de origem e `to` dentro da pasta de destino do registro (destino vazio = origem), sem ser a própria pasta. Um registro editado ou corrompido com caminhos de fora não move nada: o item é pulado, conta em `skippedMissing` e vai para o log. Registro sem pasta de origem não restaura nada.
 - Se o local original estiver ocupado, aplica a regra de conflito (§5) e conta em `renamedOnRestore`.
 - Uma falha num arquivo não interrompe os demais. O registro é regravado só com os itens que falharam, e o desfazer continua disponível para tentar de novo (`failedFiles`). Sem falhas, o registro é apagado.
+- Cada arquivo volta para o caminho de onde saiu, inclusive dentro de subpastas da origem; as subpastas removidas por **Incluir subpastas** são recriadas nesse momento.
 - Depois dos movidos, os **substituídos** voltam do backup para o lugar (`restoredReplaced`), da última substituição para a primeira. Só voltam itens com `path` dentro do destino do registro e `backup` dentro de `~/.sortly/substituidos`; os outros são pulados e vão para o log. Se o lugar estiver ocupado, aplica a regra de conflito. Um substituído que falhar fica no registro, e o desfazer continua disponível.
 - Depois, remove as pastas de `createdFolders` que ficaram **vazias**, da mais funda para a mais rasa. Pastas que já existiam antes da organização ficam, mesmo vazias. Em registros antigos, sem `createdFolders`, sobe da pasta de cada arquivo até a raiz do destino (exclusive). Nada fora dessa raiz é tocado. Pastas com outros arquivos são preservadas, e a raiz nunca é removida, mesmo com diferença de maiúsculas/minúsculas no caminho (Windows e macOS).
 
@@ -221,7 +225,7 @@ O item precisa ser solto **sobre o painel** de arrastar e soltar; fora dele, nad
 Idioma e critérios ficam em `~/.sortly/settings.json`, gravado de forma atômica:
 
 ```json
-{"language":"pt-BR","theme":"dark","duplicates":"rename","organizationOptions":{"byDate":false,"byDuration":false,"byExtension":true,"byPages":false,"byResolution":false,"bySize":false,"byType":false}}
+{"language":"pt-BR","theme":"dark","duplicates":"rename","includeSubfolders":false,"organizationOptions":{"byDate":false,"byDuration":false,"byExtension":true,"byPages":false,"byResolution":false,"bySize":false,"byType":false}}
 ```
 
 | Situação | Resultado |
