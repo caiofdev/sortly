@@ -305,6 +305,20 @@ try {
   Check 'WIN_DUP_REPLACE' ($replaced -and $restored -and $cleaned) "substituído e guardado: $replaced; desfeito: $restored; backup apagado: $cleaned"
   Click 'Configurações'; Click 'Renomear'; Start-Sleep -Milliseconds 500; Click 'Organizar'
 
+  # --- 6e) Incluir subpastas: subpasta\dentro.txt vai para txt e a subpasta vazia some; o desfazer a recria (#83) ---
+  Stop-App
+  $sub = "$work\subpastas"; New-Dataset $sub
+  Set-Record $sub $sub
+  Start-App
+  Set-Criteria @('Extensão do arquivo')
+  Click 'Configurações'; Click 'Incluir subpastas'; Start-Sleep -Milliseconds 500; Click 'Organizar'
+  Click 'Organizar' -Last
+  $flattened = Wait-Until { (Test-Path "$sub\txt\dentro.txt") -and -not (Test-Path "$sub\subpasta") } 15
+  Click 'Desfazer'
+  $recreated = Wait-Until { Test-Path "$sub\subpasta\dentro.txt" } 15
+  Check 'WIN_SUBFOLDERS' ($flattened -and $recreated) "achatado: $flattened; subpasta recriada no desfazer: $recreated"
+  Click 'Configurações'; Click 'Incluir subpastas'; Start-Sleep -Milliseconds 500; Click 'Organizar'
+
   # O desfazer apagou o registro; o passo 7 reabre o app e precisa da origem do B8.
   Set-Criteria @('Resolução')
   Stop-App
