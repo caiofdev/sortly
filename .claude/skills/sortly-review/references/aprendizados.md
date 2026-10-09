@@ -40,4 +40,6 @@ Regras que já falharam neste projeto e que a revisão deve conferir sempre. Cad
 
 - Atributo do <html> que muda a aparência (data-theme) vai em useLayoutEffect: com useEffect, a primeira tela pinta com os tokens errados por um quadro. — #76 (2026-10-09)
 
+- Código que lê arquivos do usuário e passa a rodar numa goroutine própria (fora de um binding) precisa de recover: ali um panic encerra o app inteiro. — #77 (2026-10-09)
+
 <!-- Acrescente aqui: - Regra generalizada. — PR/issue (AAAA-MM-DD) -->

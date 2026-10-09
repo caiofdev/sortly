@@ -21,6 +21,7 @@ function OrganizerView({
   criteria,
   sourceFolderPath,
   destinationFolderPath,
+  preview,
   hasUndo,
   isLoading,
   loadingAction,
@@ -88,6 +89,7 @@ function OrganizerView({
               labels={text}
               sourceFolderPath={sourceFolderPath}
               destinationFolderPath={destinationFolderPath}
+              preview={preview}
               hasUndo={hasUndo}
               isLoading={isLoading}
               loadingAction={loadingAction}

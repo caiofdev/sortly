@@ -40,7 +40,26 @@ const (
 	ActionOrganize          = "organize"
 	ActionUndo              = "undo"
 	ActionSettings          = "settings"
+	ActionPreview           = "preview"
 )
+
+// Valores de PreviewState.Status: a interface mostra "contando" enquanto a prévia
+// roda em segundo plano (#77).
+const (
+	PreviewNone    = ""
+	PreviewLoading = "loading"
+	PreviewReady   = "ready"
+)
+
+type PreviewState struct {
+	Status string `json:"status"`
+	organizer.Preview
+}
+
+// Folders nunca é nil: a interface percorre a lista direto (#77).
+func noPreview(status string) PreviewState {
+	return PreviewState{Status: status, Preview: organizer.Preview{Folders: []organizer.FolderCount{}}}
+}
 
 // Valores de ViewState.Busy (#45).
 const (
@@ -70,6 +89,7 @@ type ViewState struct {
 	HasUndo               bool           `json:"hasUndo"`
 	Busy                  string         `json:"busy"`
 	Unread                bool           `json:"unread"`
+	Preview               PreviewState   `json:"preview"`
 	Settings              settings.View  `json:"settings"`
 	Notifications         []Notification `json:"notifications"`
 }

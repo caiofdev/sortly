@@ -15,6 +15,7 @@ function renderView(props = {}) {
       criteria={[{ key: 'byExtension', enabled: true, locked: true }]}
       sourceFolderPath=""
       destinationFolderPath=""
+      preview={{ status: '', totalFiles: 0, folders: [], otherFiles: 0 }}
       hasUndo={false}
       isLoading={false}
       loadingAction=""

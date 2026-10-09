@@ -27,6 +27,7 @@ const feedbackCopy = {
     undoUnexpectedError: 'Erro inesperado ao desfazer a organização.',
     droppedPathUnexpectedError: 'Não foi possível usar o item arrastado.',
     settingsSaveError: 'Não foi possível salvar a preferência.',
+    previewError: 'Não foi possível ler a pasta de origem.',
     unexpectedError: 'Erro inesperado.',
     recovered: {
       title: 'Última organização recuperada',
@@ -91,6 +92,7 @@ const feedbackCopy = {
     undoUnexpectedError: 'Unexpected error while undoing organization.',
     droppedPathUnexpectedError: 'Could not use the dropped item.',
     settingsSaveError: 'Could not save the preference.',
+    previewError: 'Could not read the source folder.',
     unexpectedError: 'Unexpected error.',
     recovered: {
       title: 'Last organization recovered',

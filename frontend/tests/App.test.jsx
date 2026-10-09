@@ -21,6 +21,7 @@ const viewState = (overrides = {}) => ({
   hasUndo: false,
   busy: '',
   unread: false,
+  preview: { status: '', totalFiles: 0, folders: [], otherFiles: 0 },
   settings: { language: 'pt-BR', theme: 'dark', criteria },
   notifications: [],
   ...overrides
@@ -114,6 +115,27 @@ describe('App', () => {
       expect(container.querySelector('.st-icon-btn__dot')).not.toBeInTheDocument()
     );
     expect(window.go.app.App.MarkNotificationsRead).toHaveBeenCalledTimes(1);
+  });
+
+  it('mostra a prévia da origem que vem do backend', async () => {
+    mockBackend(
+      viewState({
+        sourceFolderPath: 'C:\\origem',
+        preview: {
+          status: 'ready',
+          totalFiles: 3,
+          folders: [{ name: 'pdf', count: 2 }],
+          otherFiles: 1
+        }
+      })
+    );
+    render(<App />);
+
+    expect(await screen.findByText('arquivos encontrados', { exact: false })).toHaveTextContent(
+      '3 arquivos encontrados'
+    );
+    expect(screen.getByText('pdf')).toHaveTextContent('pdf 2');
+    expect(screen.getByText('Outras')).toHaveTextContent('Outras 1');
   });
 
   it('ações chamam os bindings e mostram o estado devolvido', async () => {

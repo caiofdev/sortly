@@ -45,6 +45,42 @@ export namespace app {
 		    return a;
 		}
 	}
+	export class PreviewState {
+	    status: string;
+	    totalFiles: number;
+	    folders: organizer.FolderCount[];
+	    otherFiles: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new PreviewState(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.status = source["status"];
+	        this.totalFiles = source["totalFiles"];
+	        this.folders = this.convertValues(source["folders"], organizer.FolderCount);
+	        this.otherFiles = source["otherFiles"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
 	export class ViewState {
 	    version: number;
 	    sourceFolderPath: string;
@@ -52,6 +88,7 @@ export namespace app {
 	    hasUndo: boolean;
 	    busy: string;
 	    unread: boolean;
+	    preview: PreviewState;
 	    settings: settings.View;
 	    notifications: Notification[];
 	
@@ -67,6 +104,7 @@ export namespace app {
 	        this.hasUndo = source["hasUndo"];
 	        this.busy = source["busy"];
 	        this.unread = source["unread"];
+	        this.preview = this.convertValues(source["preview"], PreviewState);
 	        this.settings = this.convertValues(source["settings"], settings.View);
 	        this.notifications = this.convertValues(source["notifications"], Notification);
 	    }

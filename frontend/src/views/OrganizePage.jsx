@@ -1,11 +1,13 @@
 import DragDropPanel from '../components/DragDropPanel';
 import OrganizerActions from '../components/OrganizerActions';
 import PathField from '../components/PathField';
+import PreviewSummary from '../components/PreviewSummary';
 
 function OrganizePage({
   labels,
   sourceFolderPath,
   destinationFolderPath,
+  preview,
   hasUndo,
   isLoading,
   loadingAction,
@@ -37,6 +39,8 @@ function OrganizePage({
           disabled={isLoading}
         />
       </div>
+
+      <PreviewSummary labels={labels} preview={preview} />
 
       <OrganizerActions
         labels={labels}
