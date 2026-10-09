@@ -27,7 +27,7 @@ backend/            backend Go (pacotes por responsabilidade; teste sempre ao la
 frontend/src/       React só de apresentação: components/, views/ (páginas), hooks/useViewState (único que importa wailsjs/), i18n/, styles/ (tokens.css, components.css do design system, app.css); teste ao lado de cada módulo
 frontend/tests/     testes de integração do frontend (App inteiro)
 frontend/wailsjs/   bindings gerados pelo Wails (versionados; regenerados por wails dev/build)
-build/              ícones, manifesto Windows, Info.plist, NSIS (windows/installer), nfpm (linux)
+build/              ícone (appicon.png e windows/icon.ico, a partir da logo), manifesto Windows, Info.plist, NSIS (windows/installer), nfpm (linux)
 scripts/            check-coverage.sh, cccases/ (CC × casos), benchmark/ e parity/ (PowerShell)
 docs/               architecture.md, organization-rules.md, development.md (inclui testes e fluxo), release.md, benchmark.md, adr/, images/
 ```
@@ -65,6 +65,7 @@ cd frontend && npm run lint && npm run format:check && npm test   # ESLint (comp
 - **Go:** injeção de dependências por construtor; interfaces pequenas declaradas no pacote que as usa; erros com `%w` e códigos de `apperr`; `context.Context` em operações longas.
 - **Sem `switch`/`case`** (Go e JS): use mapa de lookup, `if` com retorno antecipado, `if v, ok := x.(T); ok` ou Strategy.
 - **Comentários:** só o *porquê* de trechos difíceis (formato de arquivo, comportamento do SO, compatibilidade com a 1.0, ordem que importa). Nada de comentário que repete o nome ou a assinatura ("// Get devolve as preferências"), mesmo em identificador exportado: o `revive` cobra só o comentário de pacote. Todo comentário termina com a issue que motivou o trecho, entre parênteses: `(#52)`, `(ADR 0004, #8)`; o de regressão começa com `Regressão (#N):`. Não conte a história da migração. Testes não têm tabela de CC: use `go run ./scripts/cccases` (no JS, a regra `complexity` do ESLint).
+- **CSS do design system (ADR 0006):** use as classes `st-*` e os tokens (`var(--brand)`, `var(--bg-100)`, `var(--radius-md)`…); cor, espaço ou fonte fixos no JSX ou no CSS são achado. `styles/components.css` é a cópia do `bundle.css` do design system e não se edita; ajuste do app vai em `styles/app.css`. Sem Tailwind; `style={{…}}` só com token (`var(--brand)`) ou valor calculado (largura de barra, posição na animação); ícones são SVG inline em `components/icons.jsx`. Os dois temas valem para tudo: o claro vem de `data-theme="light"` no `<html>`.
 - **Frontend só renderiza (ADR 0005):** o estado da tela mora em `backend/app` (`ViewState`); cada binding devolve o estado completo e erros viram notificações. Nada de regra, validação ou estado de negócio no JS. Toda lista enviada ao frontend é array no JSON, nunca `null`.
 
 ## Invariantes (não quebre sem uma ADR nova)

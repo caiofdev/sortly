@@ -9,6 +9,7 @@ Mantido por Caio Reis & Claude.
 ## [Não lançado]
 
 ### Adicionado
+- Ícone novo do app, a partir da logo, no executável, no instalador e na barra de tarefas.
 - Visual novo, a partir da logo nova: barra lateral preta com as páginas Organizar e Configurações, amarelo do Sortly para a ação principal e fonte pixel no app todo.
 - Os critérios de organização ficam na página Configurações, como interruptores, cada um com um exemplo da pasta que cria.
 - Botões "Organizar" e "Desfazer" com texto; caminhos longos de pasta aparecem inteiros, quebrando a linha.
@@ -21,7 +22,7 @@ Mantido por Caio Reis & Claude.
 - Página Histórico, com as últimas 50 organizações: quando, a pasta, quantos arquivos e se foi concluída, desfeita ou interrompida. O histórico fica salvo na pasta `.sortly` do usuário.
 - Opção "Incluir subpastas", desligada por padrão: organiza também os arquivos dentro das pastas da origem, nas mesmas pastas de critério. As subpastas que ficarem vazias são removidas, e o desfazer as recria.
 - Nas Configurações, dá para escolher o que fazer com arquivos duplicados no destino: renomear (como antes), ignorar (o arquivo fica na origem) ou substituir. O arquivo substituído fica guardado na pasta `.sortly` e volta ao lugar se você desfizer a organização.
-- Critério novo "Tipo", desligado por padrão: separa os arquivos em pastas por categoria (`images`, `documents`, `archives`, `installers`, `videos`, `audio` e `other`), antes dos outros critérios. A prévia e o resumo mostram os nomes traduzidos.
+- Critério novo "Tipo", desligado por padrão: separa os arquivos em pastas por categoria (`images`, `documents`, `archives`, `installers`, `videos`, `audio` e `other`), antes dos outros critérios. A prévia, a tela de progresso e o resumo mostram os nomes traduzidos.
 
 ### Corrigido
 - Ao mover para outro disco ou pendrive, o arquivo original só é apagado depois que a cópia está gravada de fato. Uma queda de energia ou um pendrive removido logo depois não perde mais o arquivo.

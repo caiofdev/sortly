@@ -9,6 +9,14 @@ Base: [react.dev](https://react.dev) (especialmente "You Might Not Need an Effec
 - [ ] Textos vêm do i18n (`i18n/*`), em PT e EN; nenhum texto fixo em componente; chaves novas existem nos dois idiomas.
 - [ ] Notificações traduzidas pelo código em `i18n/notifications.js`; código novo do backend tem texto em PT e EN (ou cai no texto padrão da ação).
 
+## Design system (ADR 0006)
+
+- [ ] Estilo só com as classes `st-*` de `styles/components.css` (cópia do `bundle.css` do design system, sem edição) e os tokens de `styles/tokens.css`. Cor, espaço, raio ou fonte fixos (`#F5E600`, `16px`, `style={{ color: "#fff" }}`) são achado 🟡: quebram o tema claro e divergem do design system. `style` só com token (`var(--brand)`) ou valor calculado (largura da barra do Concluído, posição no FileFlow).
+- [ ] Ajuste que o design system não cobre vai em `styles/app.css`, com um comentário do porquê; nunca em `components.css`.
+- [ ] Sem Tailwind, CSS-in-JS ou biblioteca de ícones: ícone novo é SVG inline em `components/icons.jsx` (traço 2px, `currentColor`, `aria-hidden`).
+- [ ] Mudança visual confere nos dois temas (`data-theme="light"` no `<html>`) e nas larguras da janela padrão e mínima.
+- [ ] A fonte Pixelify Sans vem embutida (`@fontsource`); `@import` remoto (Google Fonts) não funciona offline.
+
 ## Hooks
 
 - [ ] Hooks só no topo do componente/hook, nunca em condição ou laço.
@@ -53,4 +61,4 @@ Base: [react.dev](https://react.dev) (especialmente "You Might Not Need an Effec
 - [ ] Teste do `useViewState` com `vi.mock` dos bindings e do runtime; só a integração usa `window.go`/`window.runtime` falsos.
 - [ ] Casos ≥ CC também no JS: liste a CC com a API do ESLint (regra `complexity` com máximo 1; cada ternário, `&&`, `||` e `??` conta) e compare com os `it`/linhas de `it.each` que exercitam a função. Não estime de cabeça.
 - [ ] `await`/`waitFor` em toda atualização assíncrona (sem warnings de `act`).
-- [ ] Limites: último critério marcado, caminho de 72/73 caracteres, 80/81 notificações.
+- [ ] Limites: último critério marcado, 80/81 notificações, toast em 3 999 / 4 000 ms, 7/8 pastas na prévia (o resto vira "outras").
