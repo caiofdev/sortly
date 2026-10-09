@@ -16,7 +16,7 @@ backend/            backend Go (pacotes por responsabilidade; teste sempre ao la
   undo/             desfazer pelo inverso do journal
   metadata/         resolução de imagem, duração de mp4, páginas (pdf/docx/odt)
   store/            registro da última organização (~/.sortly/last-operation.json)
-  settings/         preferências (idioma e critérios) em ~/.sortly/settings.json
+  settings/         preferências (idioma, tema e critérios) em ~/.sortly/settings.json
   fs/paths/         caminhos: Ext, Equal, IsInside, Native (prefixo \\?\ do Windows)
   fs/files/         disco: WriteAtomic, Move (fallback entre volumes), MoveUnique, Reserve, pastas
   apperr/           erros com código estável
