@@ -22,6 +22,8 @@ export function SelectSource():Promise<app.ViewState>;
 
 export function SetCriterion(arg1:string,arg2:boolean):Promise<app.ViewState>;
 
+export function SetDuplicates(arg1:string):Promise<app.ViewState>;
+
 export function SetLanguage(arg1:string):Promise<app.ViewState>;
 
 export function SetTheme(arg1:string):Promise<app.ViewState>;

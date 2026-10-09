@@ -199,7 +199,7 @@ func TestResultJSONHasNoMessage(t *testing.T) {
 	}
 	sort.Strings(keys)
 	want := []string{"canUndo", "canceled", "categoryFolders", "destinationFolderPath", "failedFiles", "folders", "ignoredFolders",
-		"ignoredWithoutExtension", "movedFiles", "otherFiles", "processedFiles", "sourceFolderPath", "unchangedFiles"}
+		"ignoredWithoutExtension", "movedFiles", "otherFiles", "processedFiles", "replacedFiles", "skippedDuplicates", "sourceFolderPath", "unchangedFiles"}
 	if !reflect.DeepEqual(keys, want) {
 		t.Fatalf("campos = %v, want %v (#8: sem \"message\")", keys, want)
 	}

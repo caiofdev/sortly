@@ -10,7 +10,7 @@ import (
 func TestView(t *testing.T) {
 	t.Run("um critério ligado fica travado", func(t *testing.T) {
 		got := Default().View()
-		want := View{Language: DefaultLanguage, Theme: DefaultTheme, Criteria: []Criterion{
+		want := View{Language: DefaultLanguage, Theme: DefaultTheme, Duplicates: "rename", Criteria: []Criterion{
 			{Key: "byType"}, {Key: "byDuration"}, {Key: "byPages"}, {Key: "byResolution"},
 			{Key: "byDate"}, {Key: "bySize"}, {Key: "byExtension", Enabled: true, Locked: true},
 		}}

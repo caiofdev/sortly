@@ -51,6 +51,7 @@ type SettingsStore interface {
 	SetLanguage(lang string) (settings.Settings, error)
 	SetCriterion(key string, enabled bool) (settings.Settings, error)
 	SetTheme(theme string) (settings.Settings, error)
+	SetDuplicates(policy string) (settings.Settings, error)
 }
 
 // Devolve "" quando o usuário cancela o seletor (#10).
@@ -197,10 +198,12 @@ func (a *App) Organize() ViewState {
 			a.notify(s, Notification{Kind: KindError, Code: CodeSourceRequired, Action: ActionOrganize})
 		})
 	}
+	prefs := a.deps.Settings.Get()
 	req := organizer.Request{
 		SourceFolderPath:      current.SourceFolderPath,
 		DestinationFolderPath: current.DestinationFolderPath,
-		Options:               a.deps.Settings.Get().Options,
+		Options:               prefs.Options,
+		Duplicates:            prefs.Duplicates,
 	}
 	if req.DestinationFolderPath == "" {
 		req.DestinationFolderPath = req.SourceFolderPath
@@ -407,6 +410,11 @@ func (a *App) SetCriterion(key string, enabled bool) ViewState {
 		}
 		a.startPreview(s)
 	})
+}
+
+func (a *App) SetDuplicates(policy string) ViewState {
+	_, err := a.deps.Settings.SetDuplicates(policy)
+	return a.afterSettings(err)
 }
 
 func (a *App) SetTheme(theme string) ViewState {

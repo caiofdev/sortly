@@ -416,11 +416,14 @@ func TestUpdateRecordFailuresAreLogged(t *testing.T) {
 	op := &store.Operation{MovedItems: []store.MovedItem{{From: "a", To: "b"}}}
 	svc := NewService(failingStore{}, log)
 
-	if svc.updateRecord(op, nil) {
+	if svc.updateRecord(op, nil, nil) {
 		t.Error("sem pendências, CanUndo deveria ser falso")
 	}
-	if !svc.updateRecord(op, op.MovedItems) {
+	if !svc.updateRecord(op, op.MovedItems, nil) {
 		t.Error("com pendências, CanUndo deveria ser verdadeiro")
+	}
+	if !svc.updateRecord(op, nil, []store.ReplacedItem{{Path: "b", Backup: "c"}}) {
+		t.Error("só com um substituído pendente, CanUndo também é verdadeiro (#82)")
 	}
 	for _, want := range []string{"apagar o registro", "regravar o registro"} {
 		if !strings.Contains(logs.String(), want) {

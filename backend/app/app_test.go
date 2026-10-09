@@ -135,6 +135,14 @@ func (f *fakeSettings) SetTheme(theme string) (settings.Settings, error) {
 	return f.current, nil
 }
 
+func (f *fakeSettings) SetDuplicates(policy string) (settings.Settings, error) {
+	if f.err != nil {
+		return f.current, f.err
+	}
+	f.current.Duplicates = policy
+	return f.current, nil
+}
+
 func (f *fakeSettings) SetCriterion(key string, enabled bool) (settings.Settings, error) {
 	if f.err != nil {
 		return f.current, f.err
@@ -1030,6 +1038,32 @@ func TestSetCriterion(t *testing.T) {
 	failing, _ := newTestApp(Deps{Settings: &fakeSettings{current: settings.Default(), err: settings.ErrLastCriterion}})
 	if got := last(failing.SetCriterion("byExtension", false)); got.Code != "LAST_CRITERION" {
 		t.Fatalf("aviso = %+v", got)
+	}
+}
+
+func TestSetDuplicates(t *testing.T) {
+	a, _ := newTestApp(Deps{})
+	if got := a.SetDuplicates("skip"); got.Settings.Duplicates != "skip" || len(got.Notifications) != 0 {
+		t.Fatalf("estado = %+v", got)
+	}
+
+	failing, _ := newTestApp(Deps{Settings: &fakeSettings{current: settings.Default(), err: settings.ErrInvalidDuplicates}})
+	if got := last(failing.SetDuplicates("mesclar")); got.Code != "INVALID_DUPLICATES" || got.Action != ActionSettings {
+		t.Fatalf("aviso = %+v", got)
+	}
+}
+
+func TestOrganizeSendsDuplicatesPolicy(t *testing.T) {
+	org := &fakeOrganizer{result: organizer.Result{MovedFiles: 1, CanUndo: true}}
+	prefs := &fakeSettings{current: settings.Default()}
+	prefs.current.Duplicates = "replace"
+	a, _ := newTestApp(Deps{Organizer: org, Settings: prefs})
+	a.state.SourceFolderPath = "origem"
+
+	a.Organize()
+
+	if org.got.Duplicates != "replace" {
+		t.Fatalf("pedido = %+v", org.got)
 	}
 }
 

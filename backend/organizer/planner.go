@@ -31,6 +31,10 @@ type Plan struct {
 	// Com o critério Tipo, as pastas de 1º nível são categorias (images,
 	// documents…), que a interface traduz (#81).
 	CategoryFolders bool
+	// Política de duplicados e, com "Substituir", a pasta do backup desta
+	// organização; o Service preenche depois de planejar (#82).
+	Duplicates   string
+	BackupFolder string
 }
 
 // Não altera nada no disco (#8).

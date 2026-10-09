@@ -230,6 +230,8 @@ export namespace organizer {
 	    folders: FolderCount[];
 	    otherFiles: number;
 	    categoryFolders: boolean;
+	    skippedDuplicates: number;
+	    replacedFiles: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new Result(source);
@@ -250,6 +252,8 @@ export namespace organizer {
 	        this.folders = this.convertValues(source["folders"], FolderCount);
 	        this.otherFiles = source["otherFiles"];
 	        this.categoryFolders = source["categoryFolders"];
+	        this.skippedDuplicates = source["skippedDuplicates"];
+	        this.replacedFiles = source["replacedFiles"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -294,6 +298,7 @@ export namespace settings {
 	export class View {
 	    language: string;
 	    theme: string;
+	    duplicates: string;
 	    criteria: Criterion[];
 	
 	    static createFrom(source: any = {}) {
@@ -304,6 +309,7 @@ export namespace settings {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.language = source["language"];
 	        this.theme = source["theme"];
+	        this.duplicates = source["duplicates"];
 	        this.criteria = this.convertValues(source["criteria"], Criterion);
 	    }
 	
@@ -336,6 +342,7 @@ export namespace undo {
 	    skippedMissing: number;
 	    failedFiles: number;
 	    canUndo: boolean;
+	    restoredReplaced: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new Result(source);
@@ -348,6 +355,7 @@ export namespace undo {
 	        this.skippedMissing = source["skippedMissing"];
 	        this.failedFiles = source["failedFiles"];
 	        this.canUndo = source["canUndo"];
+	        this.restoredReplaced = source["restoredReplaced"];
 	    }
 	}
 

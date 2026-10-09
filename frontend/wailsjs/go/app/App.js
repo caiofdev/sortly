@@ -42,6 +42,10 @@ export function SetCriterion(arg1, arg2) {
   return window['go']['app']['App']['SetCriterion'](arg1, arg2);
 }
 
+export function SetDuplicates(arg1) {
+  return window['go']['app']['App']['SetDuplicates'](arg1);
+}
+
 export function SetLanguage(arg1) {
   return window['go']['app']['App']['SetLanguage'](arg1);
 }

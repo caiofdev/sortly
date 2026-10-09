@@ -31,23 +31,27 @@ func TestGet(t *testing.T) {
 	}{
 		{"sem arquivo", "", Default()},
 		{"válido", `{"language":"en","organizationOptions":{"byDate":true,"bySize":true,"byType":false}}`,
-			Settings{Language: "en", Theme: DefaultTheme, Options: criteria.Options{ByDate: true, BySize: true}}},
+			Settings{Language: "en", Theme: DefaultTheme, Duplicates: "rename", Options: criteria.Options{ByDate: true, BySize: true}}},
 		{"vazio", " ", Default()},
 		{"JSON corrompido", `{"language":`, Default()},
 		{"null", "null", Default()},
 		{"campos ausentes", `{}`, Default()},
 		{"idioma desconhecido", `{"language":"fr","organizationOptions":{"byPages":true}}`,
-			Settings{Language: DefaultLanguage, Theme: DefaultTheme, Options: criteria.Options{ByPages: true}}},
+			Settings{Language: DefaultLanguage, Theme: DefaultTheme, Duplicates: "rename", Options: criteria.Options{ByPages: true}}},
 		{"nenhum critério ligado", `{"language":"en","organizationOptions":{"byExtension":false}}`,
-			Settings{Language: "en", Theme: DefaultTheme, Options: criteria.Default}},
+			Settings{Language: "en", Theme: DefaultTheme, Duplicates: "rename", Options: criteria.Default}},
 		{"chave desconhecida é ignorada", `{"language":"pt-BR","organizationOptions":{"byColor":true,"byDate":true}}`,
-			Settings{Language: "pt-BR", Theme: DefaultTheme, Options: criteria.Options{ByDate: true}}},
+			Settings{Language: "pt-BR", Theme: DefaultTheme, Duplicates: "rename", Options: criteria.Options{ByDate: true}}},
 		{"tema claro", `{"language":"en","theme":"light","organizationOptions":{"byDate":true}}`,
-			Settings{Language: "en", Theme: "light", Options: criteria.Options{ByDate: true}}},
+			Settings{Language: "en", Theme: "light", Duplicates: "rename", Options: criteria.Options{ByDate: true}}},
 		{"tema desconhecido", `{"language":"en","theme":"sepia","organizationOptions":{"byDate":true}}`,
-			Settings{Language: "en", Theme: DefaultTheme, Options: criteria.Options{ByDate: true}}},
+			Settings{Language: "en", Theme: DefaultTheme, Duplicates: "rename", Options: criteria.Options{ByDate: true}}},
+		{"substituir", `{"language":"en","duplicates":"replace","organizationOptions":{"byDate":true}}`,
+			Settings{Language: "en", Theme: DefaultTheme, Duplicates: "replace", Options: criteria.Options{ByDate: true}}},
+		{"política desconhecida", `{"language":"en","duplicates":"mesclar","organizationOptions":{"byDate":true}}`,
+			Settings{Language: "en", Theme: DefaultTheme, Duplicates: "rename", Options: criteria.Options{ByDate: true}}},
 		{"6 critérios", `{"language":"en","organizationOptions":{"byDuration":true,"byPages":true,"byResolution":true,"byDate":true,"bySize":true,"byExtension":true}}`,
-			Settings{Language: "en", Theme: DefaultTheme, Options: criteria.Options{ByDuration: true, ByPages: true, ByResolution: true, ByDate: true, BySize: true, ByExtension: true}}},
+			Settings{Language: "en", Theme: DefaultTheme, Duplicates: "rename", Options: criteria.Options{ByDuration: true, ByPages: true, ByResolution: true, ByDate: true, BySize: true, ByExtension: true}}},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -138,6 +142,27 @@ func TestSetTheme(t *testing.T) {
 	})
 }
 
+func TestSetDuplicates(t *testing.T) {
+	t.Run("ignorar é salvo", func(t *testing.T) {
+		s := newService(t, "")
+		got, err := s.SetDuplicates("skip")
+		if err != nil || got.Duplicates != "skip" {
+			t.Fatalf("SetDuplicates = (%+v, %v)", got, err)
+		}
+		if reread := New(s.path, nil).Get(); reread != got {
+			t.Fatalf("relido do disco = %+v, want %+v", reread, got)
+		}
+	})
+
+	t.Run("política desconhecida é recusada", func(t *testing.T) {
+		s := newService(t, "")
+		got, err := s.SetDuplicates("mesclar")
+		if !errors.Is(err, ErrInvalidDuplicates) || got != Default() {
+			t.Fatalf("SetDuplicates = (%+v, %v), want (padrão, ErrInvalidDuplicates)", got, err)
+		}
+	})
+}
+
 func TestSetCriterion(t *testing.T) {
 	t.Run("liga um critério", func(t *testing.T) {
 		got, err := newService(t, "").SetCriterion("byDate", true)
@@ -210,7 +235,7 @@ func TestSavedFileFormat(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := `{"language":"pt-BR","theme":"dark","organizationOptions":{"byDate":false,"byDuration":false,"byExtension":true,"byPages":false,"byResolution":false,"bySize":true,"byType":false}}`
+	want := `{"language":"pt-BR","theme":"dark","duplicates":"rename","organizationOptions":{"byDate":false,"byDuration":false,"byExtension":true,"byPages":false,"byResolution":false,"bySize":true,"byType":false}}`
 	if string(data) != want {
 		t.Fatalf("arquivo =\n%s\nwant\n%s", data, want)
 	}
