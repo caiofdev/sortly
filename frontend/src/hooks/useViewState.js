@@ -11,6 +11,7 @@ export const INITIAL_STATE = Object.freeze({
   destinationFolderPath: '',
   hasUndo: false,
   busy: '',
+  unread: false,
   settings: { language: DEFAULT_LANGUAGE, criteria: [] },
   notifications: []
 });
@@ -66,6 +67,7 @@ function useViewState() {
       organize: () => run(Backend.Organize),
       undo: () => run(Backend.Undo),
       clearNotifications: () => run(Backend.ClearNotifications),
+      markNotificationsRead: () => run(Backend.MarkNotificationsRead),
       setLanguage: (language) => run(() => Backend.SetLanguage(language)),
       setCriterion: (key, enabled) => run(() => Backend.SetCriterion(key, enabled))
     }),

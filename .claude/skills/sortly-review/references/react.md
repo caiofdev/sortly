@@ -35,6 +35,7 @@ Base: [react.dev](https://react.dev) (especialmente "You Might Not Need an Effec
 - [ ] Eventos de arrastar: o WebKit (macOS e Linux) costuma entregar `relatedTarget` vazio; para "saiu do painel", conte `dragenter`/`dragleave`.
 - [ ] Inputs com `<label>` associado; checkbox controlado (`checked` + `onChange`).
 - [ ] Foco visível e navegação por teclado funcionando nos painéis (configurações, notificações).
+- [ ] Toast, painel ou outro elemento fixo não cobre Organizar/Desfazer na janela padrão (980×700) nem na mínima (820×600); o que some sozinho para com o mouse ou o foco em cima.
 - [ ] Mudança visual não pedida é achado (a interface é congelada sem pedido explícito).
 
 ## JavaScript

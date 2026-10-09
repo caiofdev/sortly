@@ -138,14 +138,18 @@ function Set-Criteria([string[]]$on) {
   Click 'Organizar'
 }
 
-# Último aviso mostrado na central de notificações.
+# Primeiro texto da janela que casa com o padrão; o painel vem antes dos toasts (#75).
+function Find-Text([string]$pattern) {
+  $window = $UIA::FromHandle($script:proc.MainWindowHandle)
+  $texts = $window.FindAll([Windows.Automation.TreeScope]::Descendants, (New-Object Windows.Automation.PropertyCondition ($UIA::ControlTypeProperty), ([Windows.Automation.ControlType]::Text)))
+  return [string]($texts | ForEach-Object { $_.Current.Name } | Where-Object { $_ -match $pattern } | Select-Object -First 1)
+}
+
 function Last-Notice {
   Click 'Notificações', 'Notifications'
   Start-Sleep -Milliseconds 600
-  $window = $UIA::FromHandle($script:proc.MainWindowHandle)
-  $texts = $window.FindAll([Windows.Automation.TreeScope]::Descendants, (New-Object Windows.Automation.PropertyCondition ($UIA::ControlTypeProperty), ([Windows.Automation.ControlType]::Text)))
-  # Só textos de aviso (a central lista do mais recente para o mais antigo).
-  $notice = ($texts | ForEach-Object { $_.Current.Name } | Where-Object { $_ -match 'conclu|complete|Falha|Failed|Invalid folder|Pasta inválida|Nenhuma separação|No recent' } | Select-Object -First 1)
+  # Só textos de aviso, do mais recente para o mais antigo (#75).
+  $notice = Find-Text 'organizad|organized|com falha|failed|encontrad|not found|Invalid folder|Pasta inválida|Nenhuma separação|No recent'
   Click 'Notificações', 'Notifications'
   return [string]$notice
 }
@@ -168,8 +172,10 @@ try {
   Start-App
   Set-Criteria @('Duração (.mp4)', 'Páginas', 'Resolução', 'Data', 'Tamanho (MB)', 'Extensão do arquivo')
   Click 'Organizar' -Last
-  $moved = Wait-Until { (Tree $src).Count -eq 3 }   # ficam LEIAME, .gitignore (sem extensão) e subpasta\dentro.txt
+  $moved = Wait-Until { (Tree $src).Count -eq 3 }
   $organized = Tree $dst
+  $toast = Find-Text '^Pronto! \d+ arquivos organizados$'
+  Check 'WIN_TOAST' ($toast -ne '') "toast ao organizar: $toast"
   Check 'WIN_CRIT_ALL' ($moved -and $organized -contains 'pdf\date-2026-03-05\size-1mb\pages-3\3-pages-classic-xref.pdf') 'pdf/date-*/size-*/pages-3'
   Check 'WIN_CRIT_EXT' ($organized -contains 'txt\date-2026-03-05\size-1mb\nota.txt') 'txt/…/nota.txt; LEIAME e .gitignore ficam na origem'
   Check 'WIN_CRIT_RES' ($organized -contains 'png\date-2026-03-05\size-1mb\3x2\3x2.png') 'png/…/3x2'
@@ -201,10 +207,10 @@ try {
     $notice = Last-Notice
   } finally { $lock.Close() }
   Check 'WIN_CONFLICT' ((Get-Content "$dst\txt\nota.txt") -eq 'já existia' -and (Test-Path "$dst\txt\nota (1).txt")) 'nota.txt existente preservado; novo vira nota (1).txt'
-  Check 'WIN_B1' ($done -and $notice -match 'Falhas ao mover: 1') $notice
+  Check 'WIN_B1' ($done -and $notice -match ', 1 com falha$') $notice
 
   # --- 4) Organizar sem nada para mover mantém o desfazer (B2) ---
-  Click 'Organizar' -Last; Start-Sleep -Seconds 2   # só sobra o png (já liberado), que agora é movido
+  Click 'Organizar' -Last; Start-Sleep -Seconds 2
   Click 'Organizar' -Last; Start-Sleep -Seconds 2   # nada para mover
   $keep = Is-Enabled 'Desfazer'
   Check 'WIN_B2' $keep 'botão de desfazer continua ativo após organizar sem movimentos'
@@ -213,7 +219,7 @@ try {
   Remove-Item "$dst\png\3x2.png" -ErrorAction SilentlyContinue
   Click 'Desfazer'; Start-Sleep -Seconds 2
   $notice = Last-Notice
-  Check 'WIN_UNDO_MISSING' ($notice -match 'Não encontrados: 1') $notice
+  Check 'WIN_UNDO_MISSING' ($notice -match '1 não foi encontrado\.') $notice
 
   # --- 6) B8: só "Resolução" na própria pasta não renomeia os demais ---
   Stop-App

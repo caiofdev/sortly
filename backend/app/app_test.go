@@ -244,7 +244,7 @@ func TestOrganizeUsesSourceAsDefaultDestination(t *testing.T) {
 		t.Fatalf("pedido = %+v, want %+v", org.got, want)
 	}
 	n := last(got)
-	if !got.HasUndo || got.Busy != "" || n.Code != CodeOrganizeDone || n.Kind != KindOrganize || n.Organize.MovedFiles != 3 {
+	if !got.HasUndo || got.Busy != "" || n.Code != CodeOrganizeDone || n.Kind != KindSuccess || n.Organize.MovedFiles != 3 {
 		t.Fatalf("estado = %+v, aviso = %+v", got, n)
 	}
 	if !strings.Contains(logs.String(), "movidos=3") {
@@ -334,7 +334,7 @@ func TestUndo(t *testing.T) {
 	a, _ := newTestApp(Deps{Undoer: fakeUndoer{result: undo.Result{RestoredFiles: 2}}})
 	a.state.HasUndo = true
 	got := a.Undo()
-	if got.HasUndo || got.Busy != "" || last(got).Code != CodeUndoDone || last(got).Kind != KindRestore || last(got).Undo.RestoredFiles != 2 {
+	if got.HasUndo || got.Busy != "" || last(got).Code != CodeUndoDone || last(got).Kind != KindInfo || last(got).Undo.RestoredFiles != 2 {
 		t.Fatalf("estado = %+v", got)
 	}
 
@@ -361,6 +361,60 @@ func TestNotificationsLimitAndOrder(t *testing.T) {
 
 	if cleared := a.ClearNotifications(); len(cleared.Notifications) != 0 {
 		t.Fatalf("após limpar: %+v", cleared.Notifications)
+	}
+}
+
+func TestUnread(t *testing.T) {
+	a, _ := newTestApp(Deps{PickDir: func(context.Context, string) (string, error) { return "", errors.New("x") }})
+	if a.GetState().Unread {
+		t.Fatal("sem avisos, nada deveria estar não lido")
+	}
+	if !a.SelectSource().Unread {
+		t.Fatal("um aviso novo deveria ficar não lido")
+	}
+	read := a.MarkNotificationsRead()
+	if read.Unread || len(read.Notifications) != 1 {
+		t.Fatalf("marcar como lidas apaga o ponto e mantém a lista: %+v", read)
+	}
+	if !a.SelectSource().Unread {
+		t.Fatal("um aviso depois de ler deveria ficar não lido de novo")
+	}
+	if a.ClearNotifications().Unread {
+		t.Fatal("limpar não deixa nada para ler")
+	}
+}
+
+func TestNotificationKind(t *testing.T) {
+	organize := []struct {
+		name   string
+		result organizer.Result
+		want   string
+	}{
+		{"arquivos movidos", organizer.Result{MovedFiles: 1}, KindSuccess},
+		{"nada movido", organizer.Result{}, KindInfo},
+		{"uma falha", organizer.Result{MovedFiles: 3, FailedFiles: 1}, KindError},
+	}
+	for _, tt := range organize {
+		t.Run("organizar: "+tt.name, func(t *testing.T) {
+			if got := organizeKind(tt.result); got != tt.want {
+				t.Fatalf("organizeKind = %q, want %q", got, tt.want)
+			}
+		})
+	}
+	undone := []struct {
+		name   string
+		result undo.Result
+		want   string
+	}{
+		{"sem falhas", undo.Result{RestoredFiles: 2}, KindInfo},
+		{"uma falha", undo.Result{RestoredFiles: 2, FailedFiles: 1}, KindError},
+	}
+	for _, tt := range undone {
+		t.Run("desfazer: "+tt.name, func(t *testing.T) {
+			if got := undoKind(tt.result); got != tt.want {
+				t.Fatalf("undoKind = %q, want %q", got, tt.want)
+			}
+		})
 	}
 }
 

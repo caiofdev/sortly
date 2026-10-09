@@ -182,7 +182,26 @@ func (a *App) applyOrganize(s *ViewState, result organizer.Result, err error) {
 	}
 	a.log.Info("organização concluída", "origem", result.SourceFolderPath, "destino", result.DestinationFolderPath,
 		"movidos", result.MovedFiles, "falhas", result.FailedFiles)
-	a.notify(s, Notification{Kind: KindOrganize, Code: CodeOrganizeDone, Action: ActionOrganize, Organize: &result})
+	a.notify(s, Notification{Kind: organizeKind(result), Code: CodeOrganizeDone, Action: ActionOrganize, Organize: &result})
+}
+
+// Falha parcial conta como erro, para o aviso ficar na tela até o usuário vê-lo;
+// sem nada movido, o aviso é neutro (#75).
+func organizeKind(r organizer.Result) string {
+	if r.FailedFiles > 0 {
+		return KindError
+	}
+	if r.MovedFiles == 0 {
+		return KindInfo
+	}
+	return KindSuccess
+}
+
+func undoKind(r undo.Result) string {
+	if r.FailedFiles > 0 {
+		return KindError
+	}
+	return KindInfo
 }
 
 // Com outra ação em andamento, não faz nada (#45).
@@ -202,12 +221,19 @@ func (a *App) Undo() ViewState {
 		}
 		a.log.Info("desfazer concluído", "restaurados", result.RestoredFiles, "falhas", result.FailedFiles)
 		s.HasUndo = result.CanUndo
-		a.notify(s, Notification{Kind: KindRestore, Code: CodeUndoDone, Action: ActionUndo, Undo: &result})
+		a.notify(s, Notification{Kind: undoKind(result), Code: CodeUndoDone, Action: ActionUndo, Undo: &result})
 	})
 }
 
 func (a *App) ClearNotifications() ViewState {
-	return a.update(func(s *ViewState) { s.Notifications = nil })
+	return a.update(func(s *ViewState) {
+		s.Notifications = nil
+		s.Unread = false
+	})
+}
+
+func (a *App) MarkNotificationsRead() ViewState {
+	return a.update(func(s *ViewState) { s.Unread = false })
 }
 
 func (a *App) SetLanguage(lang string) ViewState {

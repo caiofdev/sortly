@@ -1,16 +1,16 @@
 import feedbackCopy from './feedbackCopy';
 import { getCopy, toLocale } from './language';
 
-// Códigos que não são erros: cada um tem o próprio texto, com os dados da notificação.
-const messages = {
-  RECOVERED_LAST_ORGANIZATION: (_n, copy) => copy.recoveredLastOrganization,
-  SOURCE_DROPPED: (n, copy) => `${copy.droppedPathSuccess} ${n.path}`,
-  SOURCE_REQUIRED: (_n, copy) => copy.sourceRequired,
-  ORGANIZE_DONE: (n, copy) => copy.organizeSuccess(n.organize),
-  UNDO_DONE: (n, copy) => copy.undoSuccess(n.undo)
+// Códigos que não são erros: cada um tem o próprio título e texto, com os dados
+// da notificação (#75).
+const notices = {
+  RECOVERED_LAST_ORGANIZATION: (_n, copy) => copy.recovered,
+  SOURCE_DROPPED: (n, copy) => copy.sourceDropped(n.path),
+  SOURCE_REQUIRED: (_n, copy) => ({ title: copy.sourceRequired, text: '' }),
+  ORGANIZE_DONE: (n, copy) => copy.organizeDone(n.organize),
+  UNDO_DONE: (n, copy) => copy.undoDone(n.undo)
 };
 
-// Texto padrão de cada ação para erros sem tradução própria (ex.: UNEXPECTED).
 const fallbackByAction = {
   selectSource: 'sourceSelectError',
   selectDestination: 'destinationSelectError',
@@ -20,26 +20,25 @@ const fallbackByAction = {
   settings: 'settingsSaveError'
 };
 
-export function notificationMessage(notification, copy) {
-  const message = messages[notification.code];
-  if (message) {
-    return message(notification, copy);
+export function notificationText(notification, copy) {
+  const notice = notices[notification.code];
+  if (notice) {
+    return notice(notification, copy);
   }
-  return (
+  const title =
     copy.errors[notification.code] ||
     copy[fallbackByAction[notification.action]] ||
-    copy.unexpectedError
-  );
+    copy.unexpectedError;
+  return { title, text: '' };
 }
 
-// Notificações do backend prontas para o NotificationsCenter, no idioma atual.
 export function toNotificationItems(notifications, language) {
   const copy = getCopy(feedbackCopy, language);
   const locale = toLocale(language);
   return notifications.map((n) => ({
     id: n.id,
-    type: n.kind,
-    message: notificationMessage(n, copy),
+    kind: n.kind,
+    ...notificationText(n, copy),
     time: new Date(n.at).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
   }));
 }

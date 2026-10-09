@@ -12,6 +12,8 @@ Mantido por Caio Reis & Claude.
 - Visual novo, a partir da logo nova: barra lateral preta com as páginas Organizar e Configurações, amarelo do Sortly para a ação principal e fonte pixel no app todo.
 - Os critérios de organização ficam na página Configurações, como interruptores, cada um com um exemplo da pasta que cria.
 - Botões "Organizar" e "Desfazer" com texto; caminhos longos de pasta aparecem inteiros, quebrando a linha.
+- Avisos no canto da tela ao organizar, ao desfazer e quando algo dá errado. Os de sucesso somem sozinhos em 4 segundos; os de erro ficam até você fechar.
+- O sino mostra um ponto amarelo quando há aviso novo. O painel tem "Marcar como lidas" e fecha com Esc.
 
 ### Corrigido
 - Ao mover para outro disco ou pendrive, o arquivo original só é apagado depois que a cópia está gravada de fato. Uma queda de energia ou um pendrive removido logo depois não perde mais o arquivo.
@@ -25,6 +27,7 @@ Mantido por Caio Reis & Claude.
 - O destaque da área de arrastar e soltar não pisca mais ao passar o arquivo sobre o texto e o link dentro dela.
 
 ### Alterado
+- Mensagens de organizar e desfazer mais curtas, como "Pronto! 12 arquivos organizados", com os detalhes (arquivos já no lugar, sem extensão ou que falharam) logo abaixo. Uma organização em que algum arquivo falhou aparece como erro.
 - O idioma e os critérios escolhidos ficam salvos na pasta `.sortly` do usuário, junto do registro para desfazer. Eles não se perdem mais quando os dados internos da janela do app são limpos.
 - O app abre direto no idioma escolhido, sem mostrar o português por um instante.
 

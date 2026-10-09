@@ -123,3 +123,93 @@ button {
   width: 44px;
   height: 44px;
 }
+
+.st-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.st-notif__actions {
+  display: flex;
+  gap: var(--space-4);
+}
+
+.st-notif__actions .st-link {
+  font-size: 13px;
+}
+
+.st-notif__text {
+  margin: 2px 0 0;
+  font: 400 13px/18px var(--font-sans);
+  color: var(--ink-200);
+  overflow-wrap: anywhere;
+}
+
+.st-notif:focus {
+  outline: none;
+}
+
+/* pointer-events: none deixa clicar no que está atrás da área vazia da
+   região anunciável (#75). */
+.st-toasts {
+  position: fixed;
+  right: var(--space-6);
+  bottom: var(--space-6);
+  z-index: 20;
+  max-width: calc(100vw - 2 * var(--space-6));
+  pointer-events: none;
+}
+
+.st-toasts .st-toast {
+  max-width: 100%;
+  pointer-events: auto;
+}
+
+/* Na janela mínima, o toast fica sobre os botões; com a folga embaixo, dá para
+   rolar a página e alcançá-los sem fechar o aviso (#75). */
+.st-app:has(.st-toast) .st-main {
+  padding-bottom: 160px;
+}
+
+.st-toast__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.st-toast__text {
+  overflow-wrap: anywhere;
+}
+
+.st-toast__close {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  margin: -2px -6px 0 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--ink-300);
+  cursor: pointer;
+}
+
+.st-toast__close svg {
+  width: 14px;
+  height: 14px;
+}
+
+.st-toast__close:hover {
+  background: var(--bg-200);
+  color: var(--ink-100);
+}
+
+.st-toast__close:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+}
