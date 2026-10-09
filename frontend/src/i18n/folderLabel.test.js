@@ -1,9 +1,21 @@
 import { describe, expect, it } from 'vitest';
 import organizerCopy from './organizerCopy';
-import { folderLabel } from './folderLabel';
+import { folderLabel, folderPathLabel } from './folderLabel';
 
 const pt = organizerCopy['pt-BR'];
 const en = organizerCopy.en;
+
+describe('folderPathLabel', () => {
+  it.each([
+    ['', true, pt.previewRoot],
+    ['images', true, 'Imagens'],
+    ['images\\2026-09-14', true, 'Imagens\\2026-09-14'],
+    ['images/2026-09-14', true, 'Imagens/2026-09-14'],
+    ['images\\2026-09-14', false, 'images\\2026-09-14']
+  ])('pasta "%s", categorias = %s → "%s"', (path, categoryFolders, expected) => {
+    expect(folderPathLabel(path, categoryFolders, pt)).toBe(expected);
+  });
+});
 
 describe('folderLabel', () => {
   it.each([

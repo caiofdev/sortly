@@ -10,7 +10,7 @@ function renderPanel(progress, props = {}) {
   const view = render(
     <OrganizingPanel
       labels={pt}
-      progress={{ done: 0, total: 0, file: '', folder: '', ...progress }}
+      progress={{ done: 0, total: 0, file: '', folder: '', categoryFolders: false, ...progress }}
       sourceFolderPath="C:\Users\caio\Downloads"
       destinationFolderPath=""
       onCancel={onCancel}
@@ -41,11 +41,13 @@ describe('OrganizingPanel', () => {
   });
 
   it.each([
-    ['', '', null],
-    ['a.pdf', 'pdf', 'pdf'],
-    ['b.txt', '', pt.previewRoot]
-  ])('arquivo "%s" → pasta "%s"', (file, folder, shown) => {
-    const { container } = renderPanel({ done: 1, total: 2, file, folder });
+    ['', '', false, null],
+    ['a.pdf', 'pdf', false, 'pdf'],
+    ['b.txt', '', false, pt.previewRoot],
+    // Regressão (#84): a categoria aparecia como a chave interna (images).
+    ['c.jpg', 'images', true, 'Imagens']
+  ])('arquivo "%s" → pasta "%s" (categorias = %s)', (file, folder, categoryFolders, shown) => {
+    const { container } = renderPanel({ done: 1, total: 2, file, folder, categoryFolders });
     const now = container.querySelector('.st-running__now');
     if (shown) {
       expect(now).toHaveTextContent(`${pt.moving} ${file} → ${shown}`);

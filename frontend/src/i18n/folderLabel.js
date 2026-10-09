@@ -6,3 +6,10 @@ export function folderLabel(name, categoryFolders, labels) {
   if (!categoryFolders) return name;
   return labels.categories[name] ?? name;
 }
+
+// O progresso traz a pasta relativa ao destino (images\2026-09-14); só o 1º nível
+// pode ser categoria, e o resto do caminho fica como veio (#84).
+export function folderPathLabel(path, categoryFolders, labels) {
+  const [, first, rest] = /^([^\\/]*)(.*)$/s.exec(path);
+  return folderLabel(first, categoryFolders, labels) + rest;
+}
