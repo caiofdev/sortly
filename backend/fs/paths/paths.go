@@ -27,6 +27,12 @@ func IsInside(child, root string) bool {
 	return isInside(child, root, caseInsensitive)
 }
 
+// Chave de mapa para caminhos: dois caminhos com a mesma chave são iguais para
+// Equal (sem o teste de mesmo arquivo no disco) (#82).
+func Key(p string) string {
+	return normalize(p, caseInsensitive)
+}
+
 func equal(a, b string, fold bool) bool {
 	return normalize(a, fold) == normalize(b, fold)
 }

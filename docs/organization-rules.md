@@ -130,7 +130,17 @@ A extensão é comparada em minúsculas e é só a última parte do nome: `backu
 
 ## 5. Conflito de nomes
 
-O Sortly **nunca sobrescreve** arquivos. Se o destino já existe, tenta `nome (1).ext`, `nome (2).ext`, … até `nome (9999).ext`. O nome escolhido é reservado com criação exclusiva, então dois movimentos nunca usam o mesmo nome.
+Quando já existe um arquivo com o mesmo nome no destino, a preferência **Arquivos duplicados** decide (ADR 0008):
+
+| Opção (`duplicates`) | O que acontece | Conta em |
+|---|---|---|
+| **Renomear** (`rename`, padrão, como na 1.0) | o novo ganha um número (tabela abaixo) | — |
+| **Ignorar** (`skip`) | o novo **fica na origem**; o existente não muda | `skippedDuplicates` |
+| **Substituir** (`replace`) | o existente vai para `~/.sortly/substituidos/<organização>/`, na mesma posição relativa ao destino, e o novo ocupa o lugar; se o novo não entrar, o existente volta na hora | `replacedFiles` |
+
+Só conta como duplicado o arquivo que **já estava** no destino. Dois arquivos da mesma organização com o mesmo nome indo para a mesma pasta são sempre renomeados. Opção desconhecida vale como Renomear.
+
+Ao renomear, o Sortly **nunca sobrescreve**: tenta `nome (1).ext`, `nome (2).ext`, … até `nome (9999).ext`. O nome escolhido é reservado com criação exclusiva, então dois movimentos nunca usam o mesmo nome.
 
 | Situação | Resultado |
 |---|---|
@@ -163,6 +173,17 @@ Ao final, a operação é salva em `~/.sortly/last-operation.json`, no mesmo for
 }
 ```
 
+Com **Substituir** e algum arquivo substituído, o registro ganha dois campos opcionais (ADR 0008). Sem eles, o JSON é byte a byte o da 1.0:
+
+```json
+  "replacedItems": [
+    { "path": "C:\\Users\\ana\\Organizados\\pdf\\a.pdf", "backup": "C:\\Users\\ana\\.sortly\\substituidos\\1791580000000000000\\pdf\\a.pdf" }
+  ],
+  "backupFolder": "C:\\Users\\ana\\.sortly\\substituidos\\1791580000000000000"
+```
+
+A pasta de backup é apagada quando o registro deixa de existir: depois de um desfazer completo ou quando outra organização grava um registro novo.
+
 - Cada movimento concluído entra no registro, mesmo que outro falhe depois.
 - `createdFolders` lista só as pastas que a organização **criou**, em todos os níveis (ex.: `pdf` e `pdfpages-3` quando nenhuma existia). Pastas que já existiam no destino não entram. A versão 1.0 listava a pasta de cada arquivo; o formato é o mesmo.
 - Se nada for movido, o registro anterior é preservado e o desfazer dele continua disponível.
@@ -177,6 +198,7 @@ Ao final, a operação é salva em `~/.sortly/last-operation.json`, no mesmo for
 - Só voltam itens com `from` dentro da pasta de origem e `to` dentro da pasta de destino do registro (destino vazio = origem), sem ser a própria pasta. Um registro editado ou corrompido com caminhos de fora não move nada: o item é pulado, conta em `skippedMissing` e vai para o log. Registro sem pasta de origem não restaura nada.
 - Se o local original estiver ocupado, aplica a regra de conflito (§5) e conta em `renamedOnRestore`.
 - Uma falha num arquivo não interrompe os demais. O registro é regravado só com os itens que falharam, e o desfazer continua disponível para tentar de novo (`failedFiles`). Sem falhas, o registro é apagado.
+- Depois dos movidos, os **substituídos** voltam do backup para o lugar (`restoredReplaced`), da última substituição para a primeira. Só voltam itens com `path` dentro do destino do registro e `backup` dentro de `~/.sortly/substituidos`; os outros são pulados e vão para o log. Se o lugar estiver ocupado, aplica a regra de conflito. Um substituído que falhar fica no registro, e o desfazer continua disponível.
 - Depois, remove as pastas de `createdFolders` que ficaram **vazias**, da mais funda para a mais rasa. Pastas que já existiam antes da organização ficam, mesmo vazias. Em registros antigos, sem `createdFolders`, sobe da pasta de cada arquivo até a raiz do destino (exclusive). Nada fora dessa raiz é tocado. Pastas com outros arquivos são preservadas, e a raiz nunca é removida, mesmo com diferença de maiúsculas/minúsculas no caminho (Windows e macOS).
 
 O estado de desfazer sobrevive ao fechamento do app: ao abrir, a interface recupera origem e destino e avisa que é possível desfazer.
@@ -199,7 +221,7 @@ O item precisa ser solto **sobre o painel** de arrastar e soltar; fora dele, nad
 Idioma e critérios ficam em `~/.sortly/settings.json`, gravado de forma atômica:
 
 ```json
-{"language":"pt-BR","theme":"dark","organizationOptions":{"byDate":false,"byDuration":false,"byExtension":true,"byPages":false,"byResolution":false,"bySize":false,"byType":false}}
+{"language":"pt-BR","theme":"dark","duplicates":"rename","organizationOptions":{"byDate":false,"byDuration":false,"byExtension":true,"byPages":false,"byResolution":false,"bySize":false,"byType":false}}
 ```
 
 | Situação | Resultado |

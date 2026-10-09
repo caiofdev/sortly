@@ -29,7 +29,21 @@ type Result struct {
 	SkippedMissing   int  `json:"skippedMissing"`
 	FailedFiles      int  `json:"failedFiles"`
 	CanUndo          bool `json:"canUndo"`
+	// Arquivos que "Substituir" tinha guardado no backup e voltaram (#82).
+	RestoredReplaced int `json:"restoredReplaced"`
 }
+
+// A pasta dos substituídos; Contains impede que um registro editado leia ou
+// apague algo fora dela (#54, #82).
+type Backups interface {
+	Contains(path string) bool
+	Remove(folder string)
+}
+
+type noBackups struct{}
+
+func (noBackups) Contains(string) bool { return false }
+func (noBackups) Remove(string)        {}
 
 type RecordStore interface {
 	Load() (*store.Operation, error)
@@ -45,6 +59,7 @@ type Mover interface {
 type Service struct {
 	store     RecordStore
 	mover     Mover
+	backups   Backups
 	exists    func(string) bool
 	removeDir func(string) bool
 	log       *slog.Logger
@@ -58,10 +73,17 @@ func NewService(st RecordStore, log *slog.Logger) *Service {
 	return &Service{
 		store:     st,
 		mover:     organizer.NewExecutor(log),
+		backups:   noBackups{},
 		exists:    files.Exists,
 		removeDir: files.RemoveEmptyDir,
 		log:       log,
 	}
+}
+
+// Sem isto, os substituídos de um registro não são devolvidos (#82).
+func (s *Service) WithBackups(b Backups) *Service {
+	s.backups = b
+	return s
 }
 
 // Arquivos que não estão mais no destino são pulados (SkippedMissing). Se o
@@ -76,16 +98,63 @@ func (s *Service) Undo(ctx context.Context) (Result, error) {
 
 	plan, skipped := s.inversePlan(op)
 	out, applyErr := s.mover.Apply(ctx, plan)
+	replacedPlan, replacedOut, replacedErr := s.restoreReplaced(ctx, op)
 
 	result := Result{
 		RestoredFiles:    len(out.MovedItems),
 		RenamedOnRestore: countRenamed(plan, out),
 		SkippedMissing:   skipped,
-		FailedFiles:      out.FailedFiles,
+		FailedFiles:      out.FailedFiles + replacedOut.FailedFiles,
+		RestoredReplaced: len(replacedOut.MovedItems),
 	}
 	s.cleanup(op)
-	result.CanUndo = s.updateRecord(op, remaining(op, plan, out))
-	return result, applyErr
+	result.CanUndo = s.updateRecord(op, remaining(op, plan, out), remainingReplaced(op, replacedPlan, replacedOut))
+	return result, errors.Join(applyErr, replacedErr)
+}
+
+// Registros sem substituídos (os da 1.0 e os de Renomear ou Ignorar) não chamam o
+// mover de novo (#82).
+func (s *Service) restoreReplaced(ctx context.Context, op *store.Operation) (organizer.Plan, organizer.Outcome, error) {
+	plan := s.replacedPlan(op)
+	if len(plan.Moves) == 0 {
+		return plan, organizer.Outcome{}, nil
+	}
+	out, err := s.mover.Apply(ctx, plan)
+	return plan, out, err
+}
+
+// Depois dos movidos, para o lugar estar livre: o arquivo novo saiu dali e o
+// antigo volta. Da última substituição para a primeira; o que não está mais no
+// backup ou está fora das pastas registradas é pulado e vai para o log (#54, #82).
+func (s *Service) replacedPlan(op *store.Operation) organizer.Plan {
+	var plan organizer.Plan
+	for i := len(op.ReplacedItems) - 1; i >= 0; i-- {
+		item := op.ReplacedItems[i]
+		if !strictlyInside(item.Path, rootOf(op)) || !s.backups.Contains(item.Backup) || !s.exists(item.Backup) {
+			s.log.Warn("substituído não devolvido", "path", item.Path, "backup", item.Backup)
+			continue
+		}
+		plan.Moves = append(plan.Moves, organizer.Move{From: item.Backup, To: item.Path})
+	}
+	return plan
+}
+
+func remainingReplaced(op *store.Operation, plan organizer.Plan, out organizer.Outcome) []store.ReplacedItem {
+	restored := make(map[string]bool, len(out.MovedItems))
+	for _, moved := range out.MovedItems {
+		restored[moved.From] = true
+	}
+	inPlan := make(map[string]bool, len(plan.Moves))
+	for _, m := range plan.Moves {
+		inPlan[m.From] = true
+	}
+	var left []store.ReplacedItem
+	for _, item := range op.ReplacedItems {
+		if inPlan[item.Backup] && !restored[item.Backup] {
+			left = append(left, item)
+		}
+	}
+	return left
 }
 
 // Um registro corrompido conta como "nada para desfazer", como na versão 1.0 (#9).
@@ -188,15 +257,18 @@ func remaining(op *store.Operation, plan organizer.Plan, out organizer.Outcome) 
 
 // Falhas aqui só vão para o log: na pior hipótese o registro antigo fica, e um
 // novo desfazer pula o que já voltou (#9).
-func (s *Service) updateRecord(op *store.Operation, left []store.MovedItem) bool {
-	if len(left) == 0 {
+func (s *Service) updateRecord(op *store.Operation, left []store.MovedItem, leftReplaced []store.ReplacedItem) bool {
+	if len(left) == 0 && len(leftReplaced) == 0 {
 		if err := s.store.Clear(); err != nil {
 			s.log.Error("não foi possível apagar o registro após desfazer", "err", err)
 		}
+		// Sem registro, o backup não tem mais como voltar (ADR 0008, #82).
+		s.backups.Remove(op.BackupFolder)
 		return false
 	}
 	pending := *op
 	pending.MovedItems = left
+	pending.ReplacedItems = leftReplaced
 	if err := s.store.Save(pending); err != nil {
 		s.log.Error("não foi possível regravar o registro com as falhas do desfazer", "err", err)
 	}

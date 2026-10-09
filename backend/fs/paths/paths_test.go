@@ -144,3 +144,14 @@ func TestSameFile(t *testing.T) {
 		t.Error("Equal deveria reconhecer o mesmo arquivo por outro caminho")
 	}
 }
+
+func TestKey(t *testing.T) {
+	a := filepath.Join(t.TempDir(), "Pasta", "a.txt")
+	if Key(a) != Key(filepath.Join(filepath.Dir(a), ".", "a.txt")) {
+		t.Fatal("caminhos iguais depois de limpos têm a mesma chave")
+	}
+	upper := filepath.Join(filepath.Dir(a), "A.TXT")
+	if (Key(a) == Key(upper)) != caseInsensitive {
+		t.Fatalf("maiúsculas: chaves iguais = %v, want %v (sistema sem diferenciar = %v)", Key(a) == Key(upper), caseInsensitive, caseInsensitive)
+	}
+}

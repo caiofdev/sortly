@@ -40,6 +40,7 @@ flowchart LR
 | `backend/app` | Fachada `App` exposta ao frontend: guarda o estado da tela (`ViewState`, notificações), delega as regras aos serviços e emite `sortly:state`; também as opções da janela (`Options`) e a composição das dependências (`wire.go`) |
 | `backend/organizer` | Validação do pedido, `Planner` (calcula o plano, sem efeitos colaterais), `Executor` (aplica os movimentos e mantém o journal), erros com código ([ADR 0004](adr/0004-erros-com-codigo.md)) |
 | `backend/organizer/criteria` | Os seis critérios, um por arquivo, atrás da interface `Rule` e do registry `New` ([ADR 0003](adr/0003-strategy-regras.md)); `Options` (com a ordem de exibição `Keys` e o acesso por chave) e `File` |
+| `backend/backup` | Pasta dos arquivos substituídos (`~/.sortly/substituidos/<organização>/`); só apaga o que estiver dentro dela ([ADR 0008](adr/0008-registro-do-desfazer-com-substituidos.md)) |
 | `backend/history` | Histórico das organizações em `~/.sortly/history.json` (últimas 50, a mais recente primeiro, `files.WriteAtomic`), separado do registro do desfazer ([ADR 0007](adr/0007-historico-separado-do-desfazer.md)). Arquivo ausente ou corrompido vale como vazio, com log |
 | `backend/settings` | Preferências (idioma, tema e critérios) em `~/.sortly/settings.json`: lê uma vez, aceita só valores válidos, recusa desligar o último critério e grava com `files.WriteAtomic`; monta a visão para a tela (`View`) |
 | `backend/metadata` | Leitura de resolução de imagens, duração de mp4 e contagem de páginas (`PageCounter` por extensão) |
@@ -73,7 +74,7 @@ O frontend só renderiza ([ADR 0005](adr/0005-estado-da-tela-no-backend.md)). A 
 | `StartOver()` | "Organizar outra pasta": limpa a origem e o `lastResult`; o destino e o desfazer continuam |
 | `MarkNotificationsRead()` | Apaga o ponto de não lidas do sino; a lista continua |
 | `ClearNotifications()` | Apaga o histórico de notificações |
-| `SetLanguage(language)` / `SetTheme(theme)` / `SetCriterion(key, enabled)` | Alteram as preferências (`backend/settings`). `SetTheme` também troca a cor de fundo da janela |
+| `SetLanguage(language)` / `SetTheme(theme)` / `SetDuplicates(policy)` / `SetCriterion(key, enabled)` | Alteram as preferências (`backend/settings`). `SetTheme` também troca a cor de fundo da janela |
 
 ```
 ViewState {
@@ -86,7 +87,7 @@ ViewState {
   progress: { done, total, file, folder }    // durante organizar; total 0 = ainda planejando
   lastResult: Result | null                  // a tela Concluído; preenchido quando a organização move arquivos
   history: [{ at, sourceFolderPath, destinationFolderPath, movedFiles, status: "done" | "undone" | "canceled" }]
-  settings: { language, theme: "dark" | "light", criteria: [{ key, enabled, locked }] }
+  settings: { language, theme: "dark" | "light", duplicates: "rename" | "skip" | "replace", criteria: [{ key, enabled, locked }] }
   notifications: [{ id, kind: "success" | "info" | "error", code, action, path?, organize?, undo?, at }]   // até 80, a mais recente primeiro
 }
 ```

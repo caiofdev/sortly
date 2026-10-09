@@ -5,10 +5,23 @@ import Switch from '../components/Switch';
 // settingsHintByDuration. A ordem e a trava do último ligado vêm do backend (#44).
 const suffix = (key) => `${key[0].toUpperCase()}${key.slice(1)}`;
 
-function SettingsPage({ labels, theme, criteria, onThemeChange, onCriterionChange }) {
+function SettingsPage({
+  labels,
+  theme,
+  duplicates,
+  criteria,
+  onThemeChange,
+  onDuplicatesChange,
+  onCriterionChange
+}) {
   const themes = [
     { value: 'dark', label: labels.themeDark },
     { value: 'light', label: labels.themeLight }
+  ];
+  const duplicateOptions = [
+    { value: 'rename', label: labels.duplicatesRename },
+    { value: 'skip', label: labels.duplicatesSkip },
+    { value: 'replace', label: labels.duplicatesReplace }
   ];
 
   return (
@@ -23,6 +36,19 @@ function SettingsPage({ labels, theme, criteria, onThemeChange, onCriterionChang
           options={themes}
           value={theme}
           onChange={onThemeChange}
+        />
+      </div>
+
+      <div className="st-settings__row">
+        <div>
+          <p className="st-settings__title">{labels.settingsDuplicates}</p>
+          <p className="st-settings__hint">{labels.settingsHintDuplicates}</p>
+        </div>
+        <SegmentedControl
+          label={labels.settingsDuplicates}
+          options={duplicateOptions}
+          value={duplicates}
+          onChange={onDuplicatesChange}
         />
       </div>
 

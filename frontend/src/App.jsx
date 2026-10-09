@@ -5,7 +5,7 @@ import OrganizerView from './views/OrganizerView';
 
 function App() {
   const { state, ready, actions } = useViewState();
-  const { language, theme, criteria } = state.settings;
+  const { language, theme, duplicates, criteria } = state.settings;
   const notifications = useMemo(
     () => toNotificationItems(state.notifications, language),
     [state.notifications, language]
@@ -31,6 +31,7 @@ function App() {
     <OrganizerView
       language={language}
       theme={theme}
+      duplicates={duplicates}
       criteria={criteria}
       sourceFolderPath={state.sourceFolderPath}
       destinationFolderPath={state.destinationFolderPath}
@@ -47,6 +48,7 @@ function App() {
       onMarkNotificationsRead={actions.markNotificationsRead}
       onLanguageChange={actions.setLanguage}
       onThemeChange={actions.setTheme}
+      onDuplicatesChange={actions.setDuplicates}
       onCriterionChange={actions.setCriterion}
       onSelectSourceFolder={actions.selectSource}
       onSelectDestinationFolder={actions.selectDestination}

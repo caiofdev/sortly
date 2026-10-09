@@ -25,6 +25,13 @@ type MovedItem struct {
 	To   string `json:"to"`
 }
 
+// O arquivo que já existia no destino e foi guardado em Backup antes de ser
+// substituído; o desfazer o devolve para Path (ADR 0008, #82).
+type ReplacedItem struct {
+	Path   string `json:"path"`
+	Backup string `json:"backup"`
+}
+
 // A ordem dos campos é a mesma do JSON gravado pela versão 1.0 (#6).
 type Operation struct {
 	SourceFolderPath      string      `json:"sourceFolderPath"`
@@ -32,10 +39,15 @@ type Operation struct {
 	MovedItems            []MovedItem `json:"movedItems"`
 	// Ausente em registros antigos; nesse caso fica nil (#6, #57).
 	CreatedFolders []string `json:"createdFolders"`
+	// Só com "Substituir" e algum arquivo substituído: com omitempty, um registro
+	// sem substituições continua byte a byte igual ao da 1.0 (ADR 0008, #82).
+	ReplacedItems []ReplacedItem `json:"replacedItems,omitempty"`
+	BackupFolder  string         `json:"backupFolder,omitempty"`
 }
 
+// Um substituído que não voltou também mantém o desfazer disponível (#82).
 func (o *Operation) CanUndo() bool {
-	return o != nil && len(o.MovedItems) > 0
+	return o != nil && (len(o.MovedItems) > 0 || len(o.ReplacedItems) > 0)
 }
 
 // As interfaces que o consomem ficam nos pacotes de organização e desfazer (#6).

@@ -251,6 +251,11 @@ func TestEncode(t *testing.T) {
 			`{"sourceFolderPath":"a","destinationFolderPath":"","movedItems":[],"createdFolders":["b/txt"]}`},
 		{"as duas preenchidas", Operation{SourceFolderPath: "a", DestinationFolderPath: "b", MovedItems: item, CreatedFolders: folder},
 			`{"sourceFolderPath":"a","destinationFolderPath":"b","movedItems":` + movedJSON + `,"createdFolders":["b/txt"]}`},
+		// Os campos da #82 só aparecem quando há substituídos (ADR 0008, #82).
+		{"com substituídos", Operation{SourceFolderPath: "a", MovedItems: item,
+			ReplacedItems: []ReplacedItem{{Path: "b/txt/x.txt", Backup: "s/1/txt/x.txt"}}, BackupFolder: "s/1"},
+			`{"sourceFolderPath":"a","destinationFolderPath":"","movedItems":` + movedJSON +
+				`,"createdFolders":[],"replacedItems":[{"path":"b/txt/x.txt","backup":"s/1/txt/x.txt"}],"backupFolder":"s/1"}`},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -312,5 +317,18 @@ func assertNoTempFiles(t *testing.T, dir string) {
 	matches, _ := filepath.Glob(filepath.Join(dir, ".last-operation.json-*.tmp"))
 	if len(matches) > 0 {
 		t.Fatalf("arquivos temporários esquecidos: %v", matches)
+	}
+}
+
+func TestReplacedItemsRoundTrip(t *testing.T) {
+	s := newStore(t)
+	op := Operation{SourceFolderPath: "a", MovedItems: []MovedItem{{From: "a/x", To: "b/x"}},
+		ReplacedItems: []ReplacedItem{{Path: "b/x", Backup: "s/1/x"}}, BackupFolder: "s/1"}
+	if err := s.Save(op); err != nil {
+		t.Fatal(err)
+	}
+	got, err := s.Load()
+	if err != nil || !reflect.DeepEqual(got.ReplacedItems, op.ReplacedItems) || got.BackupFolder != "s/1" {
+		t.Fatalf("Load = (%+v, %v)", got, err)
 	}
 }

@@ -16,11 +16,12 @@ import (
 	"github.com/caiofdev/sortly/backend/store"
 )
 
-// Options vem das preferências salvas (#44).
+// Options e Duplicates vêm das preferências salvas (#44, #82).
 type Request struct {
 	SourceFolderPath      string
 	DestinationFolderPath string
 	Options               criteria.Options
+	Duplicates            string
 }
 
 // Sem mensagem pronta: o frontend monta o texto no idioma do usuário (ADR 0004, #8).
@@ -39,7 +40,23 @@ type Result struct {
 	Folders         []FolderCount `json:"folders"`
 	OtherFiles      int           `json:"otherFiles"`
 	CategoryFolders bool          `json:"categoryFolders"`
+	// Com "Ignorar" e "Substituir" (#82).
+	SkippedDuplicates int `json:"skippedDuplicates"`
+	ReplacedFiles     int `json:"replacedFiles"`
 }
+
+// Onde ficam os substituídos de cada organização (#82).
+type BackupStore interface {
+	NewFolder() string
+	Remove(folder string)
+}
+
+// Sem backup configurado, "Substituir" renomeia: nunca sobrescreve sem ter como
+// devolver (#82).
+type noBackups struct{}
+
+func (noBackups) NewFolder() string { return "" }
+func (noBackups) Remove(string)     {}
 
 type RecordStore interface {
 	Load() (*store.Operation, error)
@@ -51,6 +68,7 @@ type Deps struct {
 	Metadata criteria.MetadataReader
 	Store    RecordStore
 	Location *time.Location // fuso das pastas por data; nil = fuso local (#8)
+	Backups  BackupStore    // nil = sem backup; "Substituir" renomeia (#82)
 	Logger   *slog.Logger
 }
 
@@ -58,6 +76,8 @@ type Service struct {
 	planner  *Planner
 	executor *Executor
 	store    RecordStore
+	backups  BackupStore
+	log      *slog.Logger
 }
 
 func NewService(d Deps) *Service {
@@ -65,10 +85,16 @@ func NewService(d Deps) *Service {
 	if loc == nil {
 		loc = time.Local
 	}
+	backups := d.Backups
+	if backups == nil {
+		backups = noBackups{}
+	}
 	return &Service{
 		planner:  NewPlanner(criteria.New(d.Metadata, loc)),
 		executor: NewExecutor(d.Logger),
 		store:    d.Store,
+		backups:  backups,
+		log:      logger(d.Logger),
 	}
 }
 
@@ -90,6 +116,7 @@ func (s *Service) OrganizeReporting(ctx context.Context, req Request, report Rep
 		return Result{SourceFolderPath: src, DestinationFolderPath: dst, Canceled: canceled, Folders: []FolderCount{}}, err
 	}
 
+	s.prepare(&plan, req.Duplicates)
 	out, applyErr := s.executor.ApplyReporting(ctx, plan, report)
 	saveErr := s.record(plan, out)
 
@@ -107,7 +134,27 @@ func (s *Service) OrganizeReporting(ctx context.Context, req Request, report Rep
 	}
 	result.Folders, result.OtherFiles = movedFolders(dst, out.MovedItems)
 	result.CategoryFolders = plan.CategoryFolders
+	result.SkippedDuplicates = out.SkippedDuplicates
+	result.ReplacedFiles = len(out.ReplacedItems)
 	return result, errors.Join(applyErr, saveErr)
+}
+
+// Política desconhecida (preferência de uma versão futura) vale como renomear (#82).
+func (s *Service) prepare(plan *Plan, duplicates string) {
+	if !ValidDuplicates(duplicates) {
+		duplicates = DuplicatesRename
+	}
+	plan.Duplicates = duplicates
+	if duplicates == DuplicatesReplace {
+		plan.BackupFolder = s.backups.NewFolder()
+	}
+}
+
+func logger(l *slog.Logger) *slog.Logger {
+	if l == nil {
+		return slog.New(slog.DiscardHandler)
+	}
+	return l
 }
 
 func movedFolders(dst string, moved []store.MovedItem) ([]FolderCount, int) {
@@ -130,14 +177,36 @@ func (s *Service) record(plan Plan, out Outcome) error {
 		MovedItems:            out.MovedItems,
 		CreatedFolders:        out.CreatedFolders,
 	}
+	if len(out.ReplacedItems) > 0 {
+		op.ReplacedItems = out.ReplacedItems
+		op.BackupFolder = plan.BackupFolder
+	}
+	previous := s.previousBackup()
 	if err := s.store.Save(op); err != nil {
 		// O registro que ficou é da organização anterior: se sobrevivesse, o próximo
 		// desfazer (inclusive após reabrir o app) desfaria a errada. A falha ao apagar
 		// já vai para o log do store (#53).
 		_ = s.store.Clear()
+		s.backups.Remove(previous)
+		// Sem registro, o desfazer não devolve os substituídos desta organização; eles
+		// continuam no backup, e o log diz onde (ADR 0008, #82).
+		if op.BackupFolder != "" {
+			s.log.Error("substituídos sem registro para desfazer", "pasta", op.BackupFolder, "arquivos", len(op.ReplacedItems))
+		}
 		return fmt.Errorf("%w: %w", ErrRecordNotSaved, err)
 	}
+	s.backups.Remove(previous)
 	return nil
+}
+
+// O backup só serve ao desfazer do registro que o criou: quando esse registro é
+// substituído ou apagado, os substituídos dele não têm mais como voltar (ADR 0008, #82).
+func (s *Service) previousBackup() string {
+	previous, err := s.store.Load()
+	if err != nil || previous == nil {
+		return ""
+	}
+	return previous.BackupFolder
 }
 
 func (s *Service) canUndo(out Outcome, saveErr error) bool {

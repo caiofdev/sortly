@@ -16,6 +16,7 @@ const BACKEND_CODES = [
   'UNKNOWN_CRITERION',
   'INVALID_LANGUAGE',
   'INVALID_THEME',
+  'INVALID_DUPLICATES',
   'DESTINATION_NOT_FOUND',
   'SETTINGS_NOT_SAVED'
 ];
@@ -37,6 +38,59 @@ describe('códigos de erro do backend (ADR 0004)', () => {
     expect(pt.errors.INVALID_DESTINATION).toBe('Pasta de destino inválida.');
     expect(pt.errors.NO_CRITERIA).toBe('Selecione ao menos um criterio de organizacao.');
     expect(pt.errors.NOTHING_TO_UNDO).toBe('Nenhuma separação recente para desfazer.');
+  });
+});
+
+describe('arquivos duplicados (#82)', () => {
+  const organized = (overrides) => ({
+    movedFiles: 1,
+    destinationFolderPath: 'D',
+    unchangedFiles: 0,
+    ignoredWithoutExtension: 0,
+    failedFiles: 0,
+    skippedDuplicates: 0,
+    replacedFiles: 0,
+    ...overrides
+  });
+
+  it.each([
+    [
+      { skippedDuplicates: 1 },
+      '1 já existia no destino e ficou na origem.',
+      '1 file was already in the destination and stayed in the source.'
+    ],
+    [
+      { skippedDuplicates: 2 },
+      '2 já existiam no destino e ficaram na origem.',
+      '2 files were already in the destination and stayed in the source.'
+    ],
+    [
+      { replacedFiles: 1 },
+      '1 arquivo antigo foi substituído e fica guardado para o desfazer.',
+      '1 old file was replaced and kept for undo.'
+    ],
+    [
+      { replacedFiles: 2 },
+      '2 arquivos antigos foram substituídos e ficam guardados para o desfazer.',
+      '2 old files were replaced and kept for undo.'
+    ]
+  ])('%o', (overrides, ptText, enText) => {
+    expect(pt.organizeDone(organized(overrides)).text).toContain(ptText);
+    expect(en.organizeDone(organized(overrides)).text).toContain(enText);
+  });
+
+  it('desfazer conta os substituídos que voltaram', () => {
+    const r = {
+      restoredFiles: 1,
+      renamedOnRestore: 0,
+      skippedMissing: 0,
+      failedFiles: 0,
+      restoredReplaced: 1
+    };
+    expect(pt.undoDone(r).text).toContain('1 substituído voltou para o lugar.');
+    expect(en.undoDone({ ...r, restoredReplaced: 2 }).text).toContain(
+      '2 replaced files are back in place.'
+    );
   });
 });
 

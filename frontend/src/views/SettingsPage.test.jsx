@@ -6,22 +6,41 @@ import SettingsPage from './SettingsPage';
 const pt = organizerCopy['pt-BR'];
 const KEYS = ['byType', 'byDuration', 'byPages', 'byResolution', 'byDate', 'bySize', 'byExtension'];
 
-function renderSettings(criteria, theme = 'dark') {
+function renderSettings(criteria, theme = 'dark', duplicates = 'rename') {
   const onCriterionChange = vi.fn();
   const onThemeChange = vi.fn();
+  const onDuplicatesChange = vi.fn();
   render(
     <SettingsPage
       labels={pt}
       theme={theme}
+      duplicates={duplicates}
       criteria={criteria}
       onThemeChange={onThemeChange}
+      onDuplicatesChange={onDuplicatesChange}
       onCriterionChange={onCriterionChange}
     />
   );
-  return Object.assign(onCriterionChange, { onThemeChange });
+  return Object.assign(onCriterionChange, { onThemeChange, onDuplicatesChange });
 }
 
 describe('SettingsPage', () => {
+  it.each([
+    ['rename', pt.duplicatesRename],
+    ['skip', pt.duplicatesSkip],
+    ['replace', pt.duplicatesReplace]
+  ])('duplicados %s: "%s" marcado', (duplicates, pressed) => {
+    renderSettings([], 'dark', duplicates);
+    const group = screen.getByRole('group', { name: pt.settingsDuplicates });
+    expect(group.querySelector('[aria-pressed="true"]')).toHaveTextContent(pressed);
+  });
+
+  it('escolher Substituir pede a mudança ao backend', () => {
+    const { onDuplicatesChange } = renderSettings([]);
+    fireEvent.click(screen.getByRole('button', { name: pt.duplicatesReplace }));
+    expect(onDuplicatesChange).toHaveBeenCalledWith('replace');
+  });
+
   it.each([
     ['dark', pt.themeDark],
     ['light', pt.themeLight]

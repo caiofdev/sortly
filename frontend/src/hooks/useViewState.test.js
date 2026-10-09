@@ -17,6 +17,7 @@ vi.mock('../../wailsjs/go/app/App', () => ({
   OpenDestination: vi.fn(),
   StartOver: vi.fn(),
   SetTheme: vi.fn(),
+  SetDuplicates: vi.fn(),
   SetLanguage: vi.fn(),
   SetCriterion: vi.fn()
 }));
@@ -101,6 +102,12 @@ describe('useViewState', () => {
     ['markNotificationsRead', 'MarkNotificationsRead', [], { unread: false }],
     ['setLanguage', 'SetLanguage', ['en'], { settings: { language: 'en', criteria: [] } }],
     ['setTheme', 'SetTheme', ['light'], { settings: { theme: 'light', criteria: [] } }],
+    [
+      'setDuplicates',
+      'SetDuplicates',
+      ['skip'],
+      { settings: { duplicates: 'skip', criteria: [] } }
+    ],
     ['setCriterion', 'SetCriterion', ['byDate', true], { busy: '' }]
   ])('%s chama %s e mostra o estado devolvido', async (action, binding, args, expected) => {
     const { result } = await setup();
