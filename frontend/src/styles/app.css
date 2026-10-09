@@ -257,3 +257,100 @@ button {
   font: 500 15px/18px var(--font-display);
   color: var(--ink-100);
 }
+
+.st-running {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-2) 0;
+}
+
+.st-running__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-4);
+}
+
+.st-running__title {
+  margin: 0;
+  font: 700 17px/24px var(--font-sans);
+  color: var(--ink-100);
+}
+
+.st-running__count {
+  margin: 0;
+  font: 500 20px/24px var(--font-display);
+  color: var(--ink-100);
+}
+
+.st-running__now {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 20px;
+  margin: 0;
+  font: 400 13px/18px var(--font-sans);
+}
+
+.st-running__muted {
+  color: var(--ink-300);
+}
+
+.st-running__file,
+.st-running__folder {
+  font: 500 13px/20px var(--font-mono);
+  overflow-wrap: anywhere;
+}
+
+.st-running__file {
+  color: var(--ink-100);
+}
+
+.st-running__folder {
+  color: var(--brand-text);
+}
+
+.st-running .st-actions {
+  margin-top: var(--space-2);
+}
+
+.st-flow__labels {
+  margin: -4px auto var(--space-2);
+}
+
+.st-flow__left {
+  color: var(--ink-100);
+}
+
+.st-flow__done {
+  color: var(--brand-text);
+}
+
+/* O FileFlow do design system tem 520px com posições fixas; numa janela
+   estreita, a pasta de destino saía cortada. Reduzido por inteiro, o desenho
+   e o voo dos arquivos continuam alinhados (#78). */
+.st-flow-wrap {
+  container-type: inline-size;
+}
+
+@container (max-width: 519px) {
+  .st-flow {
+    zoom: 0.8;
+  }
+
+  .st-flow__labels {
+    max-width: 416px;
+  }
+}
+
+@container (max-width: 415px) {
+  .st-flow {
+    zoom: 0.6;
+  }
+
+  .st-flow__labels {
+    max-width: 312px;
+  }
+}

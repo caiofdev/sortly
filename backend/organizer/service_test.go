@@ -197,7 +197,7 @@ func TestResultJSONHasNoMessage(t *testing.T) {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
-	want := []string{"canUndo", "destinationFolderPath", "failedFiles", "ignoredFolders",
+	want := []string{"canUndo", "canceled", "destinationFolderPath", "failedFiles", "ignoredFolders",
 		"ignoredWithoutExtension", "movedFiles", "processedFiles", "sourceFolderPath", "unchangedFiles"}
 	if !reflect.DeepEqual(keys, want) {
 		t.Fatalf("campos = %v, want %v (#8: sem \"message\")", keys, want)
@@ -249,4 +249,52 @@ func listTree(t *testing.T, root string) []string {
 	}
 	sort.Strings(got)
 	return got
+}
+
+func TestOrganizeCanceled(t *testing.T) {
+	t.Run("no meio: o que foi movido fica no registro", func(t *testing.T) {
+		src := t.TempDir()
+		writeAt(t, filepath.Join(src, "a.txt"), "a", testTime)
+		writeAt(t, filepath.Join(src, "b.txt"), "b", testTime)
+		svc, st := newTestService(t)
+		ctx, cancel := context.WithCancel(context.Background())
+		realMove := svc.executor.move
+		svc.executor.move = func(from, to string) (string, error) {
+			final, err := realMove(from, to)
+			cancel()
+			return final, err
+		}
+
+		got, err := svc.OrganizeReporting(ctx, Request{SourceFolderPath: src, Options: criteria.Default}, func(Progress) {})
+
+		op, _ := st.Load()
+		if !errors.Is(err, context.Canceled) || !got.Canceled || got.MovedFiles != 1 || !got.CanUndo || len(op.MovedItems) != 1 {
+			t.Fatalf("Organize = (%+v, %v), registro = %+v", got, err, op)
+		}
+	})
+
+	t.Run("no planejamento: nada movido", func(t *testing.T) {
+		src := t.TempDir()
+		writeAt(t, filepath.Join(src, "a.txt"), "a", testTime)
+		svc, _ := newTestService(t)
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		got, err := svc.Organize(ctx, Request{SourceFolderPath: src, Options: criteria.Default})
+
+		want := Result{SourceFolderPath: src, DestinationFolderPath: src, Canceled: true}
+		if !errors.Is(err, context.Canceled) || got != want {
+			t.Fatalf("Organize = (%+v, %v), want %+v", got, err, want)
+		}
+		assertTree(t, src, []string{"a.txt"})
+	})
+
+	t.Run("outro erro no planejamento não é cancelamento", func(t *testing.T) {
+		svc, _ := newTestService(t)
+		svc.planner.readDir = func(string) ([]os.DirEntry, error) { return nil, os.ErrPermission }
+		got, err := svc.Organize(context.Background(), Request{SourceFolderPath: t.TempDir(), Options: criteria.Default})
+		if !errors.Is(err, ErrInvalidSource) || got.Canceled {
+			t.Fatalf("Organize = (%+v, %v)", got, err)
+		}
+	})
 }

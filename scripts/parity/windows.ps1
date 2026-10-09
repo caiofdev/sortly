@@ -149,7 +149,7 @@ function Last-Notice {
   Click 'Notificações', 'Notifications'
   Start-Sleep -Milliseconds 600
   # Só textos de aviso, do mais recente para o mais antigo (#75).
-  $notice = Find-Text 'organizad|organized|com falha|failed|encontrad|not found|Invalid folder|Pasta inválida|Nenhuma separação|No recent'
+  $notice = Find-Text 'organizad|organized|Interrompido|Stopped|com falha|failed|não foi encontrado|não foram encontrados|not found|Invalid folder|Pasta inválida|Nenhuma separação|No recent'
   Click 'Notificações', 'Notifications'
   return [string]$notice
 }
@@ -233,6 +233,29 @@ try {
   $after = Tree $b8
   $renamed = @($after | Where-Object { $_ -match ' \(1\)' })
   Check 'WIN_B8' ($renamed.Count -eq 0 -and ($after -contains '3x2\3x2.png')) "renomeados: $($renamed.Count)"
+
+  # --- 6b) Cancelar no meio: o que foi movido fica no registro e pode ser desfeito (#78) ---
+  Stop-App
+  $big = "$work\cancelar"; New-Item -ItemType Directory -Force $big | Out-Null
+  foreach ($i in 1..4000) { [IO.File]::WriteAllText("$big\arquivo-$i.txt", 'x') }
+  Set-Record $big $big
+  Start-App
+  Set-Criteria @('Extensão do arquivo')
+  Click 'Organizar' -Last
+  # Cancela só depois do primeiro movimento, para conferir o registro parcial.
+  $moving = Wait-Until { @(Get-ChildItem $big -File).Count -lt 4000 } 30
+  Click 'Cancelar'
+  Start-Sleep -Seconds 2
+  $left = @(Get-ChildItem $big -File).Count
+  $notice = Last-Notice
+  Click 'Desfazer'
+  $back = Wait-Until { @(Get-ChildItem $big -File).Count -eq 4000 }
+  Check 'WIN_CANCEL' ($moving -and $notice -match '^Interrompido: \d+ arquivos movidos$' -and $left -gt 0 -and $left -lt 4000 -and $back) "$notice; movendo: $moving; ficaram $left na origem; desfeito: $back"
+  # O desfazer apagou o registro; o passo 7 reabre o app e precisa da origem do B8.
+  Set-Criteria @('Resolução')
+  Stop-App
+  Set-Record $b8 $b8
+  Start-App
 
   # --- 7) Idioma, preferências e erro em inglês (B6) ---
   $on = [Windows.Automation.ToggleState]::On

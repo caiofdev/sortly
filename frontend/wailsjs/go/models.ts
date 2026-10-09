@@ -89,6 +89,7 @@ export namespace app {
 	    busy: string;
 	    unread: boolean;
 	    preview: PreviewState;
+	    progress: organizer.Progress;
 	    settings: settings.View;
 	    notifications: Notification[];
 	
@@ -105,6 +106,7 @@ export namespace app {
 	        this.busy = source["busy"];
 	        this.unread = source["unread"];
 	        this.preview = this.convertValues(source["preview"], PreviewState);
+	        this.progress = this.convertValues(source["progress"], organizer.Progress);
 	        this.settings = this.convertValues(source["settings"], settings.View);
 	        this.notifications = this.convertValues(source["notifications"], Notification);
 	    }
@@ -132,6 +134,24 @@ export namespace app {
 
 export namespace organizer {
 	
+	export class Progress {
+	    done: number;
+	    total: number;
+	    file: string;
+	    folder: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Progress(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.done = source["done"];
+	        this.total = source["total"];
+	        this.file = source["file"];
+	        this.folder = source["folder"];
+	    }
+	}
 	export class Result {
 	    sourceFolderPath: string;
 	    destinationFolderPath: string;
@@ -142,6 +162,7 @@ export namespace organizer {
 	    ignoredWithoutExtension: number;
 	    ignoredFolders: number;
 	    canUndo: boolean;
+	    canceled: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new Result(source);
@@ -158,6 +179,7 @@ export namespace organizer {
 	        this.ignoredWithoutExtension = source["ignoredWithoutExtension"];
 	        this.ignoredFolders = source["ignoredFolders"];
 	        this.canUndo = source["canUndo"];
+	        this.canceled = source["canceled"];
 	    }
 	}
 

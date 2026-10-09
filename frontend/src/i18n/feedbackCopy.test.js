@@ -39,6 +39,27 @@ describe('códigos de erro do backend (ADR 0004)', () => {
   });
 });
 
+describe('organização cancelada (#78)', () => {
+  it.each([
+    [0, 'Organização cancelada', 'Organizing cancelled'],
+    [1, 'Interrompido: 1 arquivo movido', 'Stopped: 1 file moved'],
+    [2, 'Interrompido: 2 arquivos movidos', 'Stopped: 2 files moved']
+  ])('%i movido(s): "%s"', (movedFiles, ptTitle, enTitle) => {
+    expect(pt.organizeCanceled({ movedFiles }).title).toBe(ptTitle);
+    expect(en.organizeCanceled({ movedFiles }).title).toBe(enTitle);
+  });
+
+  // Regressão (#78): o protótipo dizia "nada foi alterado" mesmo com arquivos já movidos.
+  it('com arquivos movidos, o texto fala em desfazer', () => {
+    expect(pt.organizeCanceled({ movedFiles: 5 }).text).toBe(
+      'Você pode desfazer o que já foi movido.'
+    );
+    expect(pt.organizeCanceled({ movedFiles: 0 }).text).toBe(
+      'Nada foi alterado na pasta de origem.'
+    );
+  });
+});
+
 describe('avisos de organizar e desfazer (#75)', () => {
   const result = (overrides = {}) => ({
     movedFiles: 3,

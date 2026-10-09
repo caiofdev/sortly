@@ -66,6 +66,7 @@ O frontend só renderiza ([ADR 0005](adr/0005-estado-da-tela-no-backend.md)). A 
 | `SelectSource()` / `SelectDestination()` | Abre o seletor de pasta; cancelar não muda nada |
 | `DropPaths(paths)` | Define a origem a partir do primeiro item solto (a pasta, ou a pasta do arquivo) |
 | `Organize()` | Organiza a origem no destino (vazio = a própria origem) com os critérios salvos. Sem origem: `SOURCE_REQUIRED` |
+| `Cancel()` | Cancela a organização em andamento; o que já foi movido fica no registro e pode ser desfeito. Sem organização em andamento, não faz nada |
 | `Undo()` | Desfaz a última organização |
 | `MarkNotificationsRead()` | Apaga o ponto de não lidas do sino; a lista continua |
 | `ClearNotifications()` | Apaga o histórico de notificações |
@@ -79,6 +80,7 @@ ViewState {
   busy: "" | "organize" | "restore"          // ação em andamento
   unread: bool                               // há notificação nova desde a última leitura
   preview: { status: "" | "loading" | "ready", totalFiles, folders: [{ name, count }], otherFiles }
+  progress: { done, total, file, folder }    // durante organizar; total 0 = ainda planejando
   settings: { language, theme: "dark" | "light", criteria: [{ key, enabled, locked }] }
   notifications: [{ id, kind: "success" | "info" | "error", code, action, path?, organize?, undo?, at }]   // até 80, a mais recente primeiro
 }
@@ -88,6 +90,7 @@ ViewState {
 - **Notificações de sucesso** também são códigos com dados: `ORGANIZE_DONE` (com `organize`: movidos, falhas, ignorados…), `UNDO_DONE` (com `undo`) e `SOURCE_DROPPED` (com `path`).
 - **Status (`kind`):** o backend decide se o aviso é sucesso, neutro ou erro. Organizar ou desfazer com algum arquivo que falhou é `error`, e organizar sem nada movido é `info`. A interface usa o `kind` para o ponto do painel e a variante do toast; o toast de erro fica até o usuário fechar.
 - **Prévia da origem:** ao definir a origem ou o destino, mudar um critério, ao fim de organizar e de desfazer e na origem recuperada ao abrir, o `App` planeja em segundo plano (`organizer.Service.Preview`, o mesmo `Planner` da organização, sem mover nada). Uma prévia nova cancela a anterior, e um resultado antigo que chegue depois é descartado. O binding devolve `status: "loading"`, e o resultado chega pelo evento de estado. `folders` traz até 6 pastas de 1º nível, da maior para a menor (nome vazio = raiz do destino); o resto soma em `otherFiles`. Origem ilegível vira uma notificação de erro com a ação `preview`. Durante organizar e desfazer, a prévia some.
+- **Progresso e Cancelar:** o `Executor` reporta o progresso antes de cada movimento e no fim (`organizer.Progress`: feitos, total, nome do arquivo e pasta relativa ao destino). O `App` emite no máximo um estado a cada 50 ms (~20/s); o primeiro e o último sempre saem. `Cancel` cancela o `context` da organização: o resultado sai com `canceled: true`, o journal parcial é gravado, e a notificação `ORGANIZE_CANCELED` diz quantos arquivos foram movidos. Se o registro não pôde ser salvo, vale o erro `RECORD_NOT_SAVED`.
 - **Evento `sortly:state`:** emitido a cada mudança, com o estado inteiro. É por ele que a tela mostra "Organizando…" enquanto a chamada de `Organize` ainda não terminou.
 - **Estados fora de ordem:** evento e retorno do binding saem do lock antes de chegar à tela, então duas ações quase simultâneas podem entregá-los fora de ordem. O `useViewState` só troca o estado por um de `version` maior.
 - **Organizar e desfazer não rodam juntos:** uma chamada durante a outra devolve o estado sem fazer nada.

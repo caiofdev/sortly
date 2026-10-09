@@ -49,6 +49,15 @@ const feedbackCopy = {
         )
       )
     }),
+    // Cancelar no meio deixa o que já foi movido: o aviso não pode dizer que
+    // nada mudou (#78).
+    organizeCanceled: (r) =>
+      r.movedFiles > 0
+        ? {
+            title: `Interrompido: ${plural(r.movedFiles, 'arquivo movido', 'arquivos movidos')}`,
+            text: 'Você pode desfazer o que já foi movido.'
+          }
+        : { title: 'Organização cancelada', text: 'Nada foi alterado na pasta de origem.' },
     undoDone: (r) => ({
       title:
         r.failedFiles > 0
@@ -111,6 +120,13 @@ const feedbackCopy = {
         when(r.failedFiles, `${plural(r.failedFiles, 'file', 'files')} could not be moved.`)
       )
     }),
+    organizeCanceled: (r) =>
+      r.movedFiles > 0
+        ? {
+            title: `Stopped: ${plural(r.movedFiles, 'file moved', 'files moved')}`,
+            text: 'You can undo what was already moved.'
+          }
+        : { title: 'Organizing cancelled', text: 'Nothing changed in the source folder.' },
     undoDone: (r) => ({
       title: r.failedFiles > 0 ? `Organizing undone, ${r.failedFiles} failed` : 'Organizing undone',
       text: sentences(

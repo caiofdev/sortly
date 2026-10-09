@@ -27,7 +27,7 @@ const (
 )
 
 type Organizer interface {
-	Organize(ctx context.Context, req organizer.Request) (organizer.Result, error)
+	OrganizeReporting(ctx context.Context, req organizer.Request, report organizer.Reporter) (organizer.Result, error)
 	Preview(ctx context.Context, req organizer.Request) (organizer.Preview, error)
 }
 
@@ -90,6 +90,9 @@ type App struct {
 	previewSeq    uint64
 	// Disparadas depois de soltar o lock, porque chamam update de novo (#77).
 	pending []func()
+
+	cancelWork   context.CancelFunc
+	lastProgress time.Time
 }
 
 func New(d Deps) *App {
@@ -186,17 +189,51 @@ func (a *App) Organize() ViewState {
 		req.DestinationFolderPath = req.SourceFolderPath
 	}
 
+	ctx, cancel := context.WithCancel(a.runtimeContext())
+	defer cancel()
 	// A prévia leria arquivos que estão sendo movidos; volta quando a organização acaba (#77).
 	a.update(func(s *ViewState) {
 		s.Busy = BusyOrganize
+		s.Progress = organizer.Progress{}
+		a.cancelWork = cancel
 		a.stopPreview(s)
 	})
-	result, err := a.deps.Organizer.Organize(a.runtimeContext(), req)
+	result, err := a.deps.Organizer.OrganizeReporting(ctx, req, a.reportProgress)
 	return a.update(func(s *ViewState) {
 		s.Busy = ""
+		s.Progress = organizer.Progress{}
+		a.cancelWork = nil
 		a.applyOrganize(s, result, err)
 		a.startPreview(s)
 	})
+}
+
+// O que já foi movido fica no registro e pode ser desfeito. Sem organização em
+// andamento, não faz nada (#78).
+func (a *App) Cancel() ViewState {
+	return a.update(func(*ViewState) {
+		if a.cancelWork != nil {
+			a.cancelWork()
+		}
+	})
+}
+
+// No máximo um estado a cada 50 ms (~20/s): numa pasta com milhares de arquivos,
+// um evento por arquivo inundaria o WebView. O primeiro e o último sempre saem (#78).
+const progressInterval = 50 * time.Millisecond
+
+func (a *App) reportProgress(p organizer.Progress) {
+	a.mu.Lock()
+	now := a.deps.Now()
+	skip := p.Done > 0 && p.Done < p.Total && now.Sub(a.lastProgress) < progressInterval
+	if !skip {
+		a.lastProgress = now
+	}
+	a.mu.Unlock()
+	if skip {
+		return
+	}
+	a.update(func(s *ViewState) { s.Progress = p })
 }
 
 // Com arquivos movidos, o Result vale mesmo com erro: se o registro não foi
@@ -205,6 +242,13 @@ func (a *App) Organize() ViewState {
 func (a *App) applyOrganize(s *ViewState, result organizer.Result, err error) {
 	if err == nil || result.MovedFiles > 0 {
 		s.HasUndo = result.CanUndo
+	}
+	// Cancelar não é falha; o aviso diz quantos arquivos já foram movidos. Se o
+	// registro não foi salvo, a falha vale mais (#53, #78).
+	if result.Canceled && !errors.Is(err, organizer.ErrRecordNotSaved) {
+		a.log.Info("organização cancelada", "origem", result.SourceFolderPath, "movidos", result.MovedFiles)
+		a.notify(s, Notification{Kind: KindInfo, Code: CodeOrganizeCanceled, Action: ActionOrganize, Organize: &result})
+		return
 	}
 	if err != nil {
 		a.fail(s, ActionOrganize, err)

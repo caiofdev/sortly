@@ -34,6 +34,7 @@ type Result struct {
 	IgnoredWithoutExtension int    `json:"ignoredWithoutExtension"`
 	IgnoredFolders          int    `json:"ignoredFolders"`
 	CanUndo                 bool   `json:"canUndo"`
+	Canceled                bool   `json:"canceled"`
 }
 
 type RecordStore interface {
@@ -67,19 +68,25 @@ func NewService(d Deps) *Service {
 	}
 }
 
-// Mesmo com erro (falha ao gravar o registro, contexto cancelado), o Result
-// descreve o que foi feito, porque arquivos podem ter sido movidos (#8).
 func (s *Service) Organize(ctx context.Context, req Request) (Result, error) {
+	return s.OrganizeReporting(ctx, req, func(Progress) {})
+}
+
+// Mesmo com erro (falha ao gravar o registro, contexto cancelado), o Result
+// descreve o que foi feito, porque arquivos podem ter sido movidos. Cancelado
+// no planejamento, nada foi movido (#8, #78).
+func (s *Service) OrganizeReporting(ctx context.Context, req Request, report Reporter) (Result, error) {
 	src, dst, opts, err := validate(req)
 	if err != nil {
 		return Result{}, err
 	}
 	plan, err := s.planner.Plan(ctx, src, dst, opts)
 	if err != nil {
-		return Result{}, err
+		canceled := errors.Is(err, context.Canceled)
+		return Result{SourceFolderPath: src, DestinationFolderPath: dst, Canceled: canceled}, err
 	}
 
-	out, applyErr := s.executor.Apply(ctx, plan)
+	out, applyErr := s.executor.ApplyReporting(ctx, plan, report)
 	saveErr := s.record(plan, out)
 
 	result := Result{
@@ -92,6 +99,7 @@ func (s *Service) Organize(ctx context.Context, req Request) (Result, error) {
 		IgnoredWithoutExtension: plan.IgnoredWithoutExtension,
 		IgnoredFolders:          plan.IgnoredFolders,
 		CanUndo:                 s.canUndo(out, saveErr),
+		Canceled:                errors.Is(applyErr, context.Canceled),
 	}
 	return result, errors.Join(applyErr, saveErr)
 }

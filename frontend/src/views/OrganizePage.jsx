@@ -1,5 +1,6 @@
 import DragDropPanel from '../components/DragDropPanel';
 import OrganizerActions from '../components/OrganizerActions';
+import OrganizingPanel from '../components/OrganizingPanel';
 import PathField from '../components/PathField';
 import PreviewSummary from '../components/PreviewSummary';
 
@@ -8,14 +9,31 @@ function OrganizePage({
   sourceFolderPath,
   destinationFolderPath,
   preview,
+  progress,
   hasUndo,
   isLoading,
   loadingAction,
   onSelectSourceFolder,
   onSelectDestinationFolder,
   onOrganizeFiles,
-  onUndoLastOrganization
+  onUndoLastOrganization,
+  onCancel
 }) {
+  // Enquanto organiza, o card mostra só o progresso, como no protótipo (#78).
+  if (loadingAction === 'organize') {
+    return (
+      <section className="st-card">
+        <OrganizingPanel
+          labels={labels}
+          progress={progress}
+          sourceFolderPath={sourceFolderPath}
+          destinationFolderPath={destinationFolderPath}
+          onCancel={onCancel}
+        />
+      </section>
+    );
+  }
+
   return (
     <section className="st-card">
       <DragDropPanel

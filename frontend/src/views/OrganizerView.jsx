@@ -22,6 +22,7 @@ function OrganizerView({
   sourceFolderPath,
   destinationFolderPath,
   preview,
+  progress,
   hasUndo,
   isLoading,
   loadingAction,
@@ -35,7 +36,8 @@ function OrganizerView({
   onSelectSourceFolder,
   onSelectDestinationFolder,
   onOrganizeFiles,
-  onUndoLastOrganization
+  onUndoLastOrganization,
+  onCancel
 }) {
   const [page, setPage] = useState('organize');
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -90,6 +92,7 @@ function OrganizerView({
               sourceFolderPath={sourceFolderPath}
               destinationFolderPath={destinationFolderPath}
               preview={preview}
+              progress={progress}
               hasUndo={hasUndo}
               isLoading={isLoading}
               loadingAction={loadingAction}
@@ -97,6 +100,7 @@ function OrganizerView({
               onSelectDestinationFolder={onSelectDestinationFolder}
               onOrganizeFiles={onOrganizeFiles}
               onUndoLastOrganization={onUndoLastOrganization}
+              onCancel={onCancel}
             />
           )}
 

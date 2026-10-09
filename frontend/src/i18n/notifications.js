@@ -8,6 +8,7 @@ const notices = {
   SOURCE_DROPPED: (n, copy) => copy.sourceDropped(n.path),
   SOURCE_REQUIRED: (_n, copy) => ({ title: copy.sourceRequired, text: '' }),
   ORGANIZE_DONE: (n, copy) => copy.organizeDone(n.organize),
+  ORGANIZE_CANCELED: (n, copy) => copy.organizeCanceled(n.organize),
   UNDO_DONE: (n, copy) => copy.undoDone(n.undo)
 };
 
