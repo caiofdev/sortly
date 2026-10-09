@@ -1,10 +1,13 @@
 package organizer
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"log/slog"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/caiofdev/sortly/backend/backup"
@@ -265,4 +268,21 @@ func (b *brokenStore) Clear() error                    { return nil }
 
 func TestBackupStoreSatisfiesInterface(t *testing.T) {
 	var _ BackupStore = backup.New(t.TempDir(), nil)
+}
+
+// Regressão (#82): sem registro, os substituídos ficavam no backup sem nada dizer onde.
+func TestRecordNotSavedLogsReplacedBackup(t *testing.T) {
+	src, dst := duplicateSetup(t)
+	var logs bytes.Buffer
+	backups := &fakeBackups{folder: filepath.Join(t.TempDir(), "substituidos", "1")}
+	svc := NewService(Deps{Metadata: metadata.Reader{}, Store: &brokenStore{}, Location: testLoc, Backups: backups,
+		Logger: slog.New(slog.NewTextHandler(&logs, nil))})
+
+	_, err := svc.Organize(context.Background(), Request{SourceFolderPath: src, DestinationFolderPath: dst,
+		Options: criteria.Default, Duplicates: DuplicatesReplace})
+
+	if !errors.Is(err, ErrRecordNotSaved) || !strings.Contains(logs.String(), "substituídos sem registro") ||
+		!strings.Contains(logs.String(), backups.folder) {
+		t.Fatalf("err = %v, log = %s", err, logs.String())
+	}
 }

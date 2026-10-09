@@ -77,6 +77,7 @@ type Service struct {
 	executor *Executor
 	store    RecordStore
 	backups  BackupStore
+	log      *slog.Logger
 }
 
 func NewService(d Deps) *Service {
@@ -93,6 +94,7 @@ func NewService(d Deps) *Service {
 		executor: NewExecutor(d.Logger),
 		store:    d.Store,
 		backups:  backups,
+		log:      logger(d.Logger),
 	}
 }
 
@@ -148,6 +150,13 @@ func (s *Service) prepare(plan *Plan, duplicates string) {
 	}
 }
 
+func logger(l *slog.Logger) *slog.Logger {
+	if l == nil {
+		return slog.New(slog.DiscardHandler)
+	}
+	return l
+}
+
 func movedFolders(dst string, moved []store.MovedItem) ([]FolderCount, int) {
 	targets := make([]string, 0, len(moved))
 	for _, item := range moved {
@@ -179,6 +188,11 @@ func (s *Service) record(plan Plan, out Outcome) error {
 		// já vai para o log do store (#53).
 		_ = s.store.Clear()
 		s.backups.Remove(previous)
+		// Sem registro, o desfazer não devolve os substituídos desta organização; eles
+		// continuam no backup, e o log diz onde (ADR 0008, #82).
+		if op.BackupFolder != "" {
+			s.log.Error("substituídos sem registro para desfazer", "pasta", op.BackupFolder, "arquivos", len(op.ReplacedItems))
+		}
 		return fmt.Errorf("%w: %w", ErrRecordNotSaved, err)
 	}
 	s.backups.Remove(previous)

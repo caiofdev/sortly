@@ -46,4 +46,6 @@ Regras que já falharam neste projeto e que a revisão deve conferir sempre. Cad
 - Painel que substitui o botão focado (Organizar → Organizando) move o foco para a ação seguinte; senão o teclado cai no <body>. — #78 (2026-10-09)
 - No roteiro de paridade, espere pelo efeito no disco (arquivo saiu da pasta), não por um texto da tela, antes de agir no meio de uma operação. — #78 (2026-10-09)
 
+- Recurso que guarda arquivos do usuário fora da pasta dele (backup de substituídos) precisa dizer onde eles ficam em todo caminho de erro: sem registro para desfazer, ao menos o log aponta a pasta. — #82 (2026-10-09)
+
 <!-- Acrescente aqui: - Regra generalizada. — PR/issue (AAAA-MM-DD) -->
