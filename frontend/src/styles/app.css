@@ -39,22 +39,6 @@ button {
   background: transparent;
 }
 
-.st-btn--busy svg {
-  animation: st-spin 1s steps(8, end) infinite;
-}
-
-@keyframes st-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .st-btn--busy svg {
-    animation: none;
-  }
-}
-
 /* Linhas da página Configurações, como no protótipo (#74). */
 .st-settings {
   padding: var(--space-2) var(--space-6);

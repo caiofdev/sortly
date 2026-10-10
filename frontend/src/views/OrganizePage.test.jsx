@@ -58,8 +58,8 @@ describe('OrganizePage', () => {
     expect(onSelectSourceFolder).toHaveBeenCalled();
   });
 
-  it('desfazendo: link do destino desabilitado', () => {
-    renderPage({ isLoading: true, loadingAction: 'restore', destinationFolderPath: 'C:\\d' });
+  it('carregando outra ação: link do destino desabilitado', () => {
+    renderPage({ isLoading: true, loadingAction: 'preview', destinationFolderPath: 'C:\\d' });
     expect(screen.getByRole('button', { name: pt.destinationChange })).toBeDisabled();
   });
 
@@ -82,15 +82,19 @@ describe('OrganizePage', () => {
     expect(onStartOver).toHaveBeenCalled();
   });
 
-  it('organizando: o card mostra só o progresso e o Cancelar', () => {
+  it.each([
+    ['organize', pt.organizing],
+    ['restore', pt.restoring]
+  ])('%s: o card mostra só o progresso ("%s") e o Cancelar', (loadingAction, title) => {
     const onCancel = vi.fn();
     renderPage({
       isLoading: true,
-      loadingAction: 'organize',
+      loadingAction,
       sourceFolderPath: 'C:\\origem',
       progress: { done: 1, total: 4, file: 'a.pdf', folder: 'pdf' },
       onCancel
     });
+    expect(screen.getByText(title)).toBeInTheDocument();
     expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '1');
     expect(screen.queryByText(pt.dropTitle)).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: pt.cancel }));

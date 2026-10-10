@@ -67,6 +67,16 @@ const feedbackCopy = {
             text: 'Você pode desfazer o que já foi movido.'
           }
         : { title: 'Organização cancelada', text: 'Nada foi alterado na pasta de origem.' },
+    undoCanceled: (r) =>
+      r.restoredFiles > 0
+        ? {
+            title: `Desfazer interrompido: ${plural(r.restoredFiles, 'arquivo voltou', 'arquivos voltaram')}`,
+            text: 'Desfaça de novo para devolver o resto.'
+          }
+        : {
+            title: 'Desfazer cancelado',
+            text: 'Nada voltou para a origem; você ainda pode desfazer.'
+          },
     undoDone: (r) => ({
       title:
         r.failedFiles > 0
@@ -151,6 +161,13 @@ const feedbackCopy = {
             text: 'You can undo what was already moved.'
           }
         : { title: 'Organizing cancelled', text: 'Nothing changed in the source folder.' },
+    undoCanceled: (r) =>
+      r.restoredFiles > 0
+        ? {
+            title: `Undo stopped: ${plural(r.restoredFiles, 'file is', 'files are')} back`,
+            text: 'Undo again to return the rest.'
+          }
+        : { title: 'Undo cancelled', text: 'Nothing went back to the source; you can still undo.' },
     undoDone: (r) => ({
       title: r.failedFiles > 0 ? `Organizing undone, ${r.failedFiles} failed` : 'Organizing undone',
       text: sentences(

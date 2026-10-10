@@ -23,12 +23,13 @@ function OrganizePage({
   onOpenDestination,
   onStartOver
 }) {
-  // Enquanto organiza, o card mostra só o progresso, como no protótipo (#78).
-  if (loadingAction === 'organize') {
+  // Enquanto organiza ou desfaz, o card mostra só o progresso, como no protótipo (#78, #96).
+  if (loadingAction === 'organize' || loadingAction === 'restore') {
     return (
       <section className="st-card">
         <OrganizingPanel
           labels={labels}
+          mode={loadingAction}
           progress={progress}
           sourceFolderPath={sourceFolderPath}
           destinationFolderPath={destinationFolderPath}
@@ -48,7 +49,6 @@ function OrganizePage({
           result={lastResult}
           hasUndo={hasUndo}
           isLoading={isLoading}
-          loadingAction={loadingAction}
           onOpenDestination={onOpenDestination}
           onUndo={onUndoLastOrganization}
           onStartOver={onStartOver}
@@ -86,7 +86,6 @@ function OrganizePage({
       <OrganizerActions
         labels={labels}
         isLoading={isLoading}
-        loadingAction={loadingAction}
         hasUndo={hasUndo}
         hasSource={Boolean(sourceFolderPath)}
         onOrganizeFiles={onOrganizeFiles}

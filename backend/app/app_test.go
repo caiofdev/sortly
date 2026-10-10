@@ -74,9 +74,15 @@ func (f *fakeOrganizer) OrganizeReporting(ctx context.Context, req organizer.Req
 type fakeUndoer struct {
 	result undo.Result
 	err    error
+	run    func(ctx context.Context, report organizer.Reporter)
 }
 
-func (f fakeUndoer) Undo(context.Context) (undo.Result, error) { return f.result, f.err }
+func (f fakeUndoer) UndoReporting(ctx context.Context, report organizer.Reporter) (undo.Result, error) {
+	if f.run != nil {
+		f.run(ctx, report)
+	}
+	return f.result, f.err
+}
 
 type fakeRecords struct {
 	op  *store.Operation
@@ -708,6 +714,64 @@ func TestUndo(t *testing.T) {
 	empty, _ := newTestApp(Deps{Undoer: fakeUndoer{err: undo.ErrNothingToUndo}})
 	if got := last(empty.Undo()); got.Code != "NOTHING_TO_UNDO" || got.Action != ActionUndo {
 		t.Fatalf("aviso = %+v", got)
+	}
+}
+
+func TestUndoCancel(t *testing.T) {
+	tests := []struct {
+		name     string
+		result   undo.Result
+		wantUndo bool
+	}{
+		{"parte voltou: o resto fica para desfazer de novo", undo.Result{RestoredFiles: 3, CanUndo: true, Canceled: true}, true},
+		{"cancelado no fim, já sem nada pendente", undo.Result{RestoredFiles: 5, Canceled: true}, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var a *App
+			hist := &fakeHistory{}
+			und := fakeUndoer{result: tt.result, err: context.Canceled, run: func(ctx context.Context, _ organizer.Reporter) {
+				a.Cancel()
+				if ctx.Err() == nil {
+					t.Error("Cancel deveria cancelar o contexto do desfazer")
+				}
+			}}
+			a, _ = newTestApp(Deps{Undoer: und, History: hist})
+			a.state.HasUndo = true
+
+			got := a.Undo()
+
+			n := last(got)
+			if n.Code != CodeUndoCanceled || n.Kind != KindInfo || n.Undo.RestoredFiles != tt.result.RestoredFiles || got.HasUndo != tt.wantUndo {
+				t.Fatalf("estado = %+v, aviso = %+v", got, n)
+			}
+			if hist.undone != 0 || a.cancelWork != nil || got.Busy != "" {
+				t.Fatalf("histórico marcado %d vez(es); cancelWork = %v; busy = %q", hist.undone, a.cancelWork != nil, got.Busy)
+			}
+		})
+	}
+}
+
+func TestUndoReportsProgress(t *testing.T) {
+	var progress []organizer.Progress
+	und := fakeUndoer{result: undo.Result{RestoredFiles: 2}, run: func(_ context.Context, report organizer.Reporter) {
+		report(organizer.Progress{Done: 0, Total: 2, File: "a.pdf"})
+		report(organizer.Progress{Done: 2, Total: 2})
+	}}
+	a, _ := newTestApp(Deps{Undoer: und, Emit: func(_ context.Context, s ViewState) {
+		if s.Busy == BusyRestore && s.Progress.Total > 0 {
+			progress = append(progress, s.Progress)
+		}
+	}})
+	a.startup(context.Background())
+
+	got := a.Undo()
+
+	if len(progress) != 2 || progress[0].File != "a.pdf" || progress[1].Done != 2 {
+		t.Fatalf("progresso emitido durante o desfazer = %+v", progress)
+	}
+	if got.Progress != (organizer.Progress{}) {
+		t.Fatalf("depois de desfazer, o progresso zera: %+v", got.Progress)
 	}
 }
 

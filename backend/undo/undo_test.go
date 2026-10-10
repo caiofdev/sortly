@@ -253,10 +253,19 @@ func TestUndoIgnoresItemsOutsideRecordedFolders(t *testing.T) {
 func TestStrictlyInside(t *testing.T) {
 	root := filepath.Join(t.TempDir(), "dados")
 	cases := map[string]bool{
-		filepath.Join(root, "a.txt"): true,
-		root:                         false,
-		root + "2":                   false,
-		filepath.Dir(root):           false,
+		filepath.Join(root, "a.txt"):        true,
+		root:                                false,
+		root + string(filepath.Separator):   false,
+		filepath.Join(root, "sub", ".."):    false,
+		root + "2":                          false,
+		filepath.Dir(root):                  false,
+		filepath.Join(root, "sub", "b.txt"): true,
+	}
+	// Sem ler o disco, a raiz com outra caixa continua sendo a raiz onde o sistema
+	// não diferencia maiúsculas (#58, #96).
+	if runtime.GOOS == "windows" || runtime.GOOS == "darwin" {
+		cases[strings.ToUpper(root)] = false
+		cases[strings.ToUpper(filepath.Join(root, "a.txt"))] = true
 	}
 	for path, want := range cases {
 		if got := strictlyInside(path, root); got != want {
@@ -401,7 +410,7 @@ func TestUndoCanceled(t *testing.T) {
 
 	got, err := svc.Undo(context.Background())
 
-	if !errors.Is(err, context.Canceled) || got.RestoredFiles != 1 || !got.CanUndo {
+	if !errors.Is(err, context.Canceled) || got.RestoredFiles != 1 || !got.CanUndo || !got.Canceled {
 		t.Fatalf("Undo = (%+v, %v)", got, err)
 	}
 	op, _ := st.Load()
@@ -487,7 +496,7 @@ type fakeMover struct {
 	cancelAfter int
 }
 
-func (f *fakeMover) Apply(_ context.Context, plan organizer.Plan) (organizer.Outcome, error) {
+func (f *fakeMover) ApplyReporting(_ context.Context, plan organizer.Plan, _ organizer.Reporter) (organizer.Outcome, error) {
 	f.plan = plan
 	var out organizer.Outcome
 	for i, m := range plan.Moves {

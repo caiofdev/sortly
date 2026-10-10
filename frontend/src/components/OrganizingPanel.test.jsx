@@ -68,6 +68,21 @@ describe('OrganizingPanel', () => {
     expect(screen.getByRole('button', { name: pt.cancel })).toHaveFocus();
   });
 
+  it('desfazendo: mesma tela no sentido inverso, do destino para a origem', () => {
+    const { container } = renderPanel(
+      { done: 1, total: 3, file: 'a.pdf', folder: '' },
+      { mode: 'restore', destinationFolderPath: 'D:\\Organizados' }
+    );
+    expect(screen.getByText(pt.restoring)).toBeInTheDocument();
+    expect(screen.getByRole('progressbar', { name: pt.restoreProgressLabel })).toBeInTheDocument();
+    expect(container.querySelector('.st-flow__labels')).toHaveTextContent(
+      'Organizados · 2Downloads · 1'
+    );
+    expect(container.querySelector('.st-running__now')).toHaveTextContent(
+      `${pt.restoreMoving} a.pdf → ${pt.previewRoot}`
+    );
+  });
+
   it('Cancelar pede o cancelamento', () => {
     const { container, onCancel } = renderPanel(
       { done: 1, total: 2 },

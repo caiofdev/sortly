@@ -347,6 +347,7 @@ export namespace undo {
 	    failedFiles: number;
 	    canUndo: boolean;
 	    restoredReplaced: number;
+	    canceled: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new Result(source);
@@ -360,6 +361,7 @@ export namespace undo {
 	        this.failedFiles = source["failedFiles"];
 	        this.canUndo = source["canUndo"];
 	        this.restoredReplaced = source["restoredReplaced"];
+	        this.canceled = source["canceled"];
 	    }
 	}
 
