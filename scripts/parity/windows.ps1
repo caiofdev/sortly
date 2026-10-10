@@ -272,6 +272,20 @@ try {
   $back = Wait-Until { @(Get-ChildItem $big -File).Count -eq 4000 }
   Check 'WIN_CANCEL' ($moving -and $notice -match '^Interrompido: \d+ arquivos movidos$' -and $left -gt 0 -and $left -lt 4000 -and $back) "$notice; movendo: $moving; ficaram $left na origem; desfeito: $back"
 
+  # --- 6b2) Desfazer com progresso e Cancelar: o que não voltou continua desfazível (#96) ---
+  Click 'Organizar' -Last
+  $organized = Wait-Until { @(Get-ChildItem $big -File).Count -eq 0 } 60
+  Click 'Desfazer'
+  $returning = Wait-Until { @(Get-ChildItem $big -File).Count -gt 0 } 30
+  $screen = Find-Text '^Desfazendo…$'
+  Click 'Cancelar'
+  Start-Sleep -Seconds 2
+  $returned = @(Get-ChildItem $big -File).Count
+  $notice = Last-Notice
+  Click 'Desfazer' -Last
+  $back = Wait-Until { @(Get-ChildItem $big -File).Count -eq 4000 }
+  Check 'WIN_UNDO_CANCEL' ($organized -and $returning -and $screen -ne '' -and $notice -match '^Desfazer interrompido: \d+ arquivos voltaram$' -and $returned -gt 0 -and $returned -lt 4000 -and $back) "$notice; tela de progresso: '$screen'; voltaram $returned; desfeito depois: $back"
+
   # --- 6c) Critério Tipo: categorias no 1º nível e o sem extensão em other (#81) ---
   Stop-App
   $typ = "$work\tipo"; New-Dataset $typ
