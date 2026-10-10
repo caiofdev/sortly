@@ -80,7 +80,7 @@ describe('App', () => {
     expect(document.documentElement.lang).toBe('en');
   });
 
-  it('mostra caminhos, carregamento e notificações traduzidas do estado', async () => {
+  it('mostra o desfazer em andamento e as notificações traduzidas do estado', async () => {
     const recovered = {
       id: 1,
       kind: 'info',
@@ -103,8 +103,9 @@ describe('App', () => {
       );
     const { container } = render(<App />);
 
-    expect(await screen.findByText('C:\\origem')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Desfazendo…' })).toBeDisabled();
+    // Desfazer troca o card pela tela de progresso, como organizar (#96).
+    expect(await screen.findByText('Desfazendo…')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Cancelar' })).toBeInTheDocument();
     expect(container.querySelector('.st-toast')).toHaveTextContent(
       'Última organização recuperadaVocê pode desfazer essa alteração.'
     );

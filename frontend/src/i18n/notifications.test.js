@@ -47,6 +47,20 @@ describe('notificationText', () => {
   });
 
   it.each([
+    [pt, 0, 'Desfazer cancelado', 'Nada voltou para a origem; você ainda pode desfazer.'],
+    [pt, 1, 'Desfazer interrompido: 1 arquivo voltou', 'Desfaça de novo para devolver o resto.'],
+    [pt, 2, 'Desfazer interrompido: 2 arquivos voltaram', 'Desfaça de novo para devolver o resto.'],
+    [en, 0, 'Undo cancelled', 'Nothing went back to the source; you can still undo.'],
+    [en, 1, 'Undo stopped: 1 file is back', 'Undo again to return the rest.'],
+    [en, 2, 'Undo stopped: 2 files are back', 'Undo again to return the rest.']
+  ])('desfazer cancelado com %#: %s voltaram → "%s"', (copy, restoredFiles, title, text) => {
+    expect(notificationText({ code: 'UNDO_CANCELED', undo: { restoredFiles } }, copy)).toEqual({
+      title,
+      text
+    });
+  });
+
+  it.each([
     ['selectSource', pt.sourceSelectError],
     ['selectDestination', pt.destinationSelectError],
     ['drop', pt.droppedPathUnexpectedError],
