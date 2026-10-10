@@ -20,18 +20,8 @@ function FolderBar({ name, folder, count, max }) {
   );
 }
 
-function DonePanel({
-  labels,
-  result,
-  hasUndo,
-  isLoading,
-  loadingAction,
-  onOpenDestination,
-  onUndo,
-  onStartOver
-}) {
+function DonePanel({ labels, result, hasUndo, isLoading, onOpenDestination, onUndo, onStartOver }) {
   const max = Math.max(result.otherFiles, ...result.folders.map((f) => f.count));
-  const restoring = loadingAction === 'restore';
   const head = useRef(null);
 
   // O Cancelar, que tinha o foco, some quando a organização acaba; o foco vai
@@ -90,10 +80,9 @@ function DonePanel({
           className="st-btn st-btn--danger st-btn--lg"
           onClick={onUndo}
           disabled={!hasUndo || isLoading}
-          aria-busy={restoring}
         >
           <UndoIcon />
-          {restoring ? labels.restoring : labels.undo}
+          {labels.undo}
         </button>
         <button
           type="button"

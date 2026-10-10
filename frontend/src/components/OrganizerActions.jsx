@@ -1,38 +1,33 @@
-import { LoaderIcon, PlayIcon, UndoIcon } from './icons';
+import { PlayIcon, UndoIcon } from './icons';
 
+// Organizar e desfazer trocam o card pela tela de progresso; aqui só a trava (#78, #96).
 function OrganizerActions({
   labels,
   isLoading,
-  loadingAction,
   hasUndo,
   hasSource,
   onOrganizeFiles,
   onUndoLastOrganization
 }) {
-  const isOrganizing = loadingAction === 'organize';
-  const isRestoring = loadingAction === 'restore';
-
   return (
     <div className="st-actions">
       <button
         type="button"
-        className={`st-btn st-btn--primary st-btn--lg${isOrganizing ? ' st-btn--busy' : ''}`}
+        className="st-btn st-btn--primary st-btn--lg"
         onClick={onOrganizeFiles}
         disabled={isLoading || !hasSource}
-        aria-busy={isOrganizing}
       >
-        {isOrganizing ? <LoaderIcon /> : <PlayIcon />}
-        {isOrganizing ? labels.organizing : labels.organize}
+        <PlayIcon />
+        {labels.organize}
       </button>
       <button
         type="button"
-        className={`st-btn st-btn--danger st-btn--lg${isRestoring ? ' st-btn--busy' : ''}`}
+        className="st-btn st-btn--danger st-btn--lg"
         onClick={onUndoLastOrganization}
         disabled={isLoading || !hasUndo}
-        aria-busy={isRestoring}
       >
-        {isRestoring ? <LoaderIcon /> : <UndoIcon />}
-        {isRestoring ? labels.restoring : labels.undo}
+        <UndoIcon />
+        {labels.undo}
       </button>
     </div>
   );

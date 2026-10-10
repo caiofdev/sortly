@@ -20,15 +20,7 @@ const result = (overrides = {}) => ({
 function renderDone(props = {}) {
   const handlers = { onOpenDestination: vi.fn(), onUndo: vi.fn(), onStartOver: vi.fn() };
   const view = render(
-    <DonePanel
-      labels={pt}
-      result={result()}
-      hasUndo
-      isLoading={false}
-      loadingAction=""
-      {...handlers}
-      {...props}
-    />
+    <DonePanel labels={pt} result={result()} hasUndo isLoading={false} {...handlers} {...props} />
   );
   return { ...view, ...handlers };
 }
@@ -117,14 +109,14 @@ describe('DonePanel', () => {
   });
 
   it.each([
-    [true, false, '', pt.undo, false],
-    [false, false, '', pt.undo, true],
-    [true, true, 'restore', pt.restoring, true]
+    [true, false, false],
+    [false, false, true],
+    [true, true, true]
   ])(
-    'desfazer disponível = %s, ocupado = %s: botão "%s" desabilitado = %s',
-    (hasUndo, isLoading, loadingAction, label, disabled) => {
-      renderDone({ hasUndo, isLoading, loadingAction });
-      expect(screen.getByRole('button', { name: label }).disabled).toBe(disabled);
+    'desfazer disponível = %s, ocupado = %s: Desfazer desabilitado = %s',
+    (hasUndo, isLoading, disabled) => {
+      renderDone({ hasUndo, isLoading });
+      expect(screen.getByRole('button', { name: pt.undo }).disabled).toBe(disabled);
     }
   );
 });
