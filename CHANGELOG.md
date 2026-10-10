@@ -25,6 +25,7 @@ Mantido por Caio Reis & Claude.
 - Critério novo "Tipo", desligado por padrão: separa os arquivos em pastas por categoria (`images`, `documents`, `archives`, `installers`, `videos`, `audio` e `other`), antes dos outros critérios. A prévia, a tela de progresso e o resumo mostram os nomes traduzidos.
 
 ### Corrigido
+- Desfazer uma organização grande mostrava só "Desfazendo…" até o fim. Agora mostra a mesma tela de progresso de organizar, no sentido contrário, e dá para cancelar: o que não voltou continua podendo ser desfeito. Desfazer também ficou mais rápido, no mesmo tempo de organizar.
 - Ao mover para outro disco ou pendrive, o arquivo original só é apagado depois que a cópia está gravada de fato. Uma queda de energia ou um pendrive removido logo depois não perde mais o arquivo.
 - Quando o registro para desfazer não pode ser salvo (disco cheio, sem permissão), o botão "Desfazer" fica desabilitado, em vez de desfazer a organização anterior por engano. Isso vale também depois de reabrir o app.
 - O desfazer só devolve arquivos para dentro das pastas da última organização. Um registro danificado ou editado à mão não move mais arquivos para outros lugares.
