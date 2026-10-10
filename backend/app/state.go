@@ -30,6 +30,7 @@ const (
 	CodeOrganizeDone     = "ORGANIZE_DONE"
 	CodeOrganizeCanceled = "ORGANIZE_CANCELED"
 	CodeUndoDone         = "UNDO_DONE"
+	CodeUndoCanceled     = "UNDO_CANCELED"
 	CodeSourceRequired   = "SOURCE_REQUIRED"
 )
 

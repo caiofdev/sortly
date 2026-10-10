@@ -2,8 +2,10 @@ package undo
 
 import (
 	"context"
+	"errors"
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 
 	"github.com/caiofdev/sortly/backend/backup"
@@ -125,6 +127,73 @@ func TestUndoReplacedFailureKeepsRecord(t *testing.T) {
 	}
 }
 
+// Os movidos e os substituídos saem numa barra só: o total soma os dois planos, e a
+// pasta é relativa a quem recebe o arquivo (a origem, depois o destino) (#96).
+func TestUndoReportingProgress(t *testing.T) {
+	st, backups, _, _, _ := replacedSetup(t)
+	var got []organizer.Progress
+
+	res, err := NewService(st, nil).WithBackups(backups).UndoReporting(context.Background(), func(p organizer.Progress) {
+		got = append(got, p)
+	})
+
+	if err != nil || res.RestoredFiles != 1 || res.RestoredReplaced != 1 {
+		t.Fatalf("UndoReporting = (%+v, %v)", res, err)
+	}
+	want := []organizer.Progress{
+		{Done: 0, Total: 2, File: "nota.txt", Folder: ""},
+		{Done: 1, Total: 2},
+		{Done: 1, Total: 2, File: "nota.txt", Folder: "txt"},
+		{Done: 2, Total: 2},
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("progresso =\n%+v\nwant\n%+v", got, want)
+	}
+}
+
+func TestUndoReportingCases(t *testing.T) {
+	canceled, cancel := context.WithCancel(context.Background())
+	cancel()
+	tests := []struct {
+		name         string
+		ctx          context.Context
+		record       bool
+		missing      bool
+		wantErr      error
+		wantCanceled bool
+		wantProgress []organizer.Progress
+	}{
+		{"sem registro, nada a reportar", context.Background(), false, false, ErrNothingToUndo, false, nil},
+		{"cancelado antes do 1º arquivo: tudo fica no registro", canceled, true, false, context.Canceled, true, nil},
+		{"arquivo sumiu: só o fim, 0 de 0", context.Background(), true, true, nil, false, []organizer.Progress{{}}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			src, dst := t.TempDir(), t.TempDir()
+			st := newStore(t)
+			if tt.record {
+				item := move(t, src, dst, "a.txt", "txt")
+				if tt.missing {
+					if err := os.Remove(item.To); err != nil {
+						t.Fatal(err)
+					}
+				}
+				saveRecord(t, st, store.Operation{SourceFolderPath: src, DestinationFolderPath: dst, MovedItems: []store.MovedItem{item}})
+			}
+			var got []organizer.Progress
+
+			res, err := NewService(st, nil).UndoReporting(tt.ctx, func(p organizer.Progress) { got = append(got, p) })
+
+			if !errors.Is(err, tt.wantErr) || res.Canceled != tt.wantCanceled || !reflect.DeepEqual(got, tt.wantProgress) {
+				t.Fatalf("UndoReporting = (%+v, %v), progresso %+v", res, err, got)
+			}
+			if tt.wantCanceled && !res.CanUndo {
+				t.Fatal("cancelado, o desfazer continua disponível")
+			}
+		})
+	}
+}
+
 func TestReplacedOnlyRecordCanUndo(t *testing.T) {
 	op := &store.Operation{ReplacedItems: []store.ReplacedItem{{Path: "a", Backup: "b"}}}
 	if !op.CanUndo() {
@@ -137,9 +206,9 @@ type failingReplacedMover struct {
 	backupFolder string
 }
 
-func (f *failingReplacedMover) Apply(ctx context.Context, plan organizer.Plan) (organizer.Outcome, error) {
+func (f *failingReplacedMover) ApplyReporting(ctx context.Context, plan organizer.Plan, report organizer.Reporter) (organizer.Outcome, error) {
 	if len(plan.Moves) > 0 && filepath.Dir(filepath.Dir(plan.Moves[0].From)) == f.backupFolder {
 		return organizer.Outcome{FailedFiles: len(plan.Moves)}, nil
 	}
-	return f.real.Apply(ctx, plan)
+	return f.real.ApplyReporting(ctx, plan, report)
 }

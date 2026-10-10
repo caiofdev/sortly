@@ -31,6 +31,8 @@ type Result struct {
 	CanUndo          bool `json:"canUndo"`
 	// Arquivos que "Substituir" tinha guardado no backup e voltaram (#82).
 	RestoredReplaced int `json:"restoredReplaced"`
+	// O que não voltou fica no registro, e um novo desfazer continua (#96).
+	Canceled bool `json:"canceled"`
 }
 
 // A pasta dos substituídos; Contains impede que um registro editado leia ou
@@ -53,7 +55,7 @@ type RecordStore interface {
 
 // Precisa mover sem sobrescrever, como o *organizer.Executor (#9).
 type Mover interface {
-	Apply(ctx context.Context, plan organizer.Plan) (organizer.Outcome, error)
+	ApplyReporting(ctx context.Context, plan organizer.Plan, report organizer.Reporter) (organizer.Outcome, error)
 }
 
 type Service struct {
@@ -91,14 +93,22 @@ func (s *Service) WithBackups(b Backups) *Service {
 // (RenamedOnRestore). Arquivos que falharem continuam no registro, para que um
 // novo desfazer tente de novo (CanUndo fica verdadeiro) (#9).
 func (s *Service) Undo(ctx context.Context) (Result, error) {
+	return s.UndoReporting(ctx, func(organizer.Progress) {})
+}
+
+// O progresso é o do Executor, com a pasta relativa à origem (para onde os arquivos
+// voltam). Cancelado, o que não voltou fica no registro (#96).
+func (s *Service) UndoReporting(ctx context.Context, report organizer.Reporter) (Result, error) {
 	op, err := s.load()
 	if err != nil {
 		return Result{}, err
 	}
 
 	plan, skipped := s.inversePlan(op)
-	out, applyErr := s.mover.Apply(ctx, plan)
-	replacedPlan, replacedOut, replacedErr := s.restoreReplaced(ctx, op)
+	replacedPlan := s.replacedPlan(op)
+	total := len(plan.Moves) + len(replacedPlan.Moves)
+	out, applyErr := s.mover.ApplyReporting(ctx, plan, offset(report, 0, total))
+	replacedOut, replacedErr := s.restoreReplaced(ctx, replacedPlan, offset(report, len(plan.Moves), total))
 
 	result := Result{
 		RestoredFiles:    len(out.MovedItems),
@@ -106,28 +116,36 @@ func (s *Service) Undo(ctx context.Context) (Result, error) {
 		SkippedMissing:   skipped,
 		FailedFiles:      out.FailedFiles + replacedOut.FailedFiles,
 		RestoredReplaced: len(replacedOut.MovedItems),
+		Canceled:         errors.Is(applyErr, context.Canceled) || errors.Is(replacedErr, context.Canceled),
 	}
 	s.cleanup(op)
 	result.CanUndo = s.updateRecord(op, remaining(op, plan, out), remainingReplaced(op, replacedPlan, replacedOut))
 	return result, errors.Join(applyErr, replacedErr)
 }
 
+// Os movidos e os substituídos são dois planos, mas a tela mostra uma barra só (#96).
+func offset(report organizer.Reporter, done, total int) organizer.Reporter {
+	return func(p organizer.Progress) {
+		p.Done += done
+		p.Total = total
+		report(p)
+	}
+}
+
 // Registros sem substituídos (os da 1.0 e os de Renomear ou Ignorar) não chamam o
 // mover de novo (#82).
-func (s *Service) restoreReplaced(ctx context.Context, op *store.Operation) (organizer.Plan, organizer.Outcome, error) {
-	plan := s.replacedPlan(op)
+func (s *Service) restoreReplaced(ctx context.Context, plan organizer.Plan, report organizer.Reporter) (organizer.Outcome, error) {
 	if len(plan.Moves) == 0 {
-		return plan, organizer.Outcome{}, nil
+		return organizer.Outcome{}, nil
 	}
-	out, err := s.mover.Apply(ctx, plan)
-	return plan, out, err
+	return s.mover.ApplyReporting(ctx, plan, report)
 }
 
 // Depois dos movidos, para o lugar estar livre: o arquivo novo saiu dali e o
 // antigo volta. Da última substituição para a primeira; o que não está mais no
 // backup ou está fora das pastas registradas é pulado e vai para o log (#54, #82).
 func (s *Service) replacedPlan(op *store.Operation) organizer.Plan {
-	var plan organizer.Plan
+	plan := organizer.Plan{Destination: rootOf(op)}
 	for i := len(op.ReplacedItems) - 1; i >= 0; i-- {
 		item := op.ReplacedItems[i]
 		if !strictlyInside(item.Path, rootOf(op)) || !s.backups.Contains(item.Backup) || !s.exists(item.Backup) {
@@ -173,7 +191,8 @@ func (s *Service) load() (*store.Operation, error) {
 // estão mais onde a organização os deixou e os que estão fora das pastas do
 // registro (#9, #54).
 func (s *Service) inversePlan(op *store.Operation) (organizer.Plan, int) {
-	var plan organizer.Plan
+	// Os arquivos voltam para a origem: é dela que o progresso mostra a pasta (#96).
+	plan := organizer.Plan{Destination: op.SourceFolderPath}
 	skipped := 0
 	for i := len(op.MovedItems) - 1; i >= 0; i-- {
 		item := op.MovedItems[i]
@@ -206,8 +225,10 @@ func withinRecordedFolders(op *store.Operation, item store.MovedItem) bool {
 		strictlyInside(item.To, rootOf(op))
 }
 
+// Comparação só de texto, como IsInside: paths.Equal leria o disco duas vezes por
+// caminho, e o desfazer confere dois caminhos por arquivo (#96).
 func strictlyInside(path, root string) bool {
-	return paths.IsInside(path, root) && !paths.Equal(path, root)
+	return paths.IsInside(path, root) && paths.Key(path) != paths.Key(root)
 }
 
 // Destino vazio no registro é a própria origem (#54).

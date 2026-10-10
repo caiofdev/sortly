@@ -33,7 +33,7 @@ type Organizer interface {
 }
 
 type Undoer interface {
-	Undo(ctx context.Context) (undo.Result, error)
+	UndoReporting(ctx context.Context, report organizer.Reporter) (undo.Result, error)
 }
 
 type RecordReader interface {
@@ -365,26 +365,45 @@ func (a *App) Undo() ViewState {
 	}
 	defer a.work.Unlock()
 
+	ctx, cancel := context.WithCancel(a.runtimeContext())
+	defer cancel()
 	a.update(func(s *ViewState) {
 		s.Busy = BusyRestore
+		s.Progress = organizer.Progress{}
+		a.cancelWork = cancel
 		a.stopPreview(s)
 	})
-	result, err := a.deps.Undoer.Undo(a.runtimeContext())
+	result, err := a.deps.Undoer.UndoReporting(ctx, a.reportProgress)
 	return a.update(func(s *ViewState) {
 		s.Busy = ""
+		s.Progress = organizer.Progress{}
+		a.cancelWork = nil
 		a.startPreview(s)
-		if err != nil {
-			a.fail(s, ActionUndo, err)
-			return
-		}
-		a.log.Info("desfazer concluído", "restaurados", result.RestoredFiles, "falhas", result.FailedFiles)
+		a.applyUndo(s, result, err)
+	})
+}
+
+// Cancelado, o registro guarda o que não voltou: o desfazer continua disponível e o
+// histórico não marca a organização como desfeita (#96).
+func (a *App) applyUndo(s *ViewState, result undo.Result, err error) {
+	if result.Canceled {
+		a.log.Info("desfazer cancelado", "restaurados", result.RestoredFiles)
 		s.HasUndo = result.CanUndo
 		s.LastResult = nil
-		if err := a.deps.History.MarkLastUndone(); err != nil {
-			a.log.Warn("histórico não atualizado após desfazer", "err", err)
-		}
-		a.notify(s, Notification{Kind: undoKind(result), Code: CodeUndoDone, Action: ActionUndo, Undo: &result})
-	})
+		a.notify(s, Notification{Kind: KindInfo, Code: CodeUndoCanceled, Action: ActionUndo, Undo: &result})
+		return
+	}
+	if err != nil {
+		a.fail(s, ActionUndo, err)
+		return
+	}
+	a.log.Info("desfazer concluído", "restaurados", result.RestoredFiles, "falhas", result.FailedFiles)
+	s.HasUndo = result.CanUndo
+	s.LastResult = nil
+	if err := a.deps.History.MarkLastUndone(); err != nil {
+		a.log.Warn("histórico não atualizado após desfazer", "err", err)
+	}
+	a.notify(s, Notification{Kind: undoKind(result), Code: CodeUndoDone, Action: ActionUndo, Undo: &result})
 }
 
 func (a *App) ClearNotifications() ViewState {
