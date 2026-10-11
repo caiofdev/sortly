@@ -8,11 +8,21 @@ Mantido por Caio Reis & Claude.
 
 ## [Não lançado]
 
+## [2.1.0] - 2026-10-11
+
+Visual novo, a partir da logo nova, e um Sortly que mostra o que vai fazer antes de fazer. Por Caio Reis & Claude.
+
+### Destaques
+- **Cara nova:** barra lateral, fonte pixel, amarelo do Sortly, tema claro e escuro, ícone e instalador novos.
+- **Antes de organizar:** prévia de quantos arquivos foram encontrados e para quais pastas vão.
+- **Enquanto organiza e desfaz:** progresso arquivo a arquivo, com Cancelar.
+- **Depois:** resumo por pasta e uma página de Histórico com as últimas 50 organizações.
+- **Mais controle:** critério Tipo (imagens, documentos, vídeos…), o que fazer com duplicados e a opção de incluir subpastas.
+
 ### Adicionado
 - Ícone novo do app, a partir da logo, no executável, no instalador e na barra de tarefas.
 - Instalador do Windows no visual do Sortly: telas pretas com a logo e textos próprios em português e inglês. No macOS, a janela do `.dmg` mostra a seta para arrastar o Sortly para Aplicativos.
-- No instalador do Windows, os acentos aparecem certos ("Removendo a versão anterior").
-- Visual novo, a partir da logo nova: barra lateral preta com as páginas Organizar e Configurações, amarelo do Sortly para a ação principal e fonte pixel no app todo.
+- Visual novo, a partir da logo nova: barra lateral com as páginas Organizar, Histórico e Configurações, amarelo do Sortly para a ação principal e fonte pixel no app todo.
 - Os critérios de organização ficam na página Configurações, como interruptores, cada um com um exemplo da pasta que cria.
 - Botões "Organizar" e "Desfazer" com texto; caminhos longos de pasta aparecem inteiros, quebrando a linha.
 - Avisos no canto da tela ao organizar, ao desfazer e quando algo dá errado. Os de sucesso somem sozinhos em 4 segundos; os de erro ficam até você fechar.
@@ -35,8 +45,9 @@ Mantido por Caio Reis & Claude.
 - No macOS, uma pasta digitada com maiúsculas diferentes (`~/downloads` em vez de `~/Downloads`) é reconhecida como a mesma: arquivos que já estão no lugar não são mais renomeados para `nome (1)`.
 - Desfazer não remove mais pastas que já existiam no destino antes da organização (por exemplo, uma pasta `pdf` vazia criada por você). Só as pastas criadas pelo Sortly são apagadas.
 - A tela não fica mais presa em "Organizando…" quando outra ação (como trocar o idioma) termina quase junto com a organização.
-- Leitores de tela: os botões de idioma dizem qual está ativo e não repetem mais o nome ("PT-BR PT-BR"), e os botões de organizar e desfazer avisam quando a ação está em andamento.
+- Leitores de tela: os botões de idioma dizem qual está ativo e não repetem mais o nome ("PT-BR PT-BR").
 - O destaque da área de arrastar e soltar não pisca mais ao passar o arquivo sobre o texto e o link dentro dela.
+- No instalador do Windows, os acentos aparecem certos ("Removendo a versão anterior").
 
 ### Alterado
 - Mensagens de organizar e desfazer mais curtas, como "Pronto! 12 arquivos organizados", com os detalhes (arquivos já no lugar, sem extensão ou que falharam) logo abaixo. Uma organização em que algum arquivo falhou aparece como erro.
@@ -86,6 +97,7 @@ Primeira versão pública do Sortly. Por Caio Reis.
 - Interface em português e inglês.
 - Instalador para Windows.
 
-[Não lançado]: https://github.com/caiofdev/sortly/compare/v2.0.0...HEAD
+[Não lançado]: https://github.com/caiofdev/sortly/compare/v2.1.0...HEAD
+[2.1.0]: https://github.com/caiofdev/sortly/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/caiofdev/sortly/releases/tag/v2.0.0
 [1.0.0]: https://github.com/caiofdev/sortly/releases
