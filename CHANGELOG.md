@@ -10,6 +10,8 @@ Mantido por Caio Reis & Claude.
 
 ### Adicionado
 - Ícone novo do app, a partir da logo, no executável, no instalador e na barra de tarefas.
+- Instalador do Windows no visual do Sortly: telas pretas com a logo e textos próprios em português e inglês. No macOS, a janela do `.dmg` mostra a seta para arrastar o Sortly para Aplicativos.
+- No instalador do Windows, os acentos aparecem certos ("Removendo a versão anterior").
 - Visual novo, a partir da logo nova: barra lateral preta com as páginas Organizar e Configurações, amarelo do Sortly para a ação principal e fonte pixel no app todo.
 - Os critérios de organização ficam na página Configurações, como interruptores, cada um com um exemplo da pasta que cria.
 - Botões "Organizar" e "Desfazer" com texto; caminhos longos de pasta aparecem inteiros, quebrando a linha.

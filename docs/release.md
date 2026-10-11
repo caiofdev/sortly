@@ -49,6 +49,18 @@ Configuração em [`build/windows/installer/project.nsi`](../build/windows/insta
 - Telas em português ou inglês, conforme o idioma do sistema.
 - Instala o WebView2 Runtime se ele não existir (bootstrapper da Microsoft).
 - Ícones do instalador e do desinstalador: `build/windows/icon.ico`.
+- **Visual do design system** (MUI2):
+  - telas de boas-vindas e conclusão pretas, com a imagem lateral `resources/welcome.bmp` (164×314: a logo e os blocos da barra de progresso);
+  - cabeçalho preto com a logo nas telas internas (`resources/header.bmp`, 150×57, à direita);
+  - textos próprios em PT e EN (`LangString` no fim da lista de idiomas);
+  - "Sortly <versão>" no rodapé, no lugar de "Nullsoft Install System".
+- **Imagens:** são de 96 dpi; em telas com mais escala, o NSIS as estica. Se a logo mudar, as duas são refeitas a partir dela (preto `#000000`, amarelo `#F5E600`).
+- **Caixa "Abrir o Sortly":** fica sem o tema visual do Windows, que ignoraria a cor do texto e o desenharia preto sobre o fundo preto.
+- **Codificação:** o `project.nsi` é UTF-8 **com BOM**. Sem ele, o `makensis` lê o arquivo como ANSI, e os acentos saem quebrados.
+
+| Boas-vindas | Pasta | Conclusão |
+|---|---|---|
+| <img src="images/instalador-boas-vindas.png" alt="Tela de boas-vindas do instalador" width="260" /> | <img src="images/instalador-pasta.png" alt="Escolha da pasta, com o cabeçalho preto e a logo" width="260" /> | <img src="images/instalador-concluido.png" alt="Tela de conclusão com a opção Abrir o Sortly" width="260" /> |
 - **Atualização a partir da versão 1.0 (Electron):** o instalador encontra a instalação anterior pelo registro (`Uninstall Sortly.exe`), executa o desinstalador dela em modo silencioso e só então instala. O registro da última organização (`~/.sortly`) é preservado, então um desfazer pendente continua disponível.
 - **Desinstalação:** remove o app, os atalhos, a entrada em "Aplicativos instalados", os dados do WebView2 e os logs (`%AppData%\Sortly\logs`). Não remove o `~/.sortly`.
 - Instalação silenciosa: `Sortly-<versão>-windows-amd64-setup.exe /S`. Desinstalação silenciosa: `%LOCALAPPDATA%\Programs\Sortly\uninstall.exe /S`.
@@ -56,7 +68,12 @@ Configuração em [`build/windows/installer/project.nsi`](../build/windows/insta
 ### 3.2 macOS
 
 - Identificador do pacote: `com.sortly.app` (`build/darwin/Info.plist`); ícone gerado a partir de `build/appicon.png`.
-- O `.dmg` é criado com `hdiutil` no runner do GitHub.
+- O `.dmg` é criado no runner do GitHub com o [create-dmg](https://github.com/create-dmg/create-dmg), em versão fixa (`CREATE_DMG_VERSION` no workflow).
+- **Janela do `.dmg`:**
+  - 660×400 pontos, com o fundo `build/darwin/dmg/background.png` e o `background@2x.png` (Retina), juntados num TIFF pelo `tiffutil`;
+  - Sortly.app em (165, 200) e o atalho Aplicativos em (495, 200), com ícones de 128 e a seta entre os dois;
+  - volume "Sortly", com o ícone do app.
+- **Fundo claro** (`#f7f7f2`, o do tema claro), com a logo num quadrado preto: o Finder escreve o nome dos ícones em preto e não deixa trocar a cor. Ao mudar o desenho, as posições do workflow precisam acompanhar.
 - **Assinatura e notarização ficam fora do escopo atual.** Sem elas, o macOS avisa na primeira abertura. O usuário precisa clicar com o botão direito no app, escolher **Abrir** e confirmar. Para assinar no futuro: uma conta Apple Developer, `codesign --deep --options runtime` com o certificado "Developer ID Application" e `xcrun notarytool submit … --wait`, seguido de `xcrun stapler staple`.
 
 ### 3.3 Linux
