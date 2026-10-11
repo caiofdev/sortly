@@ -1,4 +1,4 @@
-Unicode true
+﻿Unicode true
 
 ####
 ## Please note: Template replacements don't work in this file. They are provided with default defines like
@@ -55,19 +55,35 @@ VIAddVersionKey "ProductName"     "${INFO_PRODUCTNAME}"
 # Enable HiDPI support. https://nsis.sourceforge.io/Reference/ManifestDPIAware
 ManifestDPIAware true
 
-!include "MUI.nsh"
+!include "MUI2.nsh"
 
 !define MUI_ICON "..\icon.ico"
 !define MUI_UNICON "..\icon.ico"
-# !define MUI_WELCOMEFINISHPAGE_BITMAP "resources\leftimage.bmp" #Include this to add a bitmap on the left side of the Welcome Page. Must be a size of 164x314
+## Sortly: o visual do design system, preto com a logo amarela. As imagens são
+## de 96 dpi (164×314 e 150×57); o NSIS as estica em telas com mais escala (#100).
+!define MUI_BGCOLOR "000000"
+!define MUI_TEXTCOLOR "F5F5F0"
+!define MUI_WELCOMEFINISHPAGE_BITMAP "resources\welcome.bmp"
+!define MUI_UNWELCOMEFINISHPAGE_BITMAP "resources\welcome.bmp"
+!define MUI_HEADERIMAGE
+!define MUI_HEADERIMAGE_RIGHT
+!define MUI_HEADERIMAGE_BITMAP "resources\header.bmp"
+!define MUI_HEADERIMAGE_UNBITMAP "resources\header.bmp"
 !define MUI_FINISHPAGE_NOAUTOCLOSE # Wait on the INSTFILES page so the user can take a look into the details of the installation steps
 !define MUI_ABORTWARNING # This will warn the user if they exit from the installer.
 !define MUI_FINISHPAGE_RUN "$INSTDIR\${PRODUCT_EXECUTABLE}" # Sortly: opção de abrir o app ao concluir, como na 1.0
+!define MUI_FINISHPAGE_RUN_TEXT "$(SortlyRun)"
 
+## Sortly: textos no tom do app; as LangString ficam depois dos idiomas (#100).
+!define MUI_WELCOMEPAGE_TITLE "$(SortlyWelcomeTitle)"
+!define MUI_WELCOMEPAGE_TEXT "$(SortlyWelcomeText)"
 !insertmacro MUI_PAGE_WELCOME # Welcome to the installer page.
 # !insertmacro MUI_PAGE_LICENSE "resources\eula.txt" # Adds a EULA page to the installer
 !insertmacro MUI_PAGE_DIRECTORY # In which folder install page.
 !insertmacro MUI_PAGE_INSTFILES # Installing page.
+!define MUI_FINISHPAGE_TITLE "$(SortlyFinishTitle)"
+!define MUI_FINISHPAGE_TEXT "$(SortlyFinishText)"
+!define MUI_PAGE_CUSTOMFUNCTION_SHOW SortlyFinishShow
 !insertmacro MUI_PAGE_FINISH # Finished installation page.
 
 !insertmacro MUI_UNPAGE_INSTFILES # Uinstalling page
@@ -75,11 +91,23 @@ ManifestDPIAware true
 !insertmacro MUI_LANGUAGE "PortugueseBR" # Sortly: o NSIS usa o idioma do sistema quando disponível
 !insertmacro MUI_LANGUAGE "English"
 
+LangString SortlyWelcomeTitle ${LANG_PORTUGUESEBR} "Instalar o Sortly"
+LangString SortlyWelcomeTitle ${LANG_ENGLISH} "Install Sortly"
+LangString SortlyWelcomeText ${LANG_PORTUGUESEBR} "Organize seus arquivos em segundos — simples, rápido e seguro.$\r$\n$\r$\nO Sortly é instalado só para o seu usuário, sem pedir permissão de administrador. Se uma versão anterior estiver instalada, ela é atualizada, e uma organização que ainda pode ser desfeita continua disponível."
+LangString SortlyWelcomeText ${LANG_ENGLISH} "Organize your files in seconds — simple, fast and safe.$\r$\n$\r$\nSortly is installed just for your user, without asking for administrator permission. If an earlier version is installed, it is upgraded, and an organization that can still be undone stays available."
+LangString SortlyFinishTitle ${LANG_PORTUGUESEBR} "Pronto! O Sortly foi instalado."
+LangString SortlyFinishTitle ${LANG_ENGLISH} "Done! Sortly is installed."
+LangString SortlyFinishText ${LANG_PORTUGUESEBR} "Escolha uma pasta, marque como quer agrupar os arquivos e o Sortly faz o resto. Se não gostar do resultado, é só desfazer."
+LangString SortlyFinishText ${LANG_ENGLISH} "Pick a folder, choose how to group the files and Sortly does the rest. If you don't like the result, just undo it."
+LangString SortlyRun ${LANG_PORTUGUESEBR} "Abrir o Sortly"
+LangString SortlyRun ${LANG_ENGLISH} "Open Sortly"
+
 ## The following two statements can be used to sign the installer and the uninstaller. The path to the binaries are provided in %1
 #!uninstfinalize 'signtool --file "%1"'
 #!finalize 'signtool --file "%1"'
 
 Name "${INFO_PRODUCTNAME}"
+BrandingText "${INFO_PRODUCTNAME} ${INFO_PRODUCTVERSION}" # Sortly: no lugar de "Nullsoft Install System" (#100)
 OutFile "..\..\bin\${INFO_PROJECTNAME}-${ARCH}-installer.exe" # Name of the installer's file.
 !ifdef WAILS_INSTALL_SCOPE
   !if "${WAILS_INSTALL_SCOPE}" == "user"
@@ -94,6 +122,13 @@ ShowInstDetails show # This will always show the installation details.
 
 Function .onInit
    !insertmacro wails.checkArchitecture
+FunctionEnd
+
+## Com o tema visual, o Windows ignora a cor do texto da caixa "Abrir o Sortly" e a
+## desenha preta sobre o fundo preto; sem tema na caixa, SetCtlColors vale (#100).
+Function SortlyFinishShow
+    System::Call 'uxtheme::SetWindowTheme(p $mui.FinishPage.Run, w " ", w " ")'
+    SetCtlColors $mui.FinishPage.Run "F5F5F0" "000000"
 FunctionEnd
 
 ## Sortly: remove a versão 1.0 (Electron), que usa a mesma pasta e o mesmo
