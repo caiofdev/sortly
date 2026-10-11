@@ -19,6 +19,7 @@ permissions:
 env:
   WAILS_VERSION: v2.16.0
   NFPM_VERSION: v2.47.0
+  CREATE_DMG_VERSION: 1.2.3
 
 jobs:
   build:
@@ -87,7 +88,11 @@ jobs:
       - name: Conferir instalador (Windows)
         if: runner.os == 'Windows'
         # O Wails só avisa quando não consegue gerar o instalador; aqui a falha fica explícita.
-        run: test -f build/bin/Sortly-amd64-installer.exe || { echo "::error::Instalador NSIS não foi gerado"; exit 1; }
+        # Regressão (#100): sem o BOM, o makensis lê o project.nsi como ANSI e os acentos
+        # das telas saem quebrados.
+        run: |
+          test -f build/bin/Sortly-amd64-installer.exe || { echo "::error::Instalador NSIS não foi gerado"; exit 1; }
+          test "$(head -c 3 build/windows/installer/project.nsi | od -An -tx1 | tr -d ' ')" = "efbbbf" || { echo "::error::project.nsi precisa ser UTF-8 com BOM"; exit 1; }
 
       - name: Empacotar (Windows)
         if: runner.os == 'Windows'
@@ -98,11 +103,26 @@ jobs:
 
       - name: Empacotar (macOS)
         if: runner.os == 'macOS'
+        # Janela do .dmg no visual do Sortly: fundo com a seta, Sortly.app e o atalho
+        # Aplicativos nas posições do desenho. O TIFF junta 1× e 2× para o Finder
+        # escolher pela tela (Retina). Posições em docs/release.md (#100).
         run: |
           mkdir -p dist-release dmg
           cp -R build/bin/Sortly.app dmg/
-          ln -s /Applications dmg/Applications
-          hdiutil create -volname Sortly -srcfolder dmg -ov -format UDZO "dist-release/Sortly-${VERSION}-macos-universal.dmg"
+          tiffutil -cathidpicheck build/darwin/dmg/background.png build/darwin/dmg/background@2x.png -out dmg-background.tiff
+          curl -fsSL "https://github.com/create-dmg/create-dmg/archive/refs/tags/v${CREATE_DMG_VERSION}.tar.gz" | tar -xz
+          "create-dmg-${CREATE_DMG_VERSION}/create-dmg" \
+            --volname Sortly \
+            --volicon build/bin/Sortly.app/Contents/Resources/iconfile.icns \
+            --background dmg-background.tiff \
+            --window-pos 200 120 \
+            --window-size 660 400 \
+            --icon-size 128 \
+            --text-size 13 \
+            --icon Sortly.app 165 200 \
+            --hide-extension Sortly.app \
+            --app-drop-link 495 200 \
+            "dist-release/Sortly-${VERSION}-macos-universal.dmg" dmg/
           ditto -c -k --keepParent build/bin/Sortly.app "dist-release/Sortly-${VERSION}-macos-universal.zip"
 
       - name: Empacotar (Linux)
